@@ -1,0 +1,16 @@
+binaryExpression(lhs, rhs, operator) ::= <<
+<lhs> <operator> <rhs>
+>>
+
+identifierExpression(name) ::= <<
+<name>
+>>
+
+// TODO: implement
+intervalExpression() ::= <<
+>>
+
+// TODO: add type
+valueExpression(type, value) ::= <<
+<value>
+>>

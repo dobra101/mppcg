@@ -1,0 +1,8 @@
+binaryPredicate(lhs, operator, rhs) ::= <<
+<lhs> <operator> <rhs>
+>>
+
+// TODO: add parenthesis
+logicPredicate(lhs, operator, rhs) ::= <<
+<lhs> <operator> <rhs>
+>>

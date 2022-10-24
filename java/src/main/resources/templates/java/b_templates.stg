@@ -1,0 +1,58 @@
+machine(name, constraints, sets, constants, concrete_constants, properties, definitions, concrete_variables, invariant, assertions, initialization, operations, transitions) ::= <<
+
+public class <name> {
+    <constraints>
+    <sets>
+    <constants>
+    <concrete_constants>
+    <properties>
+    <definitions>
+    <concrete_variables>
+    <assertions>
+    <initialization>
+
+    <operations; separator="\n\n">
+
+    <transitions; separator="\n\n">
+
+    <invariant>
+}
+>>
+
+// TODO: add returnValues ?
+operation(name, parameters, body) ::= <<
+public void <name>(<parameters>) {
+    <body>
+}
+>>
+
+transition(name, body) ::= <<
+public boolean tr_<name>() {
+    return <body>;
+}
+>>
+
+// TODO: implement
+function() ::= <<
+>>
+
+invariant(body) ::= <<
+public boolean check_inv() {
+    return <body>;
+}
+>>
+
+initialization(substitutions) ::= <<
+<substitutions; separator="\n">
+>>
+
+precondition(predicate, substitution) ::= <<
+<predicate>
+<substitution>
+>>
+
+// TODO: only else, when
+select(condition, then, elseSubstitution, when) ::= <<
+<! <condition> !>
+<then><! <elseSubstitution> !><! <when> !>
+>>

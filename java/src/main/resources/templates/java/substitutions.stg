@@ -1,0 +1,3 @@
+assignSubstitution(identifier, rhs) ::= <<
+<identifier> = <rhs>;
+>>

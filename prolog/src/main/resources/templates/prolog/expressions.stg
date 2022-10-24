@@ -1,0 +1,16 @@
+binaryExpression(lhs, rhs, operator, exprCount, math) ::= <<
+Expr_<exprCount> <if(math)>is<else>=<endif> <lhs> <operator> <rhs>
+>>
+
+identifierExpression(name, stateCount, exprCount) ::= <<
+get(State_<stateCount>, '<name>', Expr_<exprCount>)
+>>
+
+// TODO: implement
+intervalExpression() ::= <<
+>>
+
+// TODO: add type ?
+valueExpression(value) ::= <<
+<value>
+>>
