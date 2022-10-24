@@ -1,0 +1,18 @@
+# IDEA
+.idea/
+
+### Gradle template
+.gradle
+/build/
+/*/build/
+/buildSrc/build/
+/plugins/build/
+!/*/src/*/build/
+
+### macOS template
+# General
+.DS_Store
+.AppleDouble
+.LSOverride
+/benchmarks/Prolog/ProB_Signed/
+/benchmarks/*/runtimes.txt
