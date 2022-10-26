@@ -11,6 +11,6 @@ intervalExpression() ::= <<
 >>
 
 // TODO: add type
-valueExpression(type, value) ::= <<
+valueExpression(value) ::= <<
 <value>
 >>

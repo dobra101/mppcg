@@ -21,6 +21,8 @@ import org.stringtemplate.v4.STGroupFile
  * using the template name and a map of arguments.
  */
 abstract class OutputLanguageEnvironment : EnvironmentUtils(), BEnvironment {
+    var optimize: Boolean = true
+
     abstract val fileExtension: String
     abstract val templateDir: String // TODO: as file
     private val group: STGroup by lazy { importTemplates() } // prevents templateDir from being null
@@ -93,7 +95,7 @@ abstract class OutputLanguageEnvironment : EnvironmentUtils(), BEnvironment {
     }
 
     private fun importTemplates(): STGroup {
-        val st = STGroupFile("$templateDir/template.stg")
+        val st = STGroupFile("$templateDir/b_templates.stg")
         st.importTemplates(STGroupFile("$templateDir/expressions.stg"))
         st.importTemplates(STGroupFile("$templateDir/predicates.stg"))
         st.importTemplates(STGroupFile("$templateDir/substitutions.stg"))

@@ -1,6 +1,7 @@
-machine(name, constraints, sets, constants, concrete_constants, properties, definitions, concrete_variables, invariant, assertions, initialization, operations, transitions) ::= <<
+machine(name, parameters, constraints, sets, constants, concrete_constants, properties, definitions, variables, concrete_variables, initialization, invariant, assertions, operations, transitions) ::= <<
 
 public class <name> {
+    <parameters>
     <constraints>
     <sets>
     <constants>
@@ -19,7 +20,7 @@ public class <name> {
 }
 >>
 
-// TODO: add returnValues ?
+// TODO: add return values
 operation(name, parameters, body) ::= <<
 public void <name>(<parameters>) {
     <body>

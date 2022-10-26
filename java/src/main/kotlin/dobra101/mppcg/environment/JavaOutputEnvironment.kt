@@ -18,11 +18,21 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
 
     /* ---------- EXPRESSIONS ---------- */
     override fun BinaryExpression.renderSelf(): RenderResult {
-        TODO("Not yet implemented")
+        val map = mapOf(
+            "lhs" to left.render().rendered,
+            "rhs" to right.render().rendered,
+            "operator" to operator2String(operator)
+        )
+
+        return RenderResult(stRender("binaryExpression", map))
     }
 
     override fun IdentifierExpression.renderSelf(): RenderResult {
-        TODO("Not yet implemented")
+        val map = mapOf(
+            "name" to name
+        )
+
+        return RenderResult(stRender("identifierExpression", map))
     }
 
     override fun IntervalExpression.renderSelf(): RenderResult {
@@ -30,22 +40,45 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun ValueExpression.renderSelf(): RenderResult {
-        TODO("Not yet implemented")
+        val map = mapOf(
+            "value" to value
+        )
+
+        return RenderResult(stRender("valueExpression", map))
     }
 
 
     /* ---------- PREDICATES ---------- */
+    // HINT: SAME AS LOGIC PREDICATE
     override fun BinaryPredicate.renderSelf(): RenderResult {
-        TODO("Not yet implemented")
+        val map = mapOf(
+            "lhs" to left.render().rendered,
+            "operator" to operator2String(operator),
+            "rhs" to right.render().rendered
+        )
+
+        return RenderResult(stRender("binaryPredicate", map))
     }
 
+    // HINT: SAME AS BINARY PREDICATE
     override fun LogicPredicate.renderSelf(): RenderResult {
-        TODO("Not yet implemented")
+        val map = mapOf(
+            "lhs" to left.render().rendered,
+            "operator" to operator2String(operator),
+            "rhs" to right.render().rendered
+        )
+
+        return RenderResult(stRender("logicPredicate", map))
     }
 
     /* ---------- SUBSTITUTIONS ---------- */
     override fun AssignSubstitution.renderSelf(): RenderResult {
-        TODO("Not yet implemented")
+        val map = mapOf(
+            "identifier" to (lhs[0] as IdentifierExpression).render().rendered, // TODO: when more than one entry?
+            "rhs" to rhs.render()
+        )
+
+        return RenderResult(stRender("assignSubstitution", map))
     }
 
 
@@ -55,7 +88,11 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun Invariant.renderSelf(): RenderResult {
-        TODO("Not yet implemented")
+        val map = mapOf(
+            "body" to predicate.render().rendered
+        )
+
+        return RenderResult(stRender("invariant", map))
     }
 
     override fun Initialization.renderSelf(): RenderResult {
@@ -71,15 +108,47 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun Machine.renderSelf(): RenderResult {
-        TODO("Not yet implemented")
+        val map = mapOf(
+            "name" to name,
+            "parameters" to parameters.render(),
+            "constraints" to (constraints?.render()?.rendered ?: ""),
+            "sets" to sets.render(),
+            "constants" to constants.render(),
+            "concrete_constants" to concreteConstants.render(),
+            "properties" to (properties?.render()?.rendered ?: ""),
+            "definitions" to (definitions?.render()?.rendered ?: ""),
+            "variables" to variables.render(),
+            "concrete_variables" to concreteVariables.render(),
+//            "initialization" to (initialization?.render()?.rendered ?: ""),
+            "invariant" to (invariant?.render()?.rendered ?: ""),
+            "assertions" to assertions.render(),
+            "operations" to operations.render(),
+            "transitions" to transitions.render()
+        )
+
+        return RenderResult(stRender("machine", map))
     }
 
     override fun Operation.renderSelf(): RenderResult {
-        TODO("Not yet implemented")
+        val bodyUsed = (body as? Precondition)?.substitution ?: body
+
+        val map = mapOf(
+            "name" to name,
+            "parameters" to parameters.render(),
+//            "returnValues" to returnValues.render(), // TODO: use returnValues
+            "body" to bodyUsed.render().rendered
+        )
+
+        return RenderResult(stRender("operation", map))
     }
 
     override fun Transition.renderSelf(): RenderResult {
-        TODO("Not yet implemented")
+        val map = mapOf(
+            "name" to name,
+            "body" to body.render().rendered
+        )
+
+        return RenderResult(stRender("transition", map))
     }
 
 

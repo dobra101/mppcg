@@ -1,7 +1,10 @@
 package dobra101.mppcg
 
 import de.be4.classicalb.core.parser.node.Start
+import dobra101.mppcg.adapter.sablecc.convert
 import dobra101.mppcg.environment.OutputLanguageEnvironment
+import dobra101.mppcg.node.b.Machine
+import java.io.File
 
 class Generator {
     companion object {
@@ -9,13 +12,12 @@ class Generator {
     }
 
     fun generate(start: Start) {
-        // TODO: convert
-//        val machine: Machine =
+        val machine: Machine = start.convert()
 
-//        val result = machine.render()
+        val result = machine.render()
 
-//        val file = File("generator/build/generated/${machine.name}.${environment.fileExtension}")
-//        file.createNewFile()
-//        file.writeText(result.rendered)
+        val file = File("generator/build/generated/${machine.name}.${environment.fileExtension}")
+        file.createNewFile()
+        file.writeText(result.rendered)
     }
 }

@@ -1,4 +1,6 @@
-import dobra101.mppcg.environment.Language
+import de.be4.classicalb.core.parser.BParser
+import dobra101.mppcg.Generator
+import dobra101.mppcg.environment.*
 import kotlinx.cli.ArgParser
 import kotlinx.cli.ArgType
 import kotlinx.cli.default
@@ -16,6 +18,21 @@ fun main(args: Array<String>) {
 
     val filename = if (file.endsWith(".mch")) file else "$file.mch"
     val machine = File("build/resources/main/machines/$filename")
+    val start = when (parser) {
+        Parser.SableCC -> BParser(machine.name).parseFile(machine, false)
+        Parser.ANTLR -> throw NotImplementedError("No antlr adapter implemented")
+    }
+
+    Generator.environment = environmentOf(lang)
+    Generator.environment.optimize = optimize
+    Generator().generate(start)
+}
+
+private fun environmentOf(language: Language): OutputLanguageEnvironment {
+    return when (language) {
+        Language.JAVA -> JavaOutputEnvironment()
+        Language.PROLOG -> PrologOutputEnvironment()
+    }
 }
 
 enum class Parser {

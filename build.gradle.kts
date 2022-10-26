@@ -17,6 +17,8 @@ dependencies {
     implementation(project(":java"))
     implementation(project(":prolog"))
 
+    implementation("de.hhu.stups:bparser:2.12.1")
+
     testImplementation(kotlin("test"))
 }
 

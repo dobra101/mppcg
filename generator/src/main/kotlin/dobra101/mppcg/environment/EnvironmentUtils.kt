@@ -3,12 +3,13 @@ package dobra101.mppcg.environment
 import dobra101.mppcg.node.Type
 import dobra101.mppcg.node.b.Operation
 import dobra101.mppcg.node.b.Transition
-import dobra101.mppcg.node.collection.SetCollectionNode
+import dobra101.mppcg.node.collection.CollectionNode
 import dobra101.mppcg.node.expression.BinaryExpressionOperator
 import dobra101.mppcg.node.expression.Expression
 import dobra101.mppcg.node.expression.IdentifierExpression
 import dobra101.mppcg.node.predicate.BinaryPredicateOperator
 import dobra101.mppcg.node.predicate.LogicPredicateOperator
+import dobra101.mppcg.node.predicate.Predicate
 import dobra101.mppcg.node.substitution.Substitution
 
 abstract class EnvironmentUtils {
@@ -21,6 +22,7 @@ abstract class EnvironmentUtils {
             BinaryPredicateOperator.EQUAL -> "="
             BinaryPredicateOperator.NOT_EQUAL -> "\\="
             BinaryPredicateOperator.MEMBER -> "member"
+            BinaryPredicateOperator.NOT_MEMBER -> "notmember"
         }
     }
 
@@ -62,8 +64,13 @@ abstract class EnvironmentUtils {
         return this.map { it.render().rendered }
     }
 
-    @JvmName("renderMachineSetsList")
-    fun List<SetCollectionNode>.render(): List<String> {
+    @JvmName("renderPredicateList")
+    fun List<Predicate>.render(): List<String> {
+        return this.map { it.render().rendered }
+    }
+
+    @JvmName("renderMachineCollectionNodeList")
+    fun List<CollectionNode>.render(): List<String> {
         return this.map { it.render().rendered }
     }
 
