@@ -6,13 +6,15 @@ interface Type
 
 interface TypeNumber : Type
 
-class TypeDouble : TypeNumber
+class TypeReal : TypeNumber
 
 class TypeInteger : TypeNumber
 
 class TypeString : Type
 
 class TypeVoid : Type
+
+class TypeEnum(val name: String) : Type
 
 class TypeFunction(val type: FunctionType) : Type
 

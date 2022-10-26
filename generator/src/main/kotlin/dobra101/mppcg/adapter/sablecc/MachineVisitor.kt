@@ -6,8 +6,6 @@ import dobra101.mppcg.node.b.Invariant
 import dobra101.mppcg.node.b.Machine
 import dobra101.mppcg.node.b.Operation
 import dobra101.mppcg.node.collection.CollectionNode
-import dobra101.mppcg.node.collection.EnumCollectionNode
-import dobra101.mppcg.node.collection.EnumEntry
 import dobra101.mppcg.node.expression.Expression
 import dobra101.mppcg.node.predicate.Predicate
 
@@ -40,19 +38,7 @@ class MachineVisitor : AbstractVisitor() {
     }
 
     override fun caseASetsMachineClause(node: ASetsMachineClause) {
-        // TODO: dont convert every set to enum
-        val collectionNodes = node.setDefinitions.convert()
-        sets = collectionNodes.map {
-            EnumCollectionNode(
-                name = it.name,
-                elements = it.elements.map {elem ->
-                    EnumEntry(
-                        name = elem.name,
-                        enum = elem.collection
-                    )
-                }
-            )
-        }
+        sets = node.setDefinitions.convert()
     }
 
     override fun caseAAbstractConstantsMachineClause(node: AAbstractConstantsMachineClause) {

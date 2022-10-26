@@ -1,7 +1,7 @@
 package dobra101.mppcg.node.expression
 
 import dobra101.mppcg.node.Type
-import dobra101.mppcg.node.TypeDouble
+import dobra101.mppcg.node.TypeReal
 import dobra101.mppcg.node.TypeInteger
 
 data class BinaryExpression(
@@ -19,6 +19,6 @@ enum class BinaryExpressionOperator {
 
 // TODO: replace by type inference
 private fun getType(left: Expression, right: Expression): Type {
-    if (left.type is TypeDouble || right.type is TypeDouble) return TypeDouble()
+    if (left.type is TypeReal || right.type is TypeReal) return TypeReal()
     return TypeInteger()
 }
