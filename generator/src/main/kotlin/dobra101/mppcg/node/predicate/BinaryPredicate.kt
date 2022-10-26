@@ -15,5 +15,6 @@ enum class BinaryPredicateOperator {
     LESS_EQUAL,
     EQUAL,
     NOT_EQUAL,
-    MEMBER
+    MEMBER,
+    NOT_MEMBER
 }
