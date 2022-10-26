@@ -1,24 +1,24 @@
 package dobra101.mppcg.node.b
 
 import dobra101.mppcg.node.MPPCGNode
-import dobra101.mppcg.node.collection.SetCollectionNode
+import dobra101.mppcg.node.collection.CollectionNode
 import dobra101.mppcg.node.expression.Expression
 import dobra101.mppcg.node.predicate.Predicate
 
 data class Machine(
     val name: String,
     val parameters: List<Expression> = emptyList(),
-    val constraints: List<Expression> = emptyList(),
-    val sets: List<SetCollectionNode> = emptyList(),
+    val constraints: Predicate? = null,
+    val sets: List<CollectionNode> = emptyList(),
     val constants: List<Expression> = emptyList(),
     val concreteConstants: List<Expression> = emptyList(),
     val properties: Predicate? = null,
     val definitions: Predicate? = null,
     val variables: List<Expression> = emptyList(),
     val concreteVariables: List<Expression> = emptyList(),
-    val initialization: Initialization = Initialization(),
+    val initialization: Initialization? = null,
     val invariant: Predicate? = null,
-    val assertions: Predicate? = null,
+    val assertions: List<Predicate> = emptyList(),
     val operations: List<Operation> = emptyList()
 ) : MPPCGNode {
 

@@ -1,5 +1,8 @@
 package dobra101.mppcg.node.collection
 
-data class EnumCollectionNode(val name: String, val elements: List<EnumEntry>) : CollectionNode(CollectionType.Enum)
+data class EnumCollectionNode(
+    override val name: String,
+    override val elements: List<EnumEntry>
+) : CollectionNode(name, elements, CollectionType.Enum)
 
-data class EnumEntry(val name: String, val enum: String)
+data class EnumEntry(override val name: String, val enum: String) : CollectionEntry(name, enum)
