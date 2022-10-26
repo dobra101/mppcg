@@ -99,6 +99,7 @@ abstract class OutputLanguageEnvironment : EnvironmentUtils(), BEnvironment {
         st.importTemplates(STGroupFile("$templateDir/expressions.stg"))
         st.importTemplates(STGroupFile("$templateDir/predicates.stg"))
         st.importTemplates(STGroupFile("$templateDir/substitutions.stg"))
+        st.importTemplates(STGroupFile("$templateDir/optimizer.stg"))
         return st
     }
 

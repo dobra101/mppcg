@@ -8,7 +8,15 @@ interface TypeNumber : Type
 
 class TypeReal : TypeNumber
 
-class TypeInteger : TypeNumber
+class TypeInteger : TypeNumber {
+    override fun equals(other: Any?): Boolean {
+        return other is TypeInteger
+    }
+
+    override fun hashCode(): Int {
+        return javaClass.hashCode()
+    }
+}
 
 class TypeString : Type
 

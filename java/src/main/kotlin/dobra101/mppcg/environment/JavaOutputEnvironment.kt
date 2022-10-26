@@ -16,6 +16,8 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     override val templateDir = "templates/java"
     override val fileExtension = "java"
 
+    private val optimizer = JavaOptimizer(this)
+
     /* ---------- EXPRESSIONS ---------- */
     override fun BinaryExpression.renderSelf(): RenderResult {
         val map = mapOf(
@@ -73,6 +75,11 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
 
     /* ---------- SUBSTITUTIONS ---------- */
     override fun AssignSubstitution.renderSelf(): RenderResult {
+        if (optimize) {
+            val optimized = optimizer.renderOptimized(this)
+            if (optimized != null) return optimized
+        }
+
         val map = mapOf(
             "identifier" to (lhs[0] as IdentifierExpression).render().rendered, // TODO: when more than one entry?
             "rhs" to rhs.render()
