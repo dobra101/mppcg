@@ -9,11 +9,12 @@ class JavaOptimizer(private val environment: JavaOutputEnvironment) {
 
     /**
      * Optimized rendering of AssignSubstitution.
+     *
      * Example:
      * "a = a + 1" will be rewritten to "a += 1"
      *
-     * @param node
-     * @return
+     * @param node The node to render
+     * @return The render result or null, if optimization is not applicable
      */
     fun renderOptimized(node: AssignSubstitution): RenderResult? {
         if (node.rhs.size == 1 && node.rhs[0] is BinaryExpression) {
@@ -23,7 +24,7 @@ class JavaOptimizer(private val environment: JavaOutputEnvironment) {
                 val map = mapOf(
                     "identifier" to identifier,
                     "operator" to environment.operator2String((node.rhs[0] as BinaryExpression).operator),
-                    "rhs" to (node.rhs[0] as BinaryExpression).right.render().rendered
+                    "rhs" to (node.rhs[0] as BinaryExpression).right.render()
                 )
                 return RenderResult(environment.stRender("optimizedAssignSubstitution", map))
             }
@@ -33,7 +34,7 @@ class JavaOptimizer(private val environment: JavaOutputEnvironment) {
                 val map = mapOf(
                     "identifier" to (node.lhs[0] as IdentifierExpression).name,
                     "operator" to environment.operator2String((node.rhs[0] as BinaryExpression).operator),
-                    "rhs" to (node.rhs[0] as BinaryExpression).left.render().rendered
+                    "rhs" to (node.rhs[0] as BinaryExpression).left.render()
                 )
                 return RenderResult(environment.stRender("optimizedAssignSubstitution", map))
             }

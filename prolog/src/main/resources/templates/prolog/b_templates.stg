@@ -1,12 +1,10 @@
-machine(name, constraints, sets, constants, concrete_constants, properties, definitions, concrete_variables, invariant, assertions, initialization, operations, transitions) ::= <<
+// TODO: use remaining variables
+machine(name, parameters, constraints, sets, constants, concrete_constants, properties, definitions, variables, concrete_variables, invariant, assertions, initialization, operations) ::= <<
 :- use_module(environment).
 
 <sets; separator="\n\n">
 
 start(st).
-
-
-<props>
 
 
 <initialization>
@@ -23,12 +21,6 @@ trans('<name>', State_0, State_<resultStateCount>) :-
     State_0 \= st,
 
     <body>.
->>
-
-transition(name, body) ::= <<
-public boolean tr_<name>() {
-    return <body>;
-}
 >>
 
 // TODO: implement

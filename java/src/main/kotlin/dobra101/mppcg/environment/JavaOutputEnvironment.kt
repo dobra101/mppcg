@@ -21,8 +21,8 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     /* ---------- EXPRESSIONS ---------- */
     override fun BinaryExpression.renderSelf(): RenderResult {
         val map = mapOf(
-            "lhs" to left.render().rendered,
-            "rhs" to right.render().rendered,
+            "lhs" to left.render(),
+            "rhs" to right.render(),
             "operator" to operator2String(operator)
         )
 
@@ -41,6 +41,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         TODO("Not yet implemented")
     }
 
+    // HINT: Same for Java and Prolog
     override fun ValueExpression.renderSelf(): RenderResult {
         val map = mapOf(
             "value" to value
@@ -54,9 +55,9 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     // HINT: SAME AS LOGIC PREDICATE
     override fun BinaryPredicate.renderSelf(): RenderResult {
         val map = mapOf(
-            "lhs" to left.render().rendered,
+            "lhs" to left.render(),
             "operator" to operator2String(operator),
-            "rhs" to right.render().rendered
+            "rhs" to right.render()
         )
 
         return RenderResult(stRender("binaryPredicate", map))
@@ -65,9 +66,9 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     // HINT: SAME AS BINARY PREDICATE
     override fun LogicPredicate.renderSelf(): RenderResult {
         val map = mapOf(
-            "lhs" to left.render().rendered,
+            "lhs" to left.render(),
             "operator" to operator2String(operator),
-            "rhs" to right.render().rendered
+            "rhs" to right.render()
         )
 
         return RenderResult(stRender("logicPredicate", map))
@@ -75,13 +76,10 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
 
     /* ---------- SUBSTITUTIONS ---------- */
     override fun AssignSubstitution.renderSelf(): RenderResult {
-        if (optimize) {
-            val optimized = optimizer.renderOptimized(this)
-            if (optimized != null) return optimized
-        }
+        if (optimize) optimizer.renderOptimized(this)?.let { return it }
 
         val map = mapOf(
-            "identifier" to (lhs[0] as IdentifierExpression).render().rendered, // TODO: when more than one entry?
+            "identifier" to (lhs[0] as IdentifierExpression).render(), // TODO: when more than one entry?
             "rhs" to rhs.render()
         )
 
@@ -94,9 +92,10 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         TODO("Not yet implemented")
     }
 
+    // HINT: SAME FOR JAVA AND PROLOG
     override fun Invariant.renderSelf(): RenderResult {
         val map = mapOf(
-            "body" to predicate.render().rendered
+            "body" to predicate.render()
         )
 
         return RenderResult(stRender("invariant", map))
@@ -118,16 +117,16 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         val map = mapOf(
             "name" to name,
             "parameters" to parameters.render(),
-            "constraints" to (constraints?.render()?.rendered ?: ""),
+            "constraints" to constraints?.render(),
             "sets" to sets.render(),
             "constants" to constants.render(),
             "concrete_constants" to concreteConstants.render(),
-            "properties" to (properties?.render()?.rendered ?: ""),
-            "definitions" to (definitions?.render()?.rendered ?: ""),
+            "properties" to properties?.render(),
+            "definitions" to definitions?.render(),
             "variables" to variables.render(),
             "concrete_variables" to concreteVariables.render(),
-//            "initialization" to (initialization?.render()?.rendered ?: ""),
-            "invariant" to (invariant?.render()?.rendered ?: ""),
+//            "initialization" to initialization?.render(),
+            "invariant" to invariant?.render(),
             "assertions" to assertions.render(),
             "operations" to operations.render(),
             "transitions" to transitions.render()
@@ -143,7 +142,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             "name" to name,
             "parameters" to parameters.render(),
 //            "returnValues" to returnValues.render(), // TODO: use returnValues
-            "body" to bodyUsed.render().rendered
+            "body" to bodyUsed.render()
         )
 
         return RenderResult(stRender("operation", map))
@@ -152,7 +151,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     override fun Transition.renderSelf(): RenderResult {
         val map = mapOf(
             "name" to name,
-            "body" to body.render().rendered
+            "body" to body.render()
         )
 
         return RenderResult(stRender("transition", map))

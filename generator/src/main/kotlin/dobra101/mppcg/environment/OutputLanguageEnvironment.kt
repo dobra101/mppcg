@@ -114,7 +114,9 @@ abstract class OutputLanguageEnvironment : EnvironmentUtils(), BEnvironment {
         val st = group.getInstanceOf(templateName)
         map
             .filterValues { it != null }
-            .forEach { st.add(it.key, it.value) }
+            .forEach {
+                st.add(it.key, (it.value as? RenderResult)?.rendered ?: it.value)
+            }
         return st.render()
     }
 }
