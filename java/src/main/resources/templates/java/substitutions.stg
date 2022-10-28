@@ -1,3 +1,7 @@
 assignSubstitution(identifier, rhs) ::= <<
 <identifier> = <rhs>;
 >>
+
+declarationSubstitution(type, lhs, rhs) ::= <<
+private <type> <lhs> = <rhs>;
+>>

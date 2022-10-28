@@ -6,7 +6,7 @@ import dobra101.mppcg.node.MPPCGNode
 import dobra101.mppcg.node.Type
 import dobra101.mppcg.node.b.*
 import dobra101.mppcg.node.b.Function
-import dobra101.mppcg.node.collection.SetEntry
+import dobra101.mppcg.node.collection.*
 import dobra101.mppcg.node.expression.*
 import dobra101.mppcg.node.predicate.BinaryPredicate
 import dobra101.mppcg.node.predicate.LogicPredicate
@@ -43,6 +43,24 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         return RenderResult("${expanded.before}$rendered", info)
     }
 
+    override fun EnumCollectionNode.renderSelf(): RenderResult {
+        val map = mapOf(
+            "name" to name,
+            "elements" to elements.render()
+        )
+
+        return RenderResult(stRender("enumCollection", map))
+    }
+
+    // HINT: same as SetEntry
+    override fun EnumEntry.renderSelf(): RenderResult {
+        val map = mapOf(
+            "name" to name
+        )
+
+        return RenderResult(stRender("enumEntryExpression", map))
+    }
+
     override fun IdentifierExpression.renderSelf(): RenderResult {
         val map = mapOf(
             "name" to name,
@@ -57,6 +75,19 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
 
     override fun IntervalExpression.renderSelf(): RenderResult {
         TODO("Not yet implemented")
+    }
+
+    override fun SetCollectionNode.renderSelf(): RenderResult {
+        TODO("Not yet implemented")
+    }
+
+    // HINT: same as EnumEntry
+    override fun SetEntry.renderSelf(): RenderResult {
+        val map = mapOf(
+            "name" to name
+        )
+
+        return RenderResult(stRender("setEntryExpression", map))
     }
 
     // HINT: Same for Java and Prolog
@@ -103,8 +134,19 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     /* ---------- SUBSTITUTIONS ---------- */
     override fun AssignSubstitution.renderSelf(): RenderResult {
         val identifier = (lhs[0] as IdentifierExpression).name // TODO: when more than one identifier?
-        val expandedRhs = ExpandedExpression.of(rhs)
 
+        // don't expand collection entries
+        if (rhs.size == 1 && rhs[0] is CollectionEntry) {
+            val map = mapOf(
+                "identifier" to identifier,
+                "rhs" to rhs[0].render(),
+                "stateCount" to stateCount,
+                "resultStateCount" to ++stateCount
+            )
+            return RenderResult(stRender("assignSubstitution", map))
+        }
+
+        val expandedRhs = ExpandedExpression.of(rhs) // TODO: dont expand is rhs is CollectionEntry
         val map = mapOf(
             "identifier" to identifier,
             "rhs" to expandedRhs.expressions[0], // TODO: more than one entry?
@@ -116,7 +158,6 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         return RenderResult("${expandedRhs.before}$rendered")
     }
 
-
     /* ---------- B NODES ---------- */
     override fun Function.renderSelf(): RenderResult {
         TODO("Not yet implemented")
@@ -124,6 +165,8 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
 
     // HINT: SAME FOR JAVA AND PROLOG
     override fun Invariant.renderSelf(): RenderResult {
+        // TODO: CollectionNode only at declaration level, use here something else (Identifier? CollcetionIdentifier?)
+        println(this)
         stateCount = 0
         exprCount = 0
 
@@ -154,7 +197,13 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun Select.renderSelf(): RenderResult {
-        TODO("Not yet implemented")
+        // TODO: add when, else
+        val map = mapOf(
+            "condition" to condition.render(),
+            "then" to then.render()
+        )
+
+        return RenderResult(stRender("select", map))
     }
 
     override fun Machine.renderSelf(): RenderResult {

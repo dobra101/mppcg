@@ -4,6 +4,7 @@ import dobra101.mppcg.RenderResult
 import dobra101.mppcg.node.MPPCGNode
 import dobra101.mppcg.node.b.*
 import dobra101.mppcg.node.b.Function
+import dobra101.mppcg.node.collection.*
 import dobra101.mppcg.node.expression.*
 import dobra101.mppcg.node.predicate.BinaryPredicate
 import dobra101.mppcg.node.predicate.LogicPredicate
@@ -29,8 +30,12 @@ abstract class OutputLanguageEnvironment : EnvironmentUtils(), BEnvironment {
 
     /* Expression */
     abstract fun BinaryExpression.renderSelf(): RenderResult
+    abstract fun EnumCollectionNode.renderSelf(): RenderResult
+    abstract fun EnumEntry.renderSelf(): RenderResult
     abstract fun IdentifierExpression.renderSelf(): RenderResult
     abstract fun IntervalExpression.renderSelf(): RenderResult
+    abstract fun SetCollectionNode.renderSelf(): RenderResult
+    abstract fun SetEntry.renderSelf(): RenderResult
     abstract fun ValueExpression.renderSelf(): RenderResult
 
     /* Predicate */
@@ -58,8 +63,12 @@ abstract class OutputLanguageEnvironment : EnvironmentUtils(), BEnvironment {
     private fun callExpression(node: Expression): RenderResult {
         return when (node) {
             is BinaryExpression -> node.renderSelf()
+            is EnumCollectionNode -> node.renderSelf()
+            is EnumEntry -> node.renderSelf()
             is IdentifierExpression -> node.renderSelf()
             is IntervalExpression -> node.renderSelf()
+            is SetCollectionNode -> node.renderSelf()
+            is SetEntry -> node.renderSelf()
             is ValueExpression -> node.renderSelf()
 
             /* B Expressions */

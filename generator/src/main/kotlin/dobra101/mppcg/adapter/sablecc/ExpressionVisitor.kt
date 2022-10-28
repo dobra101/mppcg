@@ -6,6 +6,8 @@ import dobra101.mppcg.node.b.Function
 import dobra101.mppcg.node.b.FunctionMapType
 import dobra101.mppcg.node.b.FunctionType
 import dobra101.mppcg.node.b.InfiniteSet
+import dobra101.mppcg.node.collection.CollectionEntry
+import dobra101.mppcg.node.collection.CollectionNode
 import dobra101.mppcg.node.expression.*
 
 class ExpressionVisitor : AbstractVisitor() {
@@ -13,7 +15,8 @@ class ExpressionVisitor : AbstractVisitor() {
     override var result: Expression? = null
 
     override fun caseTIdentifierLiteral(node: TIdentifierLiteral) {
-        result = IdentifierExpression(node.text, type = TypeInteger()) // TODO: fix type
+        result = machineVisitor.sets.findByName(node.text) ?: machineVisitor.sets.findEntryByName(node.text)
+                ?: IdentifierExpression(name = node.text, type = TypeInteger()) // TODO: fix type
     }
 
     override fun caseTIntegerLiteral(node: TIntegerLiteral) {
@@ -123,5 +126,15 @@ class ExpressionVisitor : AbstractVisitor() {
 
     override fun caseANaturalSetExpression(node: ANaturalSetExpression) {
         result = InfiniteSet(TypeSet(SetType.NATURAL))
+    }
+
+    private fun List<CollectionNode>.findByName(name: String): CollectionNode? {
+        return this.find { it.name == name }
+    }
+
+    private fun List<CollectionNode>.findEntryByName(name: String): CollectionEntry? {
+        return this.find {
+            it.elements.find { entry -> entry.name == name } != null
+        }?.elements?.find { it.name == name }
     }
 }

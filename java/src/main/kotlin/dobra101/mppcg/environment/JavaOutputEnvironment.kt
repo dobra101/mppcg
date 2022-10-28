@@ -1,9 +1,13 @@
 package dobra101.mppcg.environment
 
 import dobra101.mppcg.RenderResult
-import dobra101.mppcg.node.Type
+import dobra101.mppcg.node.*
 import dobra101.mppcg.node.b.*
 import dobra101.mppcg.node.b.Function
+import dobra101.mppcg.node.collection.EnumCollectionNode
+import dobra101.mppcg.node.collection.EnumEntry
+import dobra101.mppcg.node.collection.SetCollectionNode
+import dobra101.mppcg.node.collection.SetEntry
 import dobra101.mppcg.node.expression.BinaryExpression
 import dobra101.mppcg.node.expression.IdentifierExpression
 import dobra101.mppcg.node.expression.IntervalExpression
@@ -12,6 +16,7 @@ import dobra101.mppcg.node.predicate.BinaryPredicate
 import dobra101.mppcg.node.predicate.LogicPredicate
 import dobra101.mppcg.node.substitution.AssignSubstitution
 
+// TODO: add constructor for generated classes
 class JavaOutputEnvironment : OutputLanguageEnvironment() {
     override val templateDir = "templates/java"
     override val fileExtension = "java"
@@ -29,6 +34,14 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         return RenderResult(stRender("binaryExpression", map))
     }
 
+    override fun EnumCollectionNode.renderSelf(): RenderResult {
+        TODO("Not yet implemented")
+    }
+
+    override fun EnumEntry.renderSelf(): RenderResult {
+        TODO("Not yet implemented")
+    }
+
     override fun IdentifierExpression.renderSelf(): RenderResult {
         val map = mapOf(
             "name" to name
@@ -38,6 +51,14 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun IntervalExpression.renderSelf(): RenderResult {
+        TODO("Not yet implemented")
+    }
+
+    override fun SetCollectionNode.renderSelf(): RenderResult {
+        TODO("Not yet implemented")
+    }
+
+    override fun SetEntry.renderSelf(): RenderResult {
         TODO("Not yet implemented")
     }
 
@@ -86,7 +107,6 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         return RenderResult(stRender("assignSubstitution", map))
     }
 
-
     /* ---------- B NODES ---------- */
     override fun Function.renderSelf(): RenderResult {
         TODO("Not yet implemented")
@@ -102,7 +122,25 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun Initialization.renderSelf(): RenderResult {
-        TODO("Not yet implemented")
+        val subs = substitutions.map {
+            // TODO: convert to declarationSubstitutionNode while converting?
+            if (it is AssignSubstitution) {
+                val map = mapOf(
+                    "type" to type2String(it.lhs[0].type), // TODO: when more than one identifier?
+                    "lhs" to it.lhs[0].render(), // TODO: when more than one identifier?
+                    "rhs" to it.rhs.render()
+                )
+                stRender("declarationSubstitution", map)
+            } else {
+                it.render().rendered
+            }
+        }
+
+        val map = mapOf(
+            "substitutions" to subs
+        )
+
+        return RenderResult(stRender("initialization", map))
     }
 
     override fun Precondition.renderSelf(): RenderResult {
@@ -125,7 +163,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             "definitions" to definitions?.render(),
             "variables" to variables.render(),
             "concrete_variables" to concreteVariables.render(),
-//            "initialization" to initialization?.render(),
+            "initialization" to initialization?.render(),
             "invariant" to invariant?.render(),
             "assertions" to assertions.render(),
             "operations" to operations.render(),
@@ -159,6 +197,13 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
 
 
     override fun type2String(type: Type): String {
-        TODO("Not yet implemented")
+        return when (type) {
+            is TypeReal -> "double"
+            is TypeInteger -> "int"
+            is TypeString -> "String"
+            is TypeVoid -> "void"
+            is TypeCollection -> type.name
+            else -> throw UnknownTypeException(type::class.simpleName!!)
+        }
     }
 }

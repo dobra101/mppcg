@@ -1,6 +1,7 @@
 package dobra101.mppcg.environment
 
 import dobra101.mppcg.RenderResult
+import dobra101.mppcg.node.collection.CollectionEntry
 import dobra101.mppcg.node.collection.SetEntry
 import dobra101.mppcg.node.expression.IdentifierExpression
 import dobra101.mppcg.node.predicate.BinaryPredicate
@@ -18,13 +19,16 @@ class PrologOptimizer(private val environment: PrologOutputEnvironment) {
      * @return The render result or null, if optimization is not applicable
      */
     fun renderOptimized(node: BinaryPredicate): RenderResult? {
-        if (node.operator == BinaryPredicateOperator.EQUAL && (node.right is IdentifierExpression || node.right is SetEntry)) {
+        if (node.operator == BinaryPredicateOperator.EQUAL &&
+            (node.right is IdentifierExpression || node.right is SetEntry || node.right is CollectionEntry)
+        ) {
             if (node.left !is IdentifierExpression) return null
 
-            // TODO: refactor
             val rhs = when (node.right) {
                 is IdentifierExpression -> (node.right as IdentifierExpression).name
-                else -> (node.right as SetEntry).name // TODO: fix
+                is SetEntry -> (node.right as SetEntry).name
+                is CollectionEntry -> (node.right as CollectionEntry).name
+                else -> "" // when is exhaustive
             }
 
             val map = mapOf(

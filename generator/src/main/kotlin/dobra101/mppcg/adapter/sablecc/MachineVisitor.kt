@@ -15,7 +15,7 @@ class MachineVisitor : AbstractVisitor() {
     private var name: String = ""
     private var parameters: List<Expression> = emptyList()
     private var constraints: Predicate? = null
-    private var sets: List<CollectionNode> = emptyList()
+    var sets: List<CollectionNode> = emptyList()
     private var constants: List<Expression> = emptyList()
     private var concreteConstants: List<Expression> = emptyList()
     private var properties: Predicate? = null
