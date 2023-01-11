@@ -1,6 +1,7 @@
 package dobra101.mppcg.node
 
 import dobra101.mppcg.node.b.FunctionType
+import dobra101.mppcg.node.collection.AnonymousCollectionType
 import dobra101.mppcg.node.collection.CollectionType
 
 interface Type
@@ -24,6 +25,8 @@ class TypeString : Type
 class TypeVoid : Type
 
 class TypeCollection(val name: String, val type: CollectionType) : Type
+
+class TypeAnonymousCollection(val type: AnonymousCollectionType) : Type
 
 class TypeFunction(val type: FunctionType) : Type
 

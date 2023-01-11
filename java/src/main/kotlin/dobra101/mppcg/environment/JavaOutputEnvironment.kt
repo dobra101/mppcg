@@ -4,10 +4,7 @@ import dobra101.mppcg.RenderResult
 import dobra101.mppcg.node.*
 import dobra101.mppcg.node.b.*
 import dobra101.mppcg.node.b.Function
-import dobra101.mppcg.node.collection.EnumCollectionNode
-import dobra101.mppcg.node.collection.EnumEntry
-import dobra101.mppcg.node.collection.SetCollectionNode
-import dobra101.mppcg.node.collection.SetEntry
+import dobra101.mppcg.node.collection.*
 import dobra101.mppcg.node.expression.BinaryExpression
 import dobra101.mppcg.node.expression.IdentifierExpression
 import dobra101.mppcg.node.expression.IntervalExpression
@@ -24,6 +21,14 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     private val optimizer = JavaOptimizer(this)
 
     /* ---------- EXPRESSIONS ---------- */
+    override fun AnonymousSetCollectionNode.renderSelf(): RenderResult {
+        TODO("Not yet implemented")
+    }
+
+    override fun AnonymousSetEntry.renderSelf(): RenderResult {
+        TODO("Not yet implemented")
+    }
+
     override fun BinaryExpression.renderSelf(): RenderResult {
         val map = mapOf(
             "lhs" to left.render(),

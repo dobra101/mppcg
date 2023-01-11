@@ -6,8 +6,7 @@ import dobra101.mppcg.node.b.Function
 import dobra101.mppcg.node.b.FunctionMapType
 import dobra101.mppcg.node.b.FunctionType
 import dobra101.mppcg.node.b.InfiniteSet
-import dobra101.mppcg.node.collection.CollectionEntry
-import dobra101.mppcg.node.collection.CollectionNode
+import dobra101.mppcg.node.collection.*
 import dobra101.mppcg.node.expression.*
 
 class ExpressionVisitor : AbstractVisitor() {
@@ -126,6 +125,14 @@ class ExpressionVisitor : AbstractVisitor() {
 
     override fun caseANaturalSetExpression(node: ANaturalSetExpression) {
         result = InfiniteSet(TypeSet(SetType.NATURAL))
+    }
+
+    override fun caseASetExtensionExpression(node: ASetExtensionExpression) {
+//        TODO("implement visitor for every single node to avoid bugs")
+        val expressions = node.expressions.convert().mapNotNull {
+            if (it is EnumEntry) AnonymousSetEntry(it.name) else null
+        }
+        result = AnonymousSetCollectionNode(expressions)
     }
 
     private fun List<CollectionNode>.findByName(name: String): CollectionNode? {

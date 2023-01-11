@@ -29,6 +29,8 @@ abstract class OutputLanguageEnvironment : EnvironmentUtils(), BEnvironment {
     private val group: STGroup by lazy { importTemplates() } // prevents templateDir from being null
 
     /* Expression */
+    abstract fun AnonymousSetCollectionNode.renderSelf(): RenderResult
+    abstract fun AnonymousSetEntry.renderSelf(): RenderResult
     abstract fun BinaryExpression.renderSelf(): RenderResult
     abstract fun EnumCollectionNode.renderSelf(): RenderResult
     abstract fun EnumEntry.renderSelf(): RenderResult
@@ -62,6 +64,8 @@ abstract class OutputLanguageEnvironment : EnvironmentUtils(), BEnvironment {
 
     private fun callExpression(node: Expression): RenderResult {
         return when (node) {
+            is AnonymousSetCollectionNode -> node.renderSelf()
+            is AnonymousSetEntry -> node.renderSelf()
             is BinaryExpression -> node.renderSelf()
             is EnumCollectionNode -> node.renderSelf()
             is EnumEntry -> node.renderSelf()

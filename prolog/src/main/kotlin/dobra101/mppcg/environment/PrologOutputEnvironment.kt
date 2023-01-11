@@ -27,6 +27,22 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     var stateCount = 0
 
     /* ---------- EXPRESSIONS ---------- */
+    override fun AnonymousSetCollectionNode.renderSelf(): RenderResult {
+        val map = mapOf(
+            "elements" to elements.render()
+        )
+
+        return RenderResult(stRender("anonymousSetCollectionExpression", map))
+    }
+
+    override fun AnonymousSetEntry.renderSelf(): RenderResult {
+        val map = mapOf(
+            "name" to name
+        )
+
+        return RenderResult(stRender("anonymousSetEntryExpression", map))
+    }
+
     override fun BinaryExpression.renderSelf(): RenderResult {
         val expanded = ExpandedBinary.of(left, right)
 
@@ -49,7 +65,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             "elements" to elements.render()
         )
 
-        return RenderResult(stRender("enumCollection", map))
+        return RenderResult(stRender("enumCollectionExpression", map))
     }
 
     // HINT: same as SetEntry
@@ -165,8 +181,6 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
 
     // HINT: SAME FOR JAVA AND PROLOG
     override fun Invariant.renderSelf(): RenderResult {
-        // TODO: CollectionNode only at declaration level, use here something else (Identifier? CollcetionIdentifier?)
-        println(this)
         stateCount = 0
         exprCount = 0
 
