@@ -8,10 +8,9 @@ import dobra101.mppcg.node.b.*
 import dobra101.mppcg.node.b.Function
 import dobra101.mppcg.node.collection.*
 import dobra101.mppcg.node.expression.*
-import dobra101.mppcg.node.predicate.BinaryPredicate
-import dobra101.mppcg.node.predicate.LogicPredicate
-import dobra101.mppcg.node.predicate.LogicPredicateOperator
+import dobra101.mppcg.node.predicate.*
 import dobra101.mppcg.node.substitution.AssignSubstitution
+import dobra101.mppcg.node.substitution.ParallelSubstitution
 
 class PrologOutputEnvironment : OutputLanguageEnvironment() {
     override val templateDir = "templates/prolog"
@@ -23,7 +22,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         const val EXPRESSION_SEPARATOR = ",\n"
     }
 
-    var exprCount = 0
+    private var exprCount = 0
     var stateCount = 0
 
     /* ---------- EXPRESSIONS ---------- */
@@ -33,14 +32,6 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         )
 
         return RenderResult(stRender("anonymousSetCollectionExpression", map))
-    }
-
-    override fun AnonymousSetEntry.renderSelf(): RenderResult {
-        val map = mapOf(
-            "name" to name
-        )
-
-        return RenderResult(stRender("anonymousSetEntryExpression", map))
     }
 
     override fun BinaryExpression.renderSelf(): RenderResult {
@@ -84,6 +75,8 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             "exprCount" to exprCount++
         )
         val rendered = stRender("identifierExpression", map)
+
+        // TODO: move before map to avoid subtraction
         val info = mapOf("resultExpr" to IndividualInfo("Expr_${exprCount - 1}")) // TODO: map to Int?
 
         return RenderResult(rendered, info)
@@ -123,10 +116,17 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
 
         val expanded = ExpandedBinary.of(left, right)
 
+        val prefixOperators = listOf(
+            BinaryPredicateOperator.MEMBER,
+            BinaryPredicateOperator.NOT_MEMBER,
+            BinaryPredicateOperator.SUBSET
+        )
+
         val map = mapOf(
             "lhs" to expanded.lhs,
             "rhs" to expanded.rhs,
-            "operator" to operator2String(operator)
+            "operator" to operator2String(operator),
+            "prefixOperator" to prefixOperators.contains(operator)
         )
         val rendered = stRender("binaryPredicate", map)
 
@@ -147,12 +147,13 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         return RenderResult("${expanded.before}$rendered")
     }
 
+
     /* ---------- SUBSTITUTIONS ---------- */
     override fun AssignSubstitution.renderSelf(): RenderResult {
         val identifier = (lhs[0] as IdentifierExpression).name // TODO: when more than one identifier?
 
         // don't expand collection entries
-        if (rhs.size == 1 && rhs[0] is CollectionEntry) {
+        if (rhs.size == 1 && (rhs[0] is CollectionEntry || rhs[0] is AnonymousCollectionNode)) {
             val map = mapOf(
                 "identifier" to identifier,
                 "rhs" to rhs[0].render(),
@@ -161,6 +162,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             )
             return RenderResult(stRender("assignSubstitution", map))
         }
+
 
         val expandedRhs = ExpandedExpression.of(rhs) // TODO: dont expand is rhs is CollectionEntry
         val map = mapOf(
@@ -174,9 +176,130 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         return RenderResult("${expandedRhs.before}$rendered")
     }
 
+
     /* ---------- B NODES ---------- */
     override fun Function.renderSelf(): RenderResult {
-        TODO("Not yet implemented")
+        val map = mapOf(
+            "left" to left.render(),
+            "right" to right.render(),
+            "type" to type.type,
+            "mapType" to mapType
+        )
+
+        return RenderResult(stRender("function", map))
+    }
+
+    override fun CallFunctionExpression.renderSelf(): RenderResult {
+        val map = mapOf(
+            "expression" to expression.render(),
+            "parameters" to parameters.render()
+        )
+
+        return RenderResult(stRender("callFunction", map))
+    }
+
+    override fun Couple.renderSelf(): RenderResult {
+        val map = mapOf(
+            "list" to list.render()
+        )
+
+        return RenderResult(stRender("couple", map))
+    }
+
+    override fun DomainFunctionExpression.renderSelf(): RenderResult {
+        val map = mapOf(
+            "expression" to expression.render()
+        )
+
+        return RenderResult(stRender("domainFunction", map))
+    }
+
+    override fun DomainRestrictionExpression.renderSelf(): RenderResult {
+        val map = mapOf(
+            "left" to left.render(),
+            "right" to right.render()
+        )
+
+        return RenderResult(stRender("domainRestriction", map))
+    }
+
+    override fun DomainSubtractionExpression.renderSelf(): RenderResult {
+        val map = mapOf(
+            "left" to left.render(),
+            "right" to right.render()
+        )
+
+        return RenderResult(stRender("domainSubtraction", map))
+    }
+
+    override fun ImageFunctionExpression.renderSelf(): RenderResult {
+        val map = mapOf(
+            "left" to left.render(),
+            "right" to right.render()
+        )
+
+        return RenderResult(stRender("imageFunction", map))
+    }
+
+    override fun IntersectionCollectionExpression.renderSelf(): RenderResult {
+        val map = mapOf(
+            "left" to left.render(),
+            "right" to right.render()
+        )
+
+        return RenderResult(stRender("intersectionCollection", map))
+    }
+
+    override fun RangeFunctionExpression.renderSelf(): RenderResult {
+        val map = mapOf(
+            "expression" to expression.render()
+        )
+
+        return RenderResult(stRender("rangeFunction", map))
+    }
+
+    override fun RangeRestrictionExpression.renderSelf(): RenderResult {
+        val map = mapOf(
+            "left" to left.render(),
+            "right" to right.render()
+        )
+
+        return RenderResult(stRender("rangeRestriction", map))
+    }
+
+    override fun RangeSubtractionExpression.renderSelf(): RenderResult {
+        val map = mapOf(
+            "left" to left.render(),
+            "right" to right.render()
+        )
+
+        return RenderResult(stRender("rangeSubtraction", map))
+    }
+
+    override fun ReverseFunctionExpression.renderSelf(): RenderResult {
+        val map = mapOf(
+            "expression" to expression.render()
+        )
+
+        return RenderResult(stRender("reverseFunction", map))
+    }
+
+    override fun SubtractionCollectionExpression.renderSelf(): RenderResult {
+        val map = mapOf(
+            "left" to left.render(),
+            "right" to right.render()
+        )
+
+        return RenderResult(stRender("subtractionCollection", map))
+    }
+
+    override fun UnionCollectionExpression.renderSelf(): RenderResult {
+        val map = mapOf(
+            "left" to left.render(),
+            "right" to right.render()
+        )
+
+        return RenderResult(stRender("unionCollection", map))
     }
 
     // HINT: SAME FOR JAVA AND PROLOG
@@ -191,6 +314,16 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         return RenderResult(stRender("invariant", map))
     }
 
+    override fun QuantifierPredicate.renderSelf(): RenderResult {
+        val map = mapOf(
+            "identifier" to identifier.renderSelf(),
+            "predicate" to predicate.render(),
+            "type" to type
+        )
+
+        return RenderResult(stRender("quantifier", map))
+    }
+
     override fun Initialization.renderSelf(): RenderResult {
         val map = mapOf(
             "body" to substitutions.render(),
@@ -198,6 +331,14 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         )
 
         return RenderResult(stRender("initialization", map))
+    }
+
+    override fun ParallelSubstitution.renderSelf(): RenderResult {
+        val map = mapOf(
+            "substitutions" to substitutions.render()
+        )
+
+        return RenderResult(stRender("parallelSubstitution", map))
     }
 
     // HINT: SAME FOR JAVA AND PROLOG
@@ -228,7 +369,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             "sets" to sets.render(),
             "constants" to constants.render(),
             "concrete_constants" to concreteConstants.render(),
-            "properties" to properties?.render(),
+//            "properties" to properties?.render(), // TODO: use properties
             "definitions" to definitions?.render(),
             "variables" to variables.render(),
             "concrete_variables" to concreteVariables.render(),
@@ -279,6 +420,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         return when (operator) {
             LogicPredicateOperator.AND -> ","
             LogicPredicateOperator.OR -> ";"
+            LogicPredicateOperator.IMPLIES -> "=>"
         }
     }
 }

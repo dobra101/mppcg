@@ -8,7 +8,7 @@ abstract class CollectionNode(
     open val name: String,
     open val elements: List<CollectionEntry>,
     private val collectionType: CollectionType
-) : Expression(type = TypeCollection(name, collectionType))
+) : Expression(type = TypeCollection(collectionType, name))
 
 abstract class CollectionEntry(open val name: String, open val collection: String) :
     Expression(type = TypeString()) // TODO: fix type

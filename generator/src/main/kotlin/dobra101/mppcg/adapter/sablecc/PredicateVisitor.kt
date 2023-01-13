@@ -1,6 +1,9 @@
 package dobra101.mppcg.adapter.sablecc
 
 import de.be4.classicalb.core.parser.node.*
+import dobra101.mppcg.node.expression.BinaryExpression
+import dobra101.mppcg.node.expression.BinaryExpressionOperator
+import dobra101.mppcg.node.expression.IdentifierExpression
 import dobra101.mppcg.node.predicate.*
 
 class PredicateVisitor : AbstractVisitor() {
@@ -45,5 +48,107 @@ class PredicateVisitor : AbstractVisitor() {
 
     override fun caseADisjunctPredicate(node: ADisjunctPredicate) {
         result = LogicPredicate(node.left.convert()!!, node.right.convert()!!, LogicPredicateOperator.OR)
+    }
+
+    override fun caseASubsetPredicate(node: ASubsetPredicate) {
+        result = BinaryPredicate(node.left.convert()!!, node.right.convert()!!, BinaryPredicateOperator.SUBSET)
+    }
+
+    override fun caseAForallPredicate(node: AForallPredicate) {
+        // TODO: when more than one identifier?
+        result = QuantifierPredicate(
+            identifier = node.identifiers.convert()[0] as IdentifierExpression,
+            predicate = node.implication.convert()!!,
+            type = QuantifierType.FORALL
+        )
+    }
+
+    override fun caseAExistsPredicate(node: AExistsPredicate) {
+        // TODO: when more than one identifier?
+        result = QuantifierPredicate(
+            identifier = node.identifiers.convert()[0] as IdentifierExpression,
+            predicate = node.predicate.convert()!!,
+            type = QuantifierType.EXISTS
+        )
+    }
+
+    override fun caseADescriptionPredicate(node: ADescriptionPredicate) {
+        TODO("Not implemented ${node::class.simpleName}")
+    }
+
+    override fun caseALabelPredicate(node: ALabelPredicate) {
+        TODO("Not implemented ${node::class.simpleName}")
+    }
+
+    override fun caseASubstitutionPredicate(node: ASubstitutionPredicate) {
+        TODO("Not implemented ${node::class.simpleName}")
+    }
+
+    override fun caseANegationPredicate(node: ANegationPredicate) {
+        TODO("Not implemented ${node::class.simpleName}")
+    }
+
+    override fun caseAImplicationPredicate(node: AImplicationPredicate) {
+        result = LogicPredicate(node.left.convert()!!, node.right.convert()!!, LogicPredicateOperator.IMPLIES)
+    }
+
+    override fun caseAEquivalencePredicate(node: AEquivalencePredicate) {
+        TODO("Not implemented ${node::class.simpleName}")
+    }
+
+    override fun caseASubsetStrictPredicate(node: ASubsetStrictPredicate) {
+        TODO("Not implemented ${node::class.simpleName}")
+    }
+
+    override fun caseANotSubsetPredicate(node: ANotSubsetPredicate) {
+        TODO("Not implemented ${node::class.simpleName}")
+    }
+
+    override fun caseANotSubsetStrictPredicate(node: ANotSubsetStrictPredicate) {
+        TODO("Not implemented ${node::class.simpleName}")
+    }
+
+    override fun caseATruthPredicate(node: ATruthPredicate) {
+        TODO("Not implemented ${node::class.simpleName}")
+    }
+
+    override fun caseAFalsityPredicate(node: AFalsityPredicate) {
+        TODO("Not implemented ${node::class.simpleName}")
+    }
+
+    override fun caseAFinitePredicate(node: AFinitePredicate) {
+        TODO("Not implemented ${node::class.simpleName}")
+    }
+
+    override fun caseAPartitionPredicate(node: APartitionPredicate) {
+        TODO("Not implemented ${node::class.simpleName}")
+    }
+
+    override fun caseADefinitionPredicate(node: ADefinitionPredicate) {
+        TODO("Not implemented ${node::class.simpleName}")
+    }
+
+    override fun caseAPredicateIdentifierPredicate(node: APredicateIdentifierPredicate) {
+        TODO("Not implemented ${node::class.simpleName}")
+    }
+
+    override fun caseAPredicateFunctionPredicate(node: APredicateFunctionPredicate) {
+        TODO("Not implemented ${node::class.simpleName}")
+    }
+
+    override fun caseALetPredicatePredicate(node: ALetPredicatePredicate) {
+        TODO("Not implemented ${node::class.simpleName}")
+    }
+
+    override fun caseAIfPredicatePredicate(node: AIfPredicatePredicate) {
+        TODO("Not implemented ${node::class.simpleName}")
+    }
+
+    override fun caseAExtendedPredPredicate(node: AExtendedPredPredicate) {
+        TODO("Not implemented ${node::class.simpleName}")
+    }
+
+    override fun caseAOperatorPredicate(node: AOperatorPredicate) {
+        TODO("Not implemented ${node::class.simpleName}")
     }
 }

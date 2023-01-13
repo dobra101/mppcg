@@ -9,10 +9,16 @@ import dobra101.mppcg.node.expression.*
 import dobra101.mppcg.node.predicate.BinaryPredicate
 import dobra101.mppcg.node.predicate.LogicPredicate
 import dobra101.mppcg.node.predicate.Predicate
+import dobra101.mppcg.node.predicate.QuantifierPredicate
 import dobra101.mppcg.node.substitution.AssignSubstitution
+import dobra101.mppcg.node.substitution.ParallelSubstitution
 import dobra101.mppcg.node.substitution.Substitution
 import org.stringtemplate.v4.STGroup
 import org.stringtemplate.v4.STGroupFile
+import java.io.FileInputStream
+import java.io.IOException
+import java.util.logging.LogManager
+import java.util.logging.Logger
 
 /**
  * Contains the rendering functions for each node of an intermediate code representation.
@@ -28,9 +34,19 @@ abstract class OutputLanguageEnvironment : EnvironmentUtils(), BEnvironment {
     abstract val templateDir: String // TODO: as file
     private val group: STGroup by lazy { importTemplates() } // prevents templateDir from being null
 
+    protected val logger: Logger = Logger.getLogger(this::class.simpleName)
+
+    init {
+        val manager = LogManager.getLogManager()
+        try {
+            manager.readConfiguration(FileInputStream("logging.properties"))
+        } catch (e: IOException) {
+            logger.warning(e.message)
+        }
+    }
+
     /* Expression */
     abstract fun AnonymousSetCollectionNode.renderSelf(): RenderResult
-    abstract fun AnonymousSetEntry.renderSelf(): RenderResult
     abstract fun BinaryExpression.renderSelf(): RenderResult
     abstract fun EnumCollectionNode.renderSelf(): RenderResult
     abstract fun EnumEntry.renderSelf(): RenderResult
@@ -65,7 +81,6 @@ abstract class OutputLanguageEnvironment : EnvironmentUtils(), BEnvironment {
     private fun callExpression(node: Expression): RenderResult {
         return when (node) {
             is AnonymousSetCollectionNode -> node.renderSelf()
-            is AnonymousSetEntry -> node.renderSelf()
             is BinaryExpression -> node.renderSelf()
             is EnumCollectionNode -> node.renderSelf()
             is EnumEntry -> node.renderSelf()
@@ -77,6 +92,19 @@ abstract class OutputLanguageEnvironment : EnvironmentUtils(), BEnvironment {
 
             /* B Expressions */
             is Function -> node.renderSelf()
+            is CallFunctionExpression -> node.renderSelf()
+            is Couple -> node.renderSelf()
+            is DomainFunctionExpression -> node.renderSelf()
+            is DomainRestrictionExpression -> node.renderSelf()
+            is DomainSubtractionExpression -> node.renderSelf()
+            is ImageFunctionExpression -> node.renderSelf()
+            is IntersectionCollectionExpression -> node.renderSelf()
+            is RangeFunctionExpression -> node.renderSelf()
+            is RangeRestrictionExpression -> node.renderSelf()
+            is RangeSubtractionExpression -> node.renderSelf()
+            is ReverseFunctionExpression -> node.renderSelf()
+            is SubtractionCollectionExpression -> node.renderSelf()
+            is UnionCollectionExpression -> node.renderSelf()
 
             else -> throw EnvironmentException("Unknown ${node::class}")
         }
@@ -89,6 +117,7 @@ abstract class OutputLanguageEnvironment : EnvironmentUtils(), BEnvironment {
 
             /* B Predicates */
             is Invariant -> node.renderSelf()
+            is QuantifierPredicate -> node.renderSelf()
 
             else -> throw EnvironmentException("Unknown ${node::class}")
         }
@@ -100,6 +129,7 @@ abstract class OutputLanguageEnvironment : EnvironmentUtils(), BEnvironment {
 
             /* B Substitutions */
             is Initialization -> node.renderSelf()
+            is ParallelSubstitution -> node.renderSelf()
             is Precondition -> node.renderSelf()
             is Select -> node.renderSelf()
 
@@ -124,7 +154,7 @@ abstract class OutputLanguageEnvironment : EnvironmentUtils(), BEnvironment {
      * @return The rendered string
      */
     fun stRender(templateName: String, map: Map<String, Any?> = emptyMap()): String {
-        val st = group.getInstanceOf(templateName)
+        val st = group.getInstanceOf(templateName) ?: throw EnvironmentException("Template '$templateName' not found")
         map
             .filterValues { it != null }
             .forEach {

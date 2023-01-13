@@ -16,12 +16,12 @@ class MachineVisitor : AbstractVisitor() {
     private var parameters: List<Expression> = emptyList()
     private var constraints: Predicate? = null
     var sets: List<CollectionNode> = emptyList()
-    private var constants: List<Expression> = emptyList()
-    private var concreteConstants: List<Expression> = emptyList()
+    var constants: List<Expression> = emptyList()
+    var concreteConstants: List<Expression> = emptyList()
     private var properties: Predicate? = null
     private var definitions: Predicate? = null
-    private var variables: List<Expression> = emptyList()
-    private var concreteVariables: List<Expression> = emptyList()
+    var variables: List<Expression> = emptyList()
+    var concreteVariables: List<Expression> = emptyList()
     private var initialization: Initialization? = null
     private var invariant: Predicate? = null
     private var assertions: List<Predicate> = emptyList()
@@ -54,7 +54,7 @@ class MachineVisitor : AbstractVisitor() {
     }
 
     override fun caseADefinitionsMachineClause(node: ADefinitionsMachineClause) {
-        TODO("Not implemented caseADefinitionsMachineClause")
+//        TODO("Not implemented caseADefinitionsMachineClause")
 //        definitions = node.definitions.convert()
     }
 
@@ -87,6 +87,58 @@ class MachineVisitor : AbstractVisitor() {
 
     override fun caseAOperationsMachineClause(node: AOperationsMachineClause) {
         operations = node.operations.convert()
+    }
+
+    override fun caseASeesMachineClause(node: ASeesMachineClause) {
+        TODO("Not implemented ${node::class.simpleName}")
+    }
+
+    override fun caseAPromotesMachineClause(node: APromotesMachineClause) {
+        TODO("Not implemented ${node::class.simpleName}")
+    }
+
+    override fun caseAUsesMachineClause(node: AUsesMachineClause) {
+        TODO("Not implemented ${node::class.simpleName}")
+    }
+
+    override fun caseAIncludesMachineClause(node: AIncludesMachineClause) {
+        TODO("Not implemented ${node::class.simpleName}")
+    }
+
+    override fun caseAExtendsMachineClause(node: AExtendsMachineClause) {
+        TODO("Not implemented ${node::class.simpleName}")
+    }
+
+    override fun caseAImportsMachineClause(node: AImportsMachineClause) {
+        TODO("Not implemented ${node::class.simpleName}")
+    }
+
+    override fun caseAFreetypesMachineClause(node: AFreetypesMachineClause) {
+        TODO("Not implemented ${node::class.simpleName}")
+    }
+
+    override fun caseAValuesMachineClause(node: AValuesMachineClause) {
+        TODO("Not implemented ${node::class.simpleName}")
+    }
+
+    override fun caseALocalOperationsMachineClause(node: ALocalOperationsMachineClause) {
+        TODO("Not implemented ${node::class.simpleName}")
+    }
+
+    override fun caseAReferencesMachineClause(node: AReferencesMachineClause) {
+        TODO("Not implemented ${node::class.simpleName}")
+    }
+
+    override fun caseAInvalidOperationsClauseMachineClause(node: AInvalidOperationsClauseMachineClause) {
+        TODO("Not implemented ${node::class.simpleName}")
+    }
+
+    override fun caseAExpressionsMachineClause(node: AExpressionsMachineClause) {
+        TODO("Not implemented ${node::class.simpleName}")
+    }
+
+    override fun caseAPredicatesMachineClause(node: APredicatesMachineClause) {
+        TODO("Not implemented ${node::class.simpleName}")
     }
 
     override fun caseEOF(node: EOF) {

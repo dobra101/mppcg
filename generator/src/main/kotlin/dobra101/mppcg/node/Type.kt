@@ -24,7 +24,7 @@ class TypeString : Type
 
 class TypeVoid : Type
 
-class TypeCollection(val name: String, val type: CollectionType) : Type
+class TypeCollection(val type: CollectionType, val name: String = "") : Type
 
 class TypeAnonymousCollection(val type: AnonymousCollectionType) : Type
 
@@ -33,6 +33,8 @@ class TypeFunction(val type: FunctionType) : Type
 class TypeSet(val type: SetType) : Type
 
 class TypeInterval(val type: TypeNumber) : Type
+
+class TypeCouple : Type
 
 enum class SetType {
     INTEGER,

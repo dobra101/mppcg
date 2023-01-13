@@ -1,5 +1,8 @@
-binaryPredicate(lhs, operator, rhs) ::= <<
+binaryPredicate(lhs, operator, rhs, prefixOperator) ::= <<
+<if(prefixOperator)>
+<operator>(<lhs>, <rhs>)<else>
 <lhs> <operator> <rhs>
+<endif>
 >>
 
 // TODO: add parenthesis

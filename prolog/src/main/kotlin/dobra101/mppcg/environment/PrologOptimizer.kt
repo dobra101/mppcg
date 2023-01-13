@@ -40,4 +40,6 @@ class PrologOptimizer(private val environment: PrologOutputEnvironment) {
         }
         return null
     }
+
+    // TODO: prevent same variable being getted multiple times if it has not changed
 }

@@ -8,5 +8,6 @@ data class LogicPredicate(
 
 enum class LogicPredicateOperator {
     AND,
-    OR
+    OR,
+    IMPLIES
 }

@@ -23,6 +23,7 @@ abstract class EnvironmentUtils {
             BinaryPredicateOperator.NOT_EQUAL -> "\\="
             BinaryPredicateOperator.MEMBER -> "member"
             BinaryPredicateOperator.NOT_MEMBER -> "notmember"
+            BinaryPredicateOperator.SUBSET -> "subset"
         }
     }
 
@@ -39,6 +40,7 @@ abstract class EnvironmentUtils {
         return when (operator) {
             LogicPredicateOperator.AND -> "&&"
             LogicPredicateOperator.OR -> "||"
+            LogicPredicateOperator.IMPLIES -> "=>"
         }
     }
 

@@ -11,7 +11,9 @@ import dobra101.mppcg.node.expression.IntervalExpression
 import dobra101.mppcg.node.expression.ValueExpression
 import dobra101.mppcg.node.predicate.BinaryPredicate
 import dobra101.mppcg.node.predicate.LogicPredicate
+import dobra101.mppcg.node.predicate.QuantifierPredicate
 import dobra101.mppcg.node.substitution.AssignSubstitution
+import dobra101.mppcg.node.substitution.ParallelSubstitution
 
 // TODO: add constructor for generated classes
 class JavaOutputEnvironment : OutputLanguageEnvironment() {
@@ -22,10 +24,6 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
 
     /* ---------- EXPRESSIONS ---------- */
     override fun AnonymousSetCollectionNode.renderSelf(): RenderResult {
-        TODO("Not yet implemented")
-    }
-
-    override fun AnonymousSetEntry.renderSelf(): RenderResult {
         TODO("Not yet implemented")
     }
 
@@ -117,6 +115,58 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         TODO("Not yet implemented")
     }
 
+    override fun CallFunctionExpression.renderSelf(): RenderResult {
+        TODO("Not yet implemented")
+    }
+
+    override fun Couple.renderSelf(): RenderResult {
+        TODO("Not yet implemented")
+    }
+
+    override fun DomainFunctionExpression.renderSelf(): RenderResult {
+        TODO("Not yet implemented")
+    }
+
+    override fun DomainRestrictionExpression.renderSelf(): RenderResult {
+        TODO("Not yet implemented")
+    }
+
+    override fun DomainSubtractionExpression.renderSelf(): RenderResult {
+        TODO("Not yet implemented")
+    }
+
+    override fun ImageFunctionExpression.renderSelf(): RenderResult {
+        TODO("Not yet implemented")
+    }
+
+    override fun IntersectionCollectionExpression.renderSelf(): RenderResult {
+        TODO("Not yet implemented")
+    }
+
+    override fun RangeFunctionExpression.renderSelf(): RenderResult {
+        TODO("Not yet implemented")
+    }
+
+    override fun RangeRestrictionExpression.renderSelf(): RenderResult {
+        TODO("Not yet implemented")
+    }
+
+    override fun RangeSubtractionExpression.renderSelf(): RenderResult {
+        TODO("Not yet implemented")
+    }
+
+    override fun ReverseFunctionExpression.renderSelf(): RenderResult {
+        TODO("Not yet implemented")
+    }
+
+    override fun SubtractionCollectionExpression.renderSelf(): RenderResult {
+        TODO("Not yet implemented")
+    }
+
+    override fun UnionCollectionExpression.renderSelf(): RenderResult {
+        TODO("Not yet implemented")
+    }
+
     // HINT: SAME FOR JAVA AND PROLOG
     override fun Invariant.renderSelf(): RenderResult {
         val map = mapOf(
@@ -124,6 +174,10 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         )
 
         return RenderResult(stRender("invariant", map))
+    }
+
+    override fun QuantifierPredicate.renderSelf(): RenderResult {
+        TODO("Not yet implemented")
     }
 
     override fun Initialization.renderSelf(): RenderResult {
@@ -146,6 +200,11 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         )
 
         return RenderResult(stRender("initialization", map))
+    }
+
+
+    override fun ParallelSubstitution.renderSelf(): RenderResult {
+        TODO("Not yet implemented")
     }
 
     override fun Precondition.renderSelf(): RenderResult {
