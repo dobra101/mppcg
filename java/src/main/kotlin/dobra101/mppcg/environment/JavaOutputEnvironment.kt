@@ -115,6 +115,14 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         TODO("Not yet implemented")
     }
 
+    override fun BinaryCollectionExpression.renderSelf(): RenderResult {
+        TODO("Not yet implemented")
+    }
+
+    override fun BinaryFunctionExpression.renderSelf(): RenderResult {
+        TODO("Not yet implemented")
+    }
+
     override fun CallFunctionExpression.renderSelf(): RenderResult {
         TODO("Not yet implemented")
     }
@@ -127,43 +135,11 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         TODO("Not yet implemented")
     }
 
-    override fun DomainRestrictionExpression.renderSelf(): RenderResult {
-        TODO("Not yet implemented")
-    }
-
-    override fun DomainSubtractionExpression.renderSelf(): RenderResult {
-        TODO("Not yet implemented")
-    }
-
-    override fun ImageFunctionExpression.renderSelf(): RenderResult {
-        TODO("Not yet implemented")
-    }
-
-    override fun IntersectionCollectionExpression.renderSelf(): RenderResult {
-        TODO("Not yet implemented")
-    }
-
     override fun RangeFunctionExpression.renderSelf(): RenderResult {
         TODO("Not yet implemented")
     }
 
-    override fun RangeRestrictionExpression.renderSelf(): RenderResult {
-        TODO("Not yet implemented")
-    }
-
-    override fun RangeSubtractionExpression.renderSelf(): RenderResult {
-        TODO("Not yet implemented")
-    }
-
     override fun ReverseFunctionExpression.renderSelf(): RenderResult {
-        TODO("Not yet implemented")
-    }
-
-    override fun SubtractionCollectionExpression.renderSelf(): RenderResult {
-        TODO("Not yet implemented")
-    }
-
-    override fun UnionCollectionExpression.renderSelf(): RenderResult {
         TODO("Not yet implemented")
     }
 

@@ -1,8 +1,11 @@
 package dobra101.mppcg.environment
 
 import dobra101.mppcg.node.Type
+import dobra101.mppcg.node.b.BinaryFunctionOperator
 import dobra101.mppcg.node.b.Operation
 import dobra101.mppcg.node.b.Transition
+import dobra101.mppcg.node.collection.BinaryCollectionExpression
+import dobra101.mppcg.node.collection.BinaryCollectionOperator
 import dobra101.mppcg.node.collection.CollectionNode
 import dobra101.mppcg.node.expression.BinaryExpressionOperator
 import dobra101.mppcg.node.expression.Expression
@@ -41,6 +44,24 @@ abstract class EnvironmentUtils {
             LogicPredicateOperator.AND -> "&&"
             LogicPredicateOperator.OR -> "||"
             LogicPredicateOperator.IMPLIES -> "=>"
+        }
+    }
+
+    open fun operator2String(operator: BinaryCollectionOperator): String {
+        return when (operator) {
+            BinaryCollectionOperator.INTERSECTION -> "intersection"
+            BinaryCollectionOperator.SUBTRACTION -> "subtraction"
+            BinaryCollectionOperator.UNION -> "union"
+        }
+    }
+
+    open fun operator2String(operator: BinaryFunctionOperator): String {
+        return when (operator) {
+            BinaryFunctionOperator.DOMAIN_RESTRICTION -> "domainRestriction"
+            BinaryFunctionOperator.DOMAIN_SUBTRACTION -> "domainSubtraction"
+            BinaryFunctionOperator.RANGE_RESTRICTION -> "rangeRestriction"
+            BinaryFunctionOperator.RANGE_SUBTRACTION -> "rangeSubtraction"
+            BinaryFunctionOperator.IMAGE -> "image"
         }
     }
 

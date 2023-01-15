@@ -92,19 +92,13 @@ abstract class OutputLanguageEnvironment : EnvironmentUtils(), BEnvironment {
 
             /* B Expressions */
             is Function -> node.renderSelf()
+            is BinaryCollectionExpression -> node.renderSelf()
+            is BinaryFunctionExpression -> node.renderSelf()
             is CallFunctionExpression -> node.renderSelf()
             is Couple -> node.renderSelf()
             is DomainFunctionExpression -> node.renderSelf()
-            is DomainRestrictionExpression -> node.renderSelf()
-            is DomainSubtractionExpression -> node.renderSelf()
-            is ImageFunctionExpression -> node.renderSelf()
-            is IntersectionCollectionExpression -> node.renderSelf()
             is RangeFunctionExpression -> node.renderSelf()
-            is RangeRestrictionExpression -> node.renderSelf()
-            is RangeSubtractionExpression -> node.renderSelf()
             is ReverseFunctionExpression -> node.renderSelf()
-            is SubtractionCollectionExpression -> node.renderSelf()
-            is UnionCollectionExpression -> node.renderSelf()
 
             else -> throw EnvironmentException("Unknown ${node::class}")
         }

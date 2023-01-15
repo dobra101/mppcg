@@ -13,35 +13,24 @@ data class DomainFunctionExpression(
     val expression: Expression
 ) : Expression(TypeInteger())
 
-data class DomainRestrictionExpression(
+data class BinaryFunctionExpression(
     val left: Expression,
-    val right: Expression
-) : Expression(TypeInteger())
-
-data class DomainSubtractionExpression(
-    val left: Expression,
-    val right: Expression
-) : Expression(TypeInteger())
-
-data class ImageFunctionExpression(
-    val left: Expression,
-    val right: Expression
+    val right: Expression,
+    val operator: BinaryFunctionOperator
 ) : Expression(TypeInteger())
 
 data class RangeFunctionExpression(
     val expression: Expression
 ) : Expression(TypeInteger())
 
-data class RangeRestrictionExpression(
-    val left: Expression,
-    val right: Expression
-) : Expression(TypeInteger())
-
-data class RangeSubtractionExpression(
-    val left: Expression,
-    val right: Expression
-) : Expression(TypeInteger())
-
 data class ReverseFunctionExpression(
     val expression: Expression
 ) : Expression(TypeInteger())
+
+enum class BinaryFunctionOperator {
+    DOMAIN_RESTRICTION,
+    DOMAIN_SUBTRACTION,
+    RANGE_RESTRICTION,
+    RANGE_SUBTRACTION,
+    IMAGE
+}

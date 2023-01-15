@@ -189,6 +189,26 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         return RenderResult(stRender("function", map))
     }
 
+    override fun BinaryCollectionExpression.renderSelf(): RenderResult {
+        val map = mapOf(
+            "left" to left.render(),
+            "right" to right.render(),
+            "operator" to operator2String(operator)
+        )
+
+        return RenderResult(stRender("binaryCollectionExpression", map))
+    }
+
+    override fun BinaryFunctionExpression.renderSelf(): RenderResult {
+        val map = mapOf(
+            "left" to left.render(),
+            "right" to right.render(),
+            "operator" to operator2String(operator)
+        )
+
+        return RenderResult(stRender("binaryFunctionExpression", map))
+    }
+
     override fun CallFunctionExpression.renderSelf(): RenderResult {
         val map = mapOf(
             "expression" to expression.render(),
@@ -214,42 +234,6 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         return RenderResult(stRender("domainFunction", map))
     }
 
-    override fun DomainRestrictionExpression.renderSelf(): RenderResult {
-        val map = mapOf(
-            "left" to left.render(),
-            "right" to right.render()
-        )
-
-        return RenderResult(stRender("domainRestriction", map))
-    }
-
-    override fun DomainSubtractionExpression.renderSelf(): RenderResult {
-        val map = mapOf(
-            "left" to left.render(),
-            "right" to right.render()
-        )
-
-        return RenderResult(stRender("domainSubtraction", map))
-    }
-
-    override fun ImageFunctionExpression.renderSelf(): RenderResult {
-        val map = mapOf(
-            "left" to left.render(),
-            "right" to right.render()
-        )
-
-        return RenderResult(stRender("imageFunction", map))
-    }
-
-    override fun IntersectionCollectionExpression.renderSelf(): RenderResult {
-        val map = mapOf(
-            "left" to left.render(),
-            "right" to right.render()
-        )
-
-        return RenderResult(stRender("intersectionCollection", map))
-    }
-
     override fun RangeFunctionExpression.renderSelf(): RenderResult {
         val map = mapOf(
             "expression" to expression.render()
@@ -258,48 +242,12 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         return RenderResult(stRender("rangeFunction", map))
     }
 
-    override fun RangeRestrictionExpression.renderSelf(): RenderResult {
-        val map = mapOf(
-            "left" to left.render(),
-            "right" to right.render()
-        )
-
-        return RenderResult(stRender("rangeRestriction", map))
-    }
-
-    override fun RangeSubtractionExpression.renderSelf(): RenderResult {
-        val map = mapOf(
-            "left" to left.render(),
-            "right" to right.render()
-        )
-
-        return RenderResult(stRender("rangeSubtraction", map))
-    }
-
     override fun ReverseFunctionExpression.renderSelf(): RenderResult {
         val map = mapOf(
             "expression" to expression.render()
         )
 
         return RenderResult(stRender("reverseFunction", map))
-    }
-
-    override fun SubtractionCollectionExpression.renderSelf(): RenderResult {
-        val map = mapOf(
-            "left" to left.render(),
-            "right" to right.render()
-        )
-
-        return RenderResult(stRender("subtractionCollection", map))
-    }
-
-    override fun UnionCollectionExpression.renderSelf(): RenderResult {
-        val map = mapOf(
-            "left" to left.render(),
-            "right" to right.render()
-        )
-
-        return RenderResult(stRender("unionCollection", map))
     }
 
     // HINT: SAME FOR JAVA AND PROLOG

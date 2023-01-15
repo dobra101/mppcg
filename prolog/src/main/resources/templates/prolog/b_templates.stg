@@ -34,6 +34,14 @@ Type: <type>
 mapType: <mapType>
 >>
 
+binaryFunctionExpression(left, right, operator) ::= <<
+<operator>(<left>, <right>, Result)
+>>
+
+binaryCollectionExpression(left, right, operator) ::= <<
+<operator>(<left>, <right>, Result)
+>>
+
 callFunction(expression, parameters) ::= <<
 CallFunction:
 Expression: <expression>
@@ -46,66 +54,15 @@ List: <list>
 >>
 
 domainFunction(expression) ::= <<
-DomainFunction:
-Expression: <expression>
->>
-
-domainRestriction(left, right) ::= <<
-DomainRestriction:
-Left: <left>
-Right: <right>
->>
-
-domainSubtraction(left, right) ::= <<
-DomainSubtraction:
-Left: <left>
-Right: <right>
->>
-
-imageFunction(left, right) ::= <<
-ImageFunction:
-Left: <left>
-Right: <right>
->>
-
-intersectionCollection(left, right) ::= <<
-IntersectionCollection:
-Left: <left>
-Right: <right>
+relationalDomain(<expression>, Domain)
 >>
 
 rangeFunction(expression) ::= <<
-RangeFunction:
-Expression: <expression>
->>
-
-rangeRestriction(left, right) ::= <<
-RangeRestriction:
-Left: <left>
-Right: <right>
->>
-
-rangeSubtraction(left, right) ::= <<
-RangeSubtraction:
-Left: <left>
-Right: <right>
+relationalRange(<expression>, Range)
 >>
 
 reverseFunction(expression) ::= <<
-ReverseFunction:
-Expression: <expression>
->>
-
-subtractionCollection(left, right) ::= <<
-SubtractionCollection:
-Left: <left>
-Right: <right>
->>
-
-unionCollection(left, right) ::= <<
-UnionCollection:
-Left: <left>
-Right: <right>
+relationalReverse(<expression>, Reverse)
 >>
 
 invariant(body) ::= <<

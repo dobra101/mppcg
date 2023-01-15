@@ -352,15 +352,15 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseAUnionExpression(node: AUnionExpression) {
-        result = UnionCollectionExpression(node.left.convert()!!, node.right.convert()!!)
+        result = BinaryCollectionExpression(node.left.convert()!!, node.right.convert()!!, BinaryCollectionOperator.UNION)
     }
 
     override fun caseAIntersectionExpression(node: AIntersectionExpression) {
-        result = IntersectionCollectionExpression(node.left.convert()!!, node.right.convert()!!)
+        result = BinaryCollectionExpression(node.left.convert()!!, node.right.convert()!!, BinaryCollectionOperator.INTERSECTION)
     }
 
     override fun caseASetSubtractionExpression(node: ASetSubtractionExpression) {
-        result = SubtractionCollectionExpression(node.left.convert()!!, node.right.convert()!!)
+        result = BinaryCollectionExpression(node.left.convert()!!, node.right.convert()!!, BinaryCollectionOperator.SUBTRACTION)
     }
 
     override fun caseAGeneralUnionExpression(node: AGeneralUnionExpression) {
@@ -460,23 +460,23 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseAImageExpression(node: AImageExpression) {
-        result = ImageFunctionExpression(node.left.convert()!!, node.right.convert()!!)
+        result = BinaryFunctionExpression(node.left.convert()!!, node.right.convert()!!, BinaryFunctionOperator.IMAGE)
     }
 
     override fun caseADomainRestrictionExpression(node: ADomainRestrictionExpression) {
-        result = DomainRestrictionExpression(node.left.convert()!!, node.right.convert()!!)
+        result = BinaryFunctionExpression(node.left.convert()!!, node.right.convert()!!, BinaryFunctionOperator.DOMAIN_RESTRICTION)
     }
 
     override fun caseADomainSubtractionExpression(node: ADomainSubtractionExpression) {
-        result = DomainSubtractionExpression(node.left.convert()!!, node.right.convert()!!)
+        result = BinaryFunctionExpression(node.left.convert()!!, node.right.convert()!!, BinaryFunctionOperator.DOMAIN_SUBTRACTION)
     }
 
     override fun caseARangeRestrictionExpression(node: ARangeRestrictionExpression) {
-        result = RangeRestrictionExpression(node.left.convert()!!, node.right.convert()!!)
+        result = BinaryFunctionExpression(node.left.convert()!!, node.right.convert()!!, BinaryFunctionOperator.RANGE_RESTRICTION)
     }
 
     override fun caseARangeSubtractionExpression(node: ARangeSubtractionExpression) {
-        result = RangeSubtractionExpression(node.left.convert()!!, node.right.convert()!!)
+        result = BinaryFunctionExpression(node.left.convert()!!, node.right.convert()!!, BinaryFunctionOperator.RANGE_SUBTRACTION)
     }
 
     override fun caseAOverwriteExpression(node: AOverwriteExpression) {

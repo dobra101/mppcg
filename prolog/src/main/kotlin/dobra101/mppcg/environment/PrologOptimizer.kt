@@ -1,11 +1,13 @@
 package dobra101.mppcg.environment
 
 import dobra101.mppcg.RenderResult
+import dobra101.mppcg.node.b.Precondition
 import dobra101.mppcg.node.collection.CollectionEntry
 import dobra101.mppcg.node.collection.SetEntry
 import dobra101.mppcg.node.expression.IdentifierExpression
 import dobra101.mppcg.node.predicate.BinaryPredicate
 import dobra101.mppcg.node.predicate.BinaryPredicateOperator
+import dobra101.mppcg.node.predicate.Predicate
 
 class PrologOptimizer(private val environment: PrologOutputEnvironment) {
 
@@ -42,4 +44,8 @@ class PrologOptimizer(private val environment: PrologOutputEnvironment) {
     }
 
     // TODO: prevent same variable being getted multiple times if it has not changed
+    fun renderOptimized(node: Precondition): RenderResult? {
+
+        TODO("Optimization not implemented")
+    }
 }
