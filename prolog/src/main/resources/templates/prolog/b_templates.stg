@@ -26,20 +26,20 @@ trans('<name>', State_0, State_<resultStateCount>) :-
 >>
 
 // TODO: implement
-function(left, right, type, mapType) ::= <<
+function(lhs, rhs, type, mapType) ::= <<
 Function:
-Left: <left>
-Right: <right>
+lhs: <lhs>
+rhs: <rhs>
 Type: <type>
 mapType: <mapType>
 >>
 
-binaryFunctionExpression(left, right, operator) ::= <<
-<operator>(<left>, <right>, Result)
+binaryCollectionExpression(lhs, rhs, operator, exprCount) ::= <<
+<operator>(<lhs>, <rhs>, Expr_<exprCount>)
 >>
 
-binaryCollectionExpression(left, right, operator) ::= <<
-<operator>(<left>, <right>, Result)
+binaryFunctionExpression(lhs, rhs, operator, exprCount) ::= <<
+<operator>(<lhs>, <rhs>, Expr_<exprCount>)
 >>
 
 callFunction(expression, parameters) ::= <<
@@ -61,8 +61,8 @@ rangeFunction(expression) ::= <<
 relationalRange(<expression>, Range)
 >>
 
-reverseFunction(expression) ::= <<
-relationalReverse(<expression>, Reverse)
+reverseFunction(expression, exprCount) ::= <<
+relationalReverse(<expression>, Expr_<exprCount>)
 >>
 
 invariant(body) ::= <<

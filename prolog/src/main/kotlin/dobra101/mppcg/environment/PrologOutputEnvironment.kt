@@ -24,14 +24,25 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
 
     private var exprCount = 0
     var stateCount = 0
+    var operationParameters: List<IdentifierExpression> = emptyList()
 
     /* ---------- EXPRESSIONS ---------- */
     override fun AnonymousSetCollectionNode.renderSelf(): RenderResult {
+        if (elements.isEmpty()) {
+            return RenderResult(
+                stRender("anonymousSetCollectionExpression", mapOf("elements" to emptyList<String>()))
+            )
+        }
+
+        val expanded = ExpandedExpression.of(elements)
+
         val map = mapOf(
-            "elements" to elements.render()
+            "elements" to expanded.expressions
         )
 
-        return RenderResult(stRender("anonymousSetCollectionExpression", map))
+        val rendered = stRender("anonymousSetCollectionExpression", map)
+
+        return RenderResult(expanded.before, mapOf("resultExpr" to IndividualInfo(rendered)))
     }
 
     override fun BinaryExpression.renderSelf(): RenderResult {
@@ -69,6 +80,11 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun IdentifierExpression.renderSelf(): RenderResult {
+        // TODO: not hardcoded and not always
+        if (operationParameters.contains(this)) {
+            return RenderResult("Expr_$name")
+        }
+
         val map = mapOf(
             "name" to name,
             "stateCount" to stateCount,
@@ -163,8 +179,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             return RenderResult(stRender("assignSubstitution", map))
         }
 
-
-        val expandedRhs = ExpandedExpression.of(rhs) // TODO: dont expand is rhs is CollectionEntry
+        val expandedRhs = ExpandedExpression.of(rhs) // TODO: dont expand if rhs is CollectionEntry
         val map = mapOf(
             "identifier" to identifier,
             "rhs" to expandedRhs.expressions[0], // TODO: more than one entry?
@@ -180,8 +195,8 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     /* ---------- B NODES ---------- */
     override fun Function.renderSelf(): RenderResult {
         val map = mapOf(
-            "left" to left.render(),
-            "right" to right.render(),
+            "lhs" to left.render(),
+            "rhs" to right.render(),
             "type" to type.type,
             "mapType" to mapType
         )
@@ -190,23 +205,32 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun BinaryCollectionExpression.renderSelf(): RenderResult {
-        val map = mapOf(
-            "left" to left.render(),
-            "right" to right.render(),
-            "operator" to operator2String(operator)
-        )
+        val expanded = ExpandedBinary.of(left, right)
 
-        return RenderResult(stRender("binaryCollectionExpression", map))
+        val map = mapOf(
+            "lhs" to expanded.lhs,
+            "rhs" to expanded.rhs,
+            "operator" to operator2String(operator),
+            "exprCount" to exprCount
+        )
+        val rendered = stRender("binaryCollectionExpression", map)
+
+        return RenderResult("${expanded.before}$rendered", mapOf("resultExpr" to IndividualInfo("Expr_${exprCount++}")))
     }
 
+    // TODO: reuse BinaryExpression?
     override fun BinaryFunctionExpression.renderSelf(): RenderResult {
-        val map = mapOf(
-            "left" to left.render(),
-            "right" to right.render(),
-            "operator" to operator2String(operator)
-        )
+        val expanded = ExpandedBinary.of(left, right)
 
-        return RenderResult(stRender("binaryFunctionExpression", map))
+        val map = mapOf(
+            "lhs" to expanded.lhs,
+            "rhs" to expanded.rhs,
+            "operator" to operator2String(operator),
+            "exprCount" to exprCount
+        )
+        val rendered = stRender("binaryFunctionExpression", map)
+
+        return RenderResult("${expanded.before}$rendered", mapOf("resultExpr" to IndividualInfo("Expr_${exprCount++}")))
     }
 
     override fun CallFunctionExpression.renderSelf(): RenderResult {
@@ -243,11 +267,20 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun ReverseFunctionExpression.renderSelf(): RenderResult {
+        // TODO: expand single expression
+        val before = expression.render()
+
         val map = mapOf(
-            "expression" to expression.render()
+            "expression" to before.info["resultExpr"]?.info, // TODO: dont use hardcoded naming
+            "exprCount" to exprCount
         )
 
-        return RenderResult(stRender("reverseFunction", map))
+        val rendered = stRender("reverseFunction", map)
+
+        return RenderResult(
+            "${before.rendered},\n$rendered",
+            mapOf("resultExpr" to IndividualInfo("Expr_${exprCount++}"))
+        )
     }
 
     // HINT: SAME FOR JAVA AND PROLOG
@@ -333,6 +366,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     override fun Operation.renderSelf(): RenderResult {
         stateCount = 0
         exprCount = 0
+        operationParameters = parameters.map { it as IdentifierExpression }
 
         val map = mapOf(
             "name" to name,
@@ -381,10 +415,12 @@ private data class ExpandedExpression(val before: String = "", val expressions: 
             val expression = expressions.map {
                 val result = it.render()
 
-                if (it is IdentifierExpression || it is ValueExpression || it is SetEntry) {
+                if ((it is IdentifierExpression) || it is ValueExpression || it is SetEntry) {
                     result.rendered
                 } else {
-                    before += "${result.rendered}${PrologOutputEnvironment.EXPRESSION_SEPARATOR}"
+                    if (result.rendered.isNotBlank()) {
+                        before += "${result.rendered}${PrologOutputEnvironment.EXPRESSION_SEPARATOR}"
+                    }
                     if (result.info.containsKey("resultExpr")) result["resultExpr"].info
                     else ""
                 }
@@ -405,14 +441,18 @@ private data class ExpandedBinary(val before: String = "", val lhs: String = "",
             val rhs: String
             if (lhsRendered.containsKey("resultExpr")) { // TODO: replace result expr by variable to avoid misspelling
                 lhs = lhsRendered["resultExpr"].info
-                before += "${lhsRendered.rendered}${PrologOutputEnvironment.EXPRESSION_SEPARATOR}"
+                if (lhsRendered.rendered.isNotBlank()) {
+                    before += "${lhsRendered.rendered}${PrologOutputEnvironment.EXPRESSION_SEPARATOR}"
+                }
             } else {
                 lhs = lhsRendered.rendered
             }
 
             if (rhsRendered.containsKey("resultExpr")) {
                 rhs = rhsRendered["resultExpr"].info
-                before += "${rhsRendered.rendered}${PrologOutputEnvironment.EXPRESSION_SEPARATOR}"
+                if (rhsRendered.rendered.isNotBlank()) {
+                    before += "${rhsRendered.rendered}${PrologOutputEnvironment.EXPRESSION_SEPARATOR}"
+                }
             } else {
                 rhs = rhsRendered.rendered
             }
