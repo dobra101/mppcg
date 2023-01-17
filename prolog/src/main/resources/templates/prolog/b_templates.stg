@@ -42,10 +42,8 @@ binaryFunctionExpression(lhs, rhs, operator, exprCount) ::= <<
 <operator>(<lhs>, <rhs>, Expr_<exprCount>)
 >>
 
-callFunction(expression, parameters) ::= <<
-CallFunction:
-Expression: <expression>
-Parameters: <parameters>
+callFunction(expression, parameters, exprCount) ::= <<
+callFunction(<expression>, <parameters>, Expr_<exprCount>)
 >>
 
 couple(list) ::= <<
@@ -53,16 +51,8 @@ Couple:
 List: <list>
 >>
 
-domainFunction(expression) ::= <<
-relationalDomain(<expression>, Domain)
->>
-
-rangeFunction(expression) ::= <<
-relationalRange(<expression>, Range)
->>
-
-reverseFunction(expression, exprCount) ::= <<
-relationalReverse(<expression>, Expr_<exprCount>)
+unaryFunctionExpression(expression, operator, exprCount) ::= <<
+<operator>(<expression>, Expr_<exprCount>)
 >>
 
 invariant(body) ::= <<

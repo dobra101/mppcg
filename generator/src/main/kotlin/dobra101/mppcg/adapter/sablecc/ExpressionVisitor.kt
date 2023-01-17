@@ -135,7 +135,7 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseAReverseExpression(node: AReverseExpression) {
-        result = ReverseFunctionExpression(node.expression.convert()!!)
+        result = UnaryFunctionExpression(node.expression.convert()!!, UnaryFunctionOperator.REVERSE)
     }
 
     override fun caseAFileExpression(node: AFileExpression) {
@@ -452,11 +452,11 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseADomainExpression(node: ADomainExpression) {
-        result = DomainFunctionExpression(node.expression.convert()!!)
+        result = UnaryFunctionExpression(node.expression.convert()!!, UnaryFunctionOperator.DOMAIN)
     }
 
     override fun caseARangeExpression(node: ARangeExpression) {
-        result = RangeFunctionExpression(node.expression.convert()!!)
+        result = UnaryFunctionExpression(node.expression.convert()!!, UnaryFunctionOperator.RANGE)
     }
 
     override fun caseAImageExpression(node: AImageExpression) {

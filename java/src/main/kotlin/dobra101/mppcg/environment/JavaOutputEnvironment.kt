@@ -131,15 +131,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         TODO("Not yet implemented")
     }
 
-    override fun DomainFunctionExpression.renderSelf(): RenderResult {
-        TODO("Not yet implemented")
-    }
-
-    override fun RangeFunctionExpression.renderSelf(): RenderResult {
-        TODO("Not yet implemented")
-    }
-
-    override fun ReverseFunctionExpression.renderSelf(): RenderResult {
+    override fun UnaryFunctionExpression.renderSelf(): RenderResult {
         TODO("Not yet implemented")
     }
 

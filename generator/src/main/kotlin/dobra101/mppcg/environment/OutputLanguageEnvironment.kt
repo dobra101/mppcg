@@ -96,9 +96,7 @@ abstract class OutputLanguageEnvironment : EnvironmentUtils(), BEnvironment {
             is BinaryFunctionExpression -> node.renderSelf()
             is CallFunctionExpression -> node.renderSelf()
             is Couple -> node.renderSelf()
-            is DomainFunctionExpression -> node.renderSelf()
-            is RangeFunctionExpression -> node.renderSelf()
-            is ReverseFunctionExpression -> node.renderSelf()
+            is UnaryFunctionExpression -> node.renderSelf()
 
             else -> throw EnvironmentException("Unknown ${node::class}")
         }

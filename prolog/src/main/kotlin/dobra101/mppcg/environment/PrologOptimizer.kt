@@ -1,15 +1,17 @@
 package dobra101.mppcg.environment
 
 import dobra101.mppcg.RenderResult
+import dobra101.mppcg.node.MPPCGNode
 import dobra101.mppcg.node.b.Precondition
 import dobra101.mppcg.node.collection.CollectionEntry
 import dobra101.mppcg.node.collection.SetEntry
 import dobra101.mppcg.node.expression.IdentifierExpression
 import dobra101.mppcg.node.predicate.BinaryPredicate
 import dobra101.mppcg.node.predicate.BinaryPredicateOperator
-import dobra101.mppcg.node.predicate.Predicate
 
 class PrologOptimizer(private val environment: PrologOutputEnvironment) {
+
+    var evaluated: HashMap<MPPCGNode, String> = hashMapOf()
 
     /**
      * Optimized rendering of BinaryPredicate using unification if the operator is 'EQUAL'.
@@ -43,9 +45,24 @@ class PrologOptimizer(private val environment: PrologOutputEnvironment) {
         return null
     }
 
-    // TODO: prevent same variable being getted multiple times if it has not changed
     fun renderOptimized(node: Precondition): RenderResult? {
+        evaluated = hashMapOf()
 
-        TODO("Optimization not implemented")
+        val predicateRendered = node.predicate.render()
+        val substitutionRendered = node.substitution.render()
+
+        val map = mapOf(
+            "predicate" to predicateRendered.rendered,
+            "substitution" to substitutionRendered.rendered
+        )
+
+        return RenderResult(environment.stRender("precondition", map))
+    }
+
+    fun loadIfEvaluated(node: MPPCGNode): RenderResult? {
+        if (evaluated.containsKey(node)) {
+            return RenderResult(evaluated[node] ?: "")
+        }
+        return null
     }
 }

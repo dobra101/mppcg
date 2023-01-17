@@ -4,7 +4,7 @@ import dobra101.mppcg.node.Type
 import dobra101.mppcg.node.b.BinaryFunctionOperator
 import dobra101.mppcg.node.b.Operation
 import dobra101.mppcg.node.b.Transition
-import dobra101.mppcg.node.collection.BinaryCollectionExpression
+import dobra101.mppcg.node.b.UnaryFunctionOperator
 import dobra101.mppcg.node.collection.BinaryCollectionOperator
 import dobra101.mppcg.node.collection.CollectionNode
 import dobra101.mppcg.node.expression.BinaryExpressionOperator
@@ -55,6 +55,7 @@ abstract class EnvironmentUtils {
         }
     }
 
+    // TODO: names as constants in some file to avoid generation of different named functions
     open fun operator2String(operator: BinaryFunctionOperator): String {
         return when (operator) {
             BinaryFunctionOperator.DOMAIN_RESTRICTION -> "domainRestriction"
@@ -62,6 +63,14 @@ abstract class EnvironmentUtils {
             BinaryFunctionOperator.RANGE_RESTRICTION -> "rangeRestriction"
             BinaryFunctionOperator.RANGE_SUBTRACTION -> "rangeSubtraction"
             BinaryFunctionOperator.IMAGE -> "image"
+        }
+    }
+
+    open fun operator2String(operator: UnaryFunctionOperator): String {
+        return when (operator) {
+            UnaryFunctionOperator.DOMAIN -> "domain"
+            UnaryFunctionOperator.RANGE -> "range"
+            UnaryFunctionOperator.REVERSE -> "reverse"
         }
     }
 

@@ -9,8 +9,9 @@ data class CallFunctionExpression(
     val parameters: List<Expression>
 ) : Expression(TypeInteger())
 
-data class DomainFunctionExpression(
-    val expression: Expression
+data class UnaryFunctionExpression(
+    val expression: Expression,
+    val operator: UnaryFunctionOperator
 ) : Expression(TypeInteger())
 
 data class BinaryFunctionExpression(
@@ -19,13 +20,11 @@ data class BinaryFunctionExpression(
     val operator: BinaryFunctionOperator
 ) : Expression(TypeInteger())
 
-data class RangeFunctionExpression(
-    val expression: Expression
-) : Expression(TypeInteger())
-
-data class ReverseFunctionExpression(
-    val expression: Expression
-) : Expression(TypeInteger())
+enum class UnaryFunctionOperator {
+    DOMAIN,
+    RANGE,
+    REVERSE
+}
 
 enum class BinaryFunctionOperator {
     DOMAIN_RESTRICTION,
