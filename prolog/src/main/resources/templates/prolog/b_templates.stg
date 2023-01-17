@@ -1,5 +1,5 @@
 // TODO: use remaining variables
-machine(name, parameters, constraints, sets, constants, concrete_constants, properties, definitions, variables, concrete_variables, invariant, assertions, initialization, operations) ::= <<
+machine(name, parameters, constraints, sets, constants, concrete_constants, properties, definitions, variables, concrete_variables, invariant, assertions, initialization, operations, methods) ::= <<
 :- use_module(environment).
 
 <if(sets)>
@@ -103,4 +103,28 @@ prop(State, List) :-
     State \= st,
     avl2List(State, List),
     !.
+>>
+
+domain() ::= <<
+>>
+
+range() ::= <<
+>>
+
+reverse() ::= <<
+>>
+
+domainRestriction() ::= <<
+>>
+
+domainSubtraction() ::= <<
+>>
+
+image() ::= <<
+>>
+
+rangeRestriction() ::= <<
+>>
+
+rangeSubtraction() ::= <<
 >>

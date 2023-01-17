@@ -20,13 +20,13 @@ data class BinaryFunctionExpression(
     val operator: BinaryFunctionOperator
 ) : Expression(TypeInteger())
 
-enum class UnaryFunctionOperator {
+enum class UnaryFunctionOperator: BMethod {
     DOMAIN,
     RANGE,
     REVERSE
 }
 
-enum class BinaryFunctionOperator {
+enum class BinaryFunctionOperator: BMethod {
     DOMAIN_RESTRICTION,
     DOMAIN_SUBTRACTION,
     RANGE_RESTRICTION,

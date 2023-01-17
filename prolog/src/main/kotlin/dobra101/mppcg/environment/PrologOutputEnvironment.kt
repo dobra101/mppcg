@@ -24,7 +24,8 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
 
     var exprCount = 0
     var stateCount = 0
-    var operationParameters: List<IdentifierExpression> = emptyList()
+    var operationParameters: List<IdentifierExpression> = emptyList() // HINT: only for B
+    var usedBMethods: HashSet<BMethod> = hashSetOf() // HINT: only for B
 
     /* ---------- EXPRESSIONS ---------- */
     override fun AnonymousSetCollectionNode.renderSelf(): RenderResult {
@@ -238,6 +239,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     // TODO: reuse BinaryExpression?
     override fun BinaryFunctionExpression.renderSelf(): RenderResult {
         if (optimize) optimizer.loadIfEvaluated(this)?.let { return it }
+        usedBMethods.add(operator)
 
         val expanded = ExpandedBinary.of(left, right)
 
@@ -282,6 +284,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
 
     override fun UnaryFunctionExpression.renderSelf(): RenderResult {
         if (optimize) optimizer.loadIfEvaluated(this)?.let { return it }
+        usedBMethods.add(operator)
 
         val expanded = ExpandedExpression.of(expression)
 
@@ -377,7 +380,8 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             "initialization" to initialization?.render(),
             "invariant" to invariant?.render(),
             "assertions" to assertions.render(),
-            "operations" to operations.render()
+            "operations" to operations.render(),
+            "methods" to usedBMethods.render()
         )
 
         return RenderResult(stRender("machine", map))
@@ -423,6 +427,37 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             LogicPredicateOperator.AND -> ","
             LogicPredicateOperator.OR -> ";"
             LogicPredicateOperator.IMPLIES -> "=>"
+        }
+    }
+
+    // HINT: input language specific
+    private fun HashSet<BMethod>.render(): List<String> {
+        return map {
+            when (it) {
+                is UnaryFunctionOperator -> it.render()
+                is BinaryFunctionOperator -> it.render()
+                else -> throw EnvironmentException("Rendering of BMethod $it is not implemented")
+            }
+        }
+    }
+
+    // HINT: input language specific
+    private fun UnaryFunctionOperator.render(): String {
+        return when (this) {
+            UnaryFunctionOperator.DOMAIN -> stRender("domain")
+            UnaryFunctionOperator.RANGE -> stRender("range")
+            UnaryFunctionOperator.REVERSE -> stRender("reverse")
+        }
+    }
+
+    // HINT: input language specific
+    private fun BinaryFunctionOperator.render(): String {
+        return when (this) {
+            BinaryFunctionOperator.DOMAIN_RESTRICTION -> stRender("domainRestriction")
+            BinaryFunctionOperator.DOMAIN_SUBTRACTION -> stRender("domainSubtraction")
+            BinaryFunctionOperator.IMAGE -> stRender("image")
+            BinaryFunctionOperator.RANGE_RESTRICTION -> stRender("rangeRestriction")
+            BinaryFunctionOperator.RANGE_SUBTRACTION -> stRender("rangeSubtraction")
         }
     }
 }
