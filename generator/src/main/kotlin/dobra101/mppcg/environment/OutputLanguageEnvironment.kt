@@ -96,6 +96,8 @@ abstract class OutputLanguageEnvironment : EnvironmentUtils(), BEnvironment {
             is BinaryFunctionExpression -> node.renderSelf()
             is CallFunctionExpression -> node.renderSelf()
             is Couple -> node.renderSelf()
+            is InfiniteSet -> node.renderSelf()
+            is UnaryCollectionExpression -> node.renderSelf()
             is UnaryFunctionExpression -> node.renderSelf()
 
             else -> throw EnvironmentException("Unknown ${node::class}")

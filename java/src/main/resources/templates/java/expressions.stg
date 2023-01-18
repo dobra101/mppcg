@@ -1,5 +1,19 @@
+anonymousSetCollectionExpression(elements) ::= <<
+{<elements; separator=", ">}
+>>
+
 binaryExpression(lhs, rhs, operator) ::= <<
 <lhs> <operator> <rhs>
+>>
+
+enumCollectionExpression(name, elements) ::= <<
+private enum <name> {
+    <elements; separator=", ">
+}
+>>
+
+enumEntryExpression(name, enum) ::= <<
+<enum>.<name>
 >>
 
 identifierExpression(name) ::= <<

@@ -24,7 +24,11 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
 
     /* ---------- EXPRESSIONS ---------- */
     override fun AnonymousSetCollectionNode.renderSelf(): RenderResult {
-        TODO("Not yet implemented")
+        val map = mapOf(
+            "elements" to elements.render()
+        )
+
+        return RenderResult(stRender("anonymousSetCollectionExpression", map))
     }
 
     override fun BinaryExpression.renderSelf(): RenderResult {
@@ -38,11 +42,21 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun EnumCollectionNode.renderSelf(): RenderResult {
-        TODO("Not yet implemented")
+        val map = mapOf(
+            "name" to name,
+            "elements" to elements.map { it.name } // TODO: refactor
+        )
+
+        return RenderResult(stRender("enumCollectionExpression", map))
     }
 
     override fun EnumEntry.renderSelf(): RenderResult {
-        TODO("Not yet implemented")
+        val map = mapOf(
+            "name" to name,
+            "enum" to enum
+        )
+
+        return RenderResult(stRender("enumEntryExpression", map))
     }
 
     override fun IdentifierExpression.renderSelf(): RenderResult {
@@ -131,6 +145,14 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         TODO("Not yet implemented")
     }
 
+    override fun InfiniteSet.renderSelf(): RenderResult {
+        TODO("Not yet implemented")
+    }
+
+    override fun UnaryCollectionExpression.renderSelf(): RenderResult {
+        TODO("Not yet implemented")
+    }
+
     override fun UnaryFunctionExpression.renderSelf(): RenderResult {
         TODO("Not yet implemented")
     }
@@ -170,7 +192,6 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         return RenderResult(stRender("initialization", map))
     }
 
-
     override fun ParallelSubstitution.renderSelf(): RenderResult {
         TODO("Not yet implemented")
     }
@@ -180,7 +201,14 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun Select.renderSelf(): RenderResult {
-        TODO("Not yet implemented")
+        val map = mapOf(
+            "condition" to condition.render(),
+            "then" to then?.render(),
+            "elseSubstitution" to elseSubstitution?.render(),
+            "when" to whenSubstitution.render()
+        )
+
+        return RenderResult(stRender("select", map))
     }
 
     override fun Machine.renderSelf(): RenderResult {
@@ -227,8 +255,8 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         return RenderResult(stRender("transition", map))
     }
 
-
-    override fun type2String(type: Type): String {
+    override fun type2String(type: Type?): String {
+        if (type == null) throw InvalidTypeException("Null as type found")
         return when (type) {
             is TypeReal -> "double"
             is TypeInteger -> "int"

@@ -4,6 +4,7 @@ public class <name> {
     <parameters>
     <constraints>
     <sets>
+
     <constants>
     <concrete_constants>
     <properties>
@@ -54,6 +55,5 @@ precondition(predicate, substitution) ::= <<
 
 // TODO: only else, when
 select(condition, then, elseSubstitution, when) ::= <<
-<! <condition> !>
-<then><! <elseSubstitution> !><! <when> !>
+<then>
 >>

@@ -29,7 +29,8 @@ enum class UnaryFunctionOperator: BMethod {
 enum class BinaryFunctionOperator: BMethod {
     DOMAIN_RESTRICTION,
     DOMAIN_SUBTRACTION,
+    IMAGE,
+    OVERWRITE,
     RANGE_RESTRICTION,
     RANGE_SUBTRACTION,
-    IMAGE
 }

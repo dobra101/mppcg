@@ -4,5 +4,5 @@ import dobra101.mppcg.node.Type
 
 data class ValueExpression(
     val value: String = "",
-    override val type: Type
+    override var type: Type? = null
 ) : Expression(type)

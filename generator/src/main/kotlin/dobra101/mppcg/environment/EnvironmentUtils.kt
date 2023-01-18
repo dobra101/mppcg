@@ -7,6 +7,7 @@ import dobra101.mppcg.node.b.Transition
 import dobra101.mppcg.node.b.UnaryFunctionOperator
 import dobra101.mppcg.node.collection.BinaryCollectionOperator
 import dobra101.mppcg.node.collection.CollectionNode
+import dobra101.mppcg.node.collection.UnaryCollectionOperator
 import dobra101.mppcg.node.expression.BinaryExpressionOperator
 import dobra101.mppcg.node.expression.Expression
 import dobra101.mppcg.node.expression.IdentifierExpression
@@ -60,9 +61,17 @@ abstract class EnvironmentUtils {
         return when (operator) {
             BinaryFunctionOperator.DOMAIN_RESTRICTION -> "domainRestriction"
             BinaryFunctionOperator.DOMAIN_SUBTRACTION -> "domainSubtraction"
+            BinaryFunctionOperator.IMAGE -> "image"
+            BinaryFunctionOperator.OVERWRITE -> "overwrite"
             BinaryFunctionOperator.RANGE_RESTRICTION -> "rangeRestriction"
             BinaryFunctionOperator.RANGE_SUBTRACTION -> "rangeSubtraction"
-            BinaryFunctionOperator.IMAGE -> "image"
+        }
+    }
+
+    open fun operator2String(operator: UnaryCollectionOperator): String {
+        return when (operator) {
+            UnaryCollectionOperator.MAX -> "max"
+            UnaryCollectionOperator.MIN -> "min"
         }
     }
 
@@ -74,7 +83,7 @@ abstract class EnvironmentUtils {
         }
     }
 
-    abstract fun type2String(type: Type): String
+    abstract fun type2String(type: Type?): String
 
     @JvmName("renderExpressionList")
     fun List<Expression>.render(): List<String> {

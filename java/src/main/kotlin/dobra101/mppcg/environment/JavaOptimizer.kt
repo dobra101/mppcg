@@ -1,8 +1,7 @@
 package dobra101.mppcg.environment
 
 import dobra101.mppcg.RenderResult
-import dobra101.mppcg.node.expression.BinaryExpression
-import dobra101.mppcg.node.expression.IdentifierExpression
+import dobra101.mppcg.node.expression.*
 import dobra101.mppcg.node.substitution.AssignSubstitution
 
 class JavaOptimizer(private val environment: JavaOutputEnvironment) {
@@ -18,26 +17,41 @@ class JavaOptimizer(private val environment: JavaOutputEnvironment) {
      */
     fun renderOptimized(node: AssignSubstitution): RenderResult? {
         if (node.rhs.size == 1 && node.rhs[0] is BinaryExpression) {
-            // e.g. a = a + 1
-            if ((node.rhs[0] as BinaryExpression).left == node.lhs[0]) {
-                val identifier = (node.lhs[0] as IdentifierExpression).name // TODO: when more than one identifier?
-                val map = mapOf(
-                    "identifier" to identifier,
-                    "operator" to environment.operator2String((node.rhs[0] as BinaryExpression).operator),
-                    "rhs" to (node.rhs[0] as BinaryExpression).right.render()
-                )
-                return RenderResult(environment.stRender("optimizedAssignSubstitution", map))
-            }
+            val binaryExpr = node.rhs[0] as BinaryExpression
 
-            // e.g. a = 1 + a
-            if ((node.rhs[0] as BinaryExpression).right == node.lhs[0]) {
-                val map = mapOf(
-                    "identifier" to (node.lhs[0] as IdentifierExpression).name,
-                    "operator" to environment.operator2String((node.rhs[0] as BinaryExpression).operator),
-                    "rhs" to (node.rhs[0] as BinaryExpression).left.render()
+            // TODO: when more than one identifier?
+            // e.g. a = a + 1 or a = 1 + a
+            return assignSelf(binaryExpr.left, binaryExpr.right, binaryExpr.operator, node.lhs[0])
+                ?: assignSelf(binaryExpr.right, binaryExpr.left, binaryExpr.operator, node.lhs[0])
+        }
+        return null
+    }
+
+    private fun canBeFurtherOptimized(expr: Expression, operator: BinaryExpressionOperator): Boolean {
+        val op = operator == BinaryExpressionOperator.ADD || operator == BinaryExpressionOperator.MINUS
+        return op && expr is ValueExpression && expr.value.toIntOrNull() == 1
+    }
+
+    private fun assignSelf(
+        left: Expression,
+        right: Expression,
+        operator: BinaryExpressionOperator,
+        target: Expression
+    ): RenderResult? {
+        if (target is IdentifierExpression && left == target) {
+            val map = if (canBeFurtherOptimized(right, operator)) {
+                mapOf(
+                    "identifier" to target.name,
+                    "operator" to if (operator == BinaryExpressionOperator.ADD) "++" else "--"
                 )
-                return RenderResult(environment.stRender("optimizedAssignSubstitution", map))
+            } else {
+                mapOf(
+                    "identifier" to target.name,
+                    "operator" to environment.operator2String(operator),
+                    "rhs" to right.render()
+                )
             }
+            return RenderResult(environment.stRender("optimizedAssignSubstitution", map))
         }
         return null
     }

@@ -6,6 +6,15 @@ binaryExpression(lhs, rhs, operator, exprCount, math) ::= <<
 Expr_<exprCount> <if(math)>is<else>=<endif> <lhs> <operator> <rhs>
 >>
 
+unaryCollectionExpression(collection, operator, exprCount) ::= <<
+UnaryCollectionExpression:
+<operator>(<collection>, Expr_<exprCount>)
+>>
+
+binaryCollectionExpression(lhs, rhs, operator, exprCount) ::= <<
+<operator>(<lhs>, <rhs>, Expr_<exprCount>)
+>>
+
 enumCollectionExpression(name, elements) ::= <<
 s_<name>([<elements; separator = ", ">])
 >>
@@ -19,8 +28,8 @@ identifierExpression(name, stateCount, exprCount) ::= <<
 get(State_<stateCount>, '<name>', Expr_<exprCount>)
 >>
 
-// TODO: implement
-intervalExpression() ::= <<
+intervalExpression(lhs, rhs) ::= <<
+(<lhs>, <rhs>)
 >>
 
 // TODO: add set name?

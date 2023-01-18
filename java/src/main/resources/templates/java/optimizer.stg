@@ -1,3 +1,5 @@
 optimizedAssignSubstitution(identifier, operator, rhs) ::= <<
-<identifier> <operator>= <rhs>;
+<if(rhs)>
+<identifier> <operator>= <rhs>;<else>
+<identifier><operator>;<endif>
 >>

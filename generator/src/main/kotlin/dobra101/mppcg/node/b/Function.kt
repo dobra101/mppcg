@@ -1,12 +1,12 @@
 package dobra101.mppcg.node.b
 
-import dobra101.mppcg.node.TypeFunction
+import dobra101.mppcg.node.Type
 import dobra101.mppcg.node.expression.Expression
 
 data class Function(
     val left: Expression,
     val right: Expression,
-    override val type: TypeFunction,
+    override var type: Type?,
     val mapType: FunctionMapType
 ): Expression(type)
 

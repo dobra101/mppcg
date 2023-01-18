@@ -2,7 +2,6 @@ package dobra101.mppcg.environment
 
 import dobra101.mppcg.RenderResult
 import dobra101.mppcg.node.MPPCGNode
-import dobra101.mppcg.node.b.Precondition
 import dobra101.mppcg.node.collection.CollectionEntry
 import dobra101.mppcg.node.collection.SetEntry
 import dobra101.mppcg.node.expression.IdentifierExpression
@@ -43,20 +42,6 @@ class PrologOptimizer(private val environment: PrologOutputEnvironment) {
             return RenderResult(environment.stRender("optimizedBinaryPredicateEqual", map))
         }
         return null
-    }
-
-    fun renderOptimized(node: Precondition): RenderResult? {
-        evaluated = hashMapOf()
-
-        val predicateRendered = node.predicate.render()
-        val substitutionRendered = node.substitution.render()
-
-        val map = mapOf(
-            "predicate" to predicateRendered.rendered,
-            "substitution" to substitutionRendered.rendered
-        )
-
-        return RenderResult(environment.stRender("precondition", map))
     }
 
     fun loadIfEvaluated(node: MPPCGNode): RenderResult? {

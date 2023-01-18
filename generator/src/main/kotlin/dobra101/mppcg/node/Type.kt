@@ -44,3 +44,5 @@ enum class SetType {
 }
 
 class UnknownTypeException(msg: String): Exception("Unknown type $msg")
+
+class InvalidTypeException(msg: String): Exception(msg)

@@ -4,6 +4,8 @@ import dobra101.mppcg.IndividualInfo
 import dobra101.mppcg.RenderResult
 import dobra101.mppcg.node.MPPCGNode
 import dobra101.mppcg.node.Type
+import dobra101.mppcg.node.TypeFunction
+import dobra101.mppcg.node.TypeSet
 import dobra101.mppcg.node.b.*
 import dobra101.mppcg.node.b.Function
 import dobra101.mppcg.node.collection.*
@@ -113,7 +115,17 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun IntervalExpression.renderSelf(): RenderResult {
-        TODO("Not yet implemented")
+        val expanded = ExpandedBinary.of(left, right)
+
+        val map = mapOf(
+            "lhs" to expanded.lhs,
+            "rhs" to expanded.rhs
+        )
+
+        val rendered = stRender("intervalExpression", map)
+
+        return RenderResult("${expanded.before}$rendered")
+
     }
 
     override fun SetCollectionNode.renderSelf(): RenderResult {
@@ -212,7 +224,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         val map = mapOf(
             "lhs" to left.render(),
             "rhs" to right.render(),
-            "type" to type.type,
+            "type" to (type as TypeFunction).type,
             "mapType" to mapType
         )
 
@@ -282,6 +294,23 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         return RenderResult(stRender("couple", map))
     }
 
+    override fun InfiniteSet.renderSelf(): RenderResult {
+        logger.info("${(type as TypeSet).type}")
+        TODO("Infinite Set not implemented")
+    }
+
+    override fun UnaryCollectionExpression.renderSelf(): RenderResult {
+        val map = mapOf(
+            "collection" to collection.render(),
+            "operator" to operator2String(operator)
+        )
+
+        return RenderResult(
+            stRender("unaryCollectionExpression", map),
+            mapOf("resultExpr" to IndividualInfo("Expr_${exprCount++}"))
+        )
+    }
+
     override fun UnaryFunctionExpression.renderSelf(): RenderResult {
         if (optimize) optimizer.loadIfEvaluated(this)?.let { return it }
         usedBMethods.add(operator)
@@ -306,6 +335,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
 
     // HINT: SAME FOR JAVA AND PROLOG
     override fun Invariant.renderSelf(): RenderResult {
+        if (optimize) optimizer.evaluated = hashMapOf()
         stateCount = 0
         exprCount = 0
 
@@ -345,7 +375,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
 
     // HINT: SAME FOR JAVA AND PROLOG
     override fun Precondition.renderSelf(): RenderResult {
-        if (optimize) optimizer.renderOptimized(this)?.let { return it }
+        if (optimize) optimizer.evaluated = hashMapOf()
 
         val map = mapOf(
             "predicate" to predicate.render().rendered,
@@ -359,7 +389,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         // TODO: add when, else
         val map = mapOf(
             "condition" to condition.render(),
-            "then" to then.render()
+            "then" to then?.render()
         )
 
         return RenderResult(stRender("select", map))
@@ -388,6 +418,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun Operation.renderSelf(): RenderResult {
+        if (optimize) optimizer.evaluated = hashMapOf()
         stateCount = 0
         exprCount = 0
         operationParameters = parameters.map { it as IdentifierExpression }
@@ -408,7 +439,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         return RenderResult("")
     }
 
-    override fun type2String(type: Type): String {
+    override fun type2String(type: Type?): String {
         TODO("Not yet implemented")
     }
 
@@ -456,6 +487,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             BinaryFunctionOperator.DOMAIN_RESTRICTION -> stRender("domainRestriction")
             BinaryFunctionOperator.DOMAIN_SUBTRACTION -> stRender("domainSubtraction")
             BinaryFunctionOperator.IMAGE -> stRender("image")
+            BinaryFunctionOperator.OVERWRITE -> stRender("overwrite")
             BinaryFunctionOperator.RANGE_RESTRICTION -> stRender("rangeRestriction")
             BinaryFunctionOperator.RANGE_SUBTRACTION -> stRender("rangeSubtraction")
         }

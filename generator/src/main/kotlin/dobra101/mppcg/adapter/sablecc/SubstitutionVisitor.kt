@@ -1,6 +1,7 @@
 package dobra101.mppcg.adapter.sablecc
 
 import de.be4.classicalb.core.parser.node.*
+import dobra101.mppcg.node.InvalidTypeException
 import dobra101.mppcg.node.b.Initialization
 import dobra101.mppcg.node.b.Precondition
 import dobra101.mppcg.node.b.Select
@@ -13,7 +14,19 @@ class SubstitutionVisitor : AbstractVisitor() {
     override var result: Substitution? = null
 
     override fun caseAAssignSubstitution(node: AAssignSubstitution) {
-        result = AssignSubstitution(node.lhsExpression.convert(), node.rhsExpressions.convert())
+        val assign = AssignSubstitution(node.lhsExpression.convert(), node.rhsExpressions.convert())
+
+        // TODO: when more than one entry?
+        val rightType = assign.rhs[0].type
+
+        if (assign.lhs[0].type == null) {
+            assign.lhs[0].type = rightType
+        }
+        if (assign.lhs[0].type != rightType) {
+            throw InvalidTypeException("Types ${assign.lhs[0].type} and $rightType to not match.\n$assign")
+        }
+
+        result = assign
     }
 
     override fun caseAPreconditionSubstitution(node: APreconditionSubstitution) {
@@ -23,7 +36,7 @@ class SubstitutionVisitor : AbstractVisitor() {
     override fun caseASelectSubstitution(node: ASelectSubstitution) {
         result = Select(
             condition = node.condition.convert()!!,
-            then = node.then.convert()!!,
+            then = node.then.convert(),
             whenSubstitution = node.whenSubstitutions.convert(),
             elseSubstitution = node.`else`.convertOrNull()
         )
@@ -38,11 +51,12 @@ class SubstitutionVisitor : AbstractVisitor() {
     }
 
     override fun caseABlockSubstitution(node: ABlockSubstitution) {
-        TODO("Not implemented ${node::class.simpleName}")
+        result = node.substitution.convert()
     }
 
     override fun caseASkipSubstitution(node: ASkipSubstitution) {
-        TODO("Not implemented ${node::class.simpleName}")
+        // do nothing
+        result = null
     }
 
     override fun caseAAssertionSubstitution(node: AAssertionSubstitution) {

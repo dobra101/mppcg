@@ -8,12 +8,12 @@ machine(name, parameters, constraints, sets, constants, concrete_constants, prop
 
 start(st).
 
-
+% Transitions
 <initialization>
 
 <operations; separator="\n\n">
 
-
+% Invariant
 <invariant>
 >>
 
@@ -32,10 +32,6 @@ lhs: <lhs>
 rhs: <rhs>
 Type: <type>
 mapType: <mapType>
->>
-
-binaryCollectionExpression(lhs, rhs, operator, exprCount) ::= <<
-<operator>(<lhs>, <rhs>, Expr_<exprCount>)
 >>
 
 binaryFunctionExpression(lhs, rhs, operator, exprCount) ::= <<
@@ -121,6 +117,9 @@ domainSubtraction() ::= <<
 >>
 
 image() ::= <<
+>>
+
+overwrite() ::= <<
 >>
 
 rangeRestriction() ::= <<

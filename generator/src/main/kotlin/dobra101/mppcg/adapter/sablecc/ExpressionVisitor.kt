@@ -12,8 +12,17 @@ class ExpressionVisitor : AbstractVisitor() {
     override var result: Expression? = null
 
     override fun caseTIdentifierLiteral(node: TIdentifierLiteral) {
+        val parent = node.parent().parent() // first "parent" is AIdentifierExpression
+
+        if (parent is AEnumeratedSetSet) {
+            // TODO: when more than one identifier?
+            val enumName = parent.identifier[0].text
+            result = IdentifierExpression(name = node.text, type = TypeCollection(CollectionType.Enum, enumName))
+            return
+        }
+
         result = machineVisitor.sets.findByName(node.text) ?: machineVisitor.sets.findEntryByName(node.text)
-                ?: IdentifierExpression(name = node.text, type = TypeInteger()) // TODO: fix type
+                ?: IdentifierExpression(name = node.text)
     }
 
     override fun caseTIntegerLiteral(node: TIntegerLiteral) {
@@ -172,7 +181,8 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseAIntegerExpression(node: AIntegerExpression) {
-        TODO("Not implemented ${node::class.simpleName}")
+        // not needed -> see caseTIntegerLiteral
+        super.caseAIntegerExpression(node)
     }
 
     override fun caseARealExpression(node: ARealExpression) {
@@ -280,11 +290,11 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseAMaxExpression(node: AMaxExpression) {
-        TODO("Not implemented ${node::class.simpleName}")
+        result = UnaryCollectionExpression(node.expression.convert()!!, UnaryCollectionOperator.MAX)
     }
 
     override fun caseAMinExpression(node: AMinExpression) {
-        TODO("Not implemented ${node::class.simpleName}")
+        result = UnaryCollectionExpression(node.expression.convert()!!, UnaryCollectionOperator.MIN)
     }
 
     override fun caseACardExpression(node: ACardExpression) {
@@ -480,7 +490,7 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseAOverwriteExpression(node: AOverwriteExpression) {
-        TODO("Not implemented ${node::class.simpleName}")
+        result = BinaryFunctionExpression(node.left.convert()!!, node.right.convert()!!, BinaryFunctionOperator.OVERWRITE)
     }
 
     override fun caseATotalRelationExpression(node: ATotalRelationExpression) {
@@ -496,7 +506,7 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseALambdaExpression(node: ALambdaExpression) {
-        TODO("Not implemented ${node::class.simpleName}")
+        result = LambdaExpression(node.identifiers.convert(), node.predicate.convert()!!, node.expression.convert()!!)
     }
 
     override fun caseASymbolicLambdaExpression(node: ASymbolicLambdaExpression) {
@@ -696,16 +706,16 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     private fun List<CollectionNode>.findByName(name: String): CollectionNode? {
-        return this.find { it.name == name }
+        return find { it.name == name }
     }
 
     private fun List<CollectionNode>.findEntryByName(name: String): CollectionEntry? {
-        return this.find {
+        return find {
             it.elements.find { entry -> entry.name == name } != null
         }?.elements?.find { it.name == name }
     }
 
     private fun List<Expression>.findByName(name: String): Expression? {
-        return this.find { (it as? IdentifierExpression)?.name == name }
+        return find { (it as? IdentifierExpression)?.name == name }
     }
 }

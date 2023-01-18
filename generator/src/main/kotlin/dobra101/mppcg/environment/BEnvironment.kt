@@ -4,6 +4,7 @@ import dobra101.mppcg.RenderResult
 import dobra101.mppcg.node.b.*
 import dobra101.mppcg.node.b.Function
 import dobra101.mppcg.node.collection.BinaryCollectionExpression
+import dobra101.mppcg.node.collection.UnaryCollectionExpression
 import dobra101.mppcg.node.predicate.QuantifierPredicate
 import dobra101.mppcg.node.substitution.ParallelSubstitution
 
@@ -15,6 +16,8 @@ interface BEnvironment {
     fun BinaryFunctionExpression.renderSelf(): RenderResult
     fun CallFunctionExpression.renderSelf(): RenderResult
     fun Couple.renderSelf(): RenderResult
+    fun InfiniteSet.renderSelf(): RenderResult
+    fun UnaryCollectionExpression.renderSelf(): RenderResult
     fun UnaryFunctionExpression.renderSelf(): RenderResult
 
     /* Predicate */
