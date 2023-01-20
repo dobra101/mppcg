@@ -17,7 +17,7 @@ data class Machine(
     val variables: List<Expression> = emptyList(),
     val concreteVariables: List<Expression> = emptyList(),
     val initialization: Initialization? = null,
-    val invariant: Predicate? = null,
+    val invariant: Invariant = Invariant(),
     val assertions: List<Predicate> = emptyList(),
     val operations: List<Operation> = emptyList()
 ) : MPPCGNode {

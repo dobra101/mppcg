@@ -1,5 +1,5 @@
 anonymousSetCollectionExpression(elements) ::= <<
-{<elements; separator=", ">}
+Set.of(<elements; separator=", ">)
 >>
 
 binaryExpression(lhs, rhs, operator) ::= <<

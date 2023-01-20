@@ -10,10 +10,12 @@ import dobra101.mppcg.node.expression.IdentifierExpression
 import dobra101.mppcg.node.expression.IntervalExpression
 import dobra101.mppcg.node.expression.ValueExpression
 import dobra101.mppcg.node.predicate.BinaryPredicate
+import dobra101.mppcg.node.predicate.BinaryPredicateOperator
 import dobra101.mppcg.node.predicate.LogicPredicate
 import dobra101.mppcg.node.predicate.QuantifierPredicate
 import dobra101.mppcg.node.substitution.AssignSubstitution
 import dobra101.mppcg.node.substitution.ParallelSubstitution
+import java.util.*
 
 // TODO: add constructor for generated classes
 class JavaOutputEnvironment : OutputLanguageEnvironment() {
@@ -43,8 +45,8 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
 
     override fun EnumCollectionNode.renderSelf(): RenderResult {
         val map = mapOf(
-            "name" to name,
-            "elements" to elements.map { it.name } // TODO: refactor
+            "name" to name.capitalize(),
+            "elements" to elements.map { it.name.uppercase() } // TODO: refactor
         )
 
         return RenderResult(stRender("enumCollectionExpression", map))
@@ -52,8 +54,8 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
 
     override fun EnumEntry.renderSelf(): RenderResult {
         val map = mapOf(
-            "name" to name,
-            "enum" to enum
+            "name" to name.uppercase(),
+            "enum" to enum.capitalize()
         )
 
         return RenderResult(stRender("enumEntryExpression", map))
@@ -90,8 +92,27 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
 
 
     /* ---------- PREDICATES ---------- */
-    // HINT: SAME AS LOGIC PREDICATE
+    // TODO: refactor
     override fun BinaryPredicate.renderSelf(): RenderResult {
+        // Predicate is a type check
+        if (right is EnumCollectionNode && operator == BinaryPredicateOperator.MEMBER) {
+            // TODO: neglect if types already match
+            val map = mapOf(
+                "lhs" to left.render(),
+                "operator" to "instanceof",
+                "rhs" to (right as EnumCollectionNode).name.capitalize()
+            )
+            return RenderResult(stRender("binaryPredicate", map))
+        }
+
+        if (right is AnonymousSetCollectionNode && operator == BinaryPredicateOperator.MEMBER) {
+            val map = mapOf(
+                "entry" to left.render(),
+                "set" to right.render()
+            )
+            return RenderResult(stRender("binaryPredicateMember", map))
+        }
+
         val map = mapOf(
             "lhs" to left.render(),
             "operator" to operator2String(operator),
@@ -101,12 +122,14 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         return RenderResult(stRender("binaryPredicate", map))
     }
 
-    // HINT: SAME AS BINARY PREDICATE
     override fun LogicPredicate.renderSelf(): RenderResult {
+        val lhs = if (left is LogicPredicate) "(${left.render().rendered})" else left.render().rendered
+        val rhs = if (right is LogicPredicate) "(${right.render().rendered})" else right.render().rendered
+
         val map = mapOf(
-            "lhs" to left.render(),
+            "lhs" to lhs,
             "operator" to operator2String(operator),
-            "rhs" to right.render()
+            "rhs" to rhs
         )
 
         return RenderResult(stRender("logicPredicate", map))
@@ -146,6 +169,9 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun InfiniteSet.renderSelf(): RenderResult {
+        // HINT: n : INTEGER -> n.type = INTEGER
+        val typeSet = (type as TypeSet).type
+        logger.info("${(type as TypeSet).type}")
         TODO("Not yet implemented")
     }
 
@@ -159,11 +185,17 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
 
     // HINT: SAME FOR JAVA AND PROLOG
     override fun Invariant.renderSelf(): RenderResult {
-        val map = mapOf(
-            "body" to predicate.render()
-        )
+        val renderedPredicates = List(predicates.size) { idx ->
+            val map = mapOf(
+                "body" to predicates[idx].render(),
+                "idx" to idx
+            )
+            stRender("invariant", map)
+        }
 
-        return RenderResult(stRender("invariant", map))
+        val map = mapOf("list" to renderedPredicates)
+
+        return RenderResult(stRender("invariants", map))
     }
 
     override fun QuantifierPredicate.renderSelf(): RenderResult {
@@ -219,12 +251,12 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             "sets" to sets.render(),
             "constants" to constants.render(),
             "concrete_constants" to concreteConstants.render(),
-            "properties" to properties?.render(),
+//            "properties" to properties?.render(),
             "definitions" to definitions?.render(),
             "variables" to variables.render(),
             "concrete_variables" to concreteVariables.render(),
             "initialization" to initialization?.render(),
-            "invariant" to invariant?.render(),
+            "invariant" to invariant.render(),
             "assertions" to assertions.render(),
             "operations" to operations.render(),
             "transitions" to transitions.render()
@@ -262,8 +294,26 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             is TypeInteger -> "int"
             is TypeString -> "String"
             is TypeVoid -> "void"
-            is TypeCollection -> type.name
+            is TypeCollection -> if (type.type == CollectionType.Enum) type.name.capitalize() else type.name
             else -> throw UnknownTypeException(type::class.simpleName!!)
         }
+    }
+
+    override fun operator2String(operator: BinaryPredicateOperator): String {
+        return when (operator) {
+            BinaryPredicateOperator.GREATER -> ">"
+            BinaryPredicateOperator.GREATER_EQUAL -> ">="
+            BinaryPredicateOperator.LESS -> "<"
+            BinaryPredicateOperator.LESS_EQUAL -> "<="
+            BinaryPredicateOperator.EQUAL -> "=="
+            BinaryPredicateOperator.NOT_EQUAL -> "!="
+            BinaryPredicateOperator.MEMBER -> "member(java)"
+            BinaryPredicateOperator.NOT_MEMBER -> "notmember(java)"
+            BinaryPredicateOperator.SUBSET -> "subset(java)"
+        }
+    }
+
+    private fun String.capitalize(): String {
+        return replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
     }
 }

@@ -51,10 +51,14 @@ unaryFunctionExpression(expression, operator, exprCount) ::= <<
 <operator>(<expression>, Expr_<exprCount>)
 >>
 
-invariant(body) ::= <<
-check_inv(State_0) :-
+invariant(body, idx) ::= <<
+check_inv_<idx>(State_0) :-
     <body>,
     !.
+>>
+
+invariants(list) ::= <<
+<list; separator="\n\n">
 >>
 
 quantifier(identifier, predicate, type) ::= <<
@@ -89,16 +93,18 @@ select(condition, then, elseSubstitution, when) ::= <<
 
 
 /* XTL */
-props(invariants) ::= <<
+props(invariants, indices) ::= <<
 prop(st, uninitialized) :- !.
 prop(State, unsafe) :-
     State \= st,
-    \+ check_inv(State),
+    <indices :{ idx | \+ check_inv_<idx>(State);}; separator="\n">
     !.
 prop(State, List) :-
     State \= st,
     avl2List(State, List),
     !.
+
+<invariants>
 >>
 
 domain() ::= <<

@@ -38,10 +38,14 @@ public boolean tr_<name>() {
 function() ::= <<
 >>
 
-invariant(body) ::= <<
-public boolean check_inv() {
+invariant(body, idx) ::= <<
+public boolean check_inv_<idx>() {
     return <body>;
 }
+>>
+
+invariants(list) ::= <<
+<list; separator="\n\n">
 >>
 
 initialization(substitutions) ::= <<

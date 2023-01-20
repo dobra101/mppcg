@@ -339,11 +339,23 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         stateCount = 0
         exprCount = 0
 
+        val checkInvs = List(predicates.size) { idx ->
+            val map = mapOf(
+                "body" to predicates[idx].render(),
+                "idx" to idx
+            )
+            stRender("invariant", map)
+        }
+
+        val renderedCheckInvs = stRender("invariants", mapOf("list" to checkInvs))
+
         val map = mapOf(
-            "body" to predicate.render()
+            "invariants" to renderedCheckInvs,
+            "indices" to predicates.indices.map { it }
         )
 
-        return RenderResult(stRender("invariant", map))
+
+        return RenderResult(stRender("props", map))
     }
 
     override fun QuantifierPredicate.renderSelf(): RenderResult {
@@ -408,7 +420,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             "variables" to variables.render(),
             "concrete_variables" to concreteVariables.render(),
             "initialization" to initialization?.render(),
-            "invariant" to invariant?.render(),
+            "invariant" to invariant.render(),
             "assertions" to assertions.render(),
             "operations" to operations.render(),
             "methods" to usedBMethods.render()

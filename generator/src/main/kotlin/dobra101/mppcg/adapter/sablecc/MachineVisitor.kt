@@ -23,7 +23,7 @@ class MachineVisitor : AbstractVisitor() {
     var variables: List<Expression> = emptyList()
     var concreteVariables: List<Expression> = emptyList()
     private var initialization: Initialization? = null
-    private var invariant: Predicate? = null
+    private var invariant: Invariant = Invariant()
     private var assertions: List<Predicate> = emptyList()
     private var operations: List<Operation> = emptyList()
 
@@ -50,6 +50,7 @@ class MachineVisitor : AbstractVisitor() {
     }
 
     override fun caseAPropertiesMachineClause(node: APropertiesMachineClause) {
+        // TODO: split into multiple
         properties = node.predicates.convert()
     }
 
@@ -76,9 +77,7 @@ class MachineVisitor : AbstractVisitor() {
     }
 
     override fun caseAInvariantMachineClause(node: AInvariantMachineClause) {
-        // TODO: split into multiple?
-        val predicates = node.predicates.convert()
-        invariant = if (predicates != null) Invariant(predicates) else null
+        invariant = Invariant.of(node.predicates.convert())
     }
 
     override fun caseAAssertionsMachineClause(node: AAssertionsMachineClause) {

@@ -2,6 +2,10 @@ binaryPredicate(lhs, operator, rhs) ::= <<
 <lhs> <operator> <rhs>
 >>
 
+binaryPredicateMember(entry, set) ::= <<
+<set>.contains(<entry>)
+>>
+
 // TODO: add parenthesis
 logicPredicate(lhs, operator, rhs) ::= <<
 <lhs> <operator> <rhs>
