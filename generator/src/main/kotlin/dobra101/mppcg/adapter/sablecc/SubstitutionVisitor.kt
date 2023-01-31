@@ -2,12 +2,9 @@ package dobra101.mppcg.adapter.sablecc
 
 import de.be4.classicalb.core.parser.node.*
 import dobra101.mppcg.node.InvalidTypeException
-import dobra101.mppcg.node.b.Initialization
 import dobra101.mppcg.node.b.Precondition
 import dobra101.mppcg.node.b.Select
-import dobra101.mppcg.node.substitution.AssignSubstitution
-import dobra101.mppcg.node.substitution.ParallelSubstitution
-import dobra101.mppcg.node.substitution.Substitution
+import dobra101.mppcg.node.substitution.*
 
 class SubstitutionVisitor : AbstractVisitor() {
 
@@ -47,7 +44,7 @@ class SubstitutionVisitor : AbstractVisitor() {
     }
 
     override fun caseASequenceSubstitution(node: ASequenceSubstitution) {
-        result = Initialization(node.substitutions.mapNotNull { it.convert() })
+        result = SequenceSubstitution(node.substitutions.mapNotNull { it.convert() })
     }
 
     override fun caseABlockSubstitution(node: ABlockSubstitution) {
@@ -72,7 +69,12 @@ class SubstitutionVisitor : AbstractVisitor() {
     }
 
     override fun caseAIfSubstitution(node: AIfSubstitution) {
-        TODO("Not implemented ${node::class.simpleName}")
+        result = IfSubstitution(
+            node.condition.convert()!!,
+            node.then.convert()!!,
+            node.elsifSubstitutions.convert(),
+            node.`else`.convert()!!
+        )
     }
 
     override fun caseAIfElsifSubstitution(node: AIfElsifSubstitution) {

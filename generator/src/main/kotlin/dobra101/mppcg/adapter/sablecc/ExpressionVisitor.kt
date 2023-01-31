@@ -298,7 +298,7 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseACardExpression(node: ACardExpression) {
-        TODO("Not implemented ${node::class.simpleName}")
+        result = UnaryCollectionExpression(node.expression.convert()!!, UnaryCollectionOperator.CARD)
     }
 
     override fun caseAConvertIntFloorExpression(node: AConvertIntFloorExpression) {
@@ -342,11 +342,11 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseAPowSubsetExpression(node: APowSubsetExpression) {
-        TODO("Not implemented ${node::class.simpleName}")
+        result = UnaryCollectionExpression(node.expression.convert()!!, UnaryCollectionOperator.POW)
     }
 
     override fun caseAPow1SubsetExpression(node: APow1SubsetExpression) {
-        TODO("Not implemented ${node::class.simpleName}")
+        result = UnaryCollectionExpression(node.expression.convert()!!, UnaryCollectionOperator.POW1)
     }
 
     override fun caseAFinSubsetExpression(node: AFinSubsetExpression) {

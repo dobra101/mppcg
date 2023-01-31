@@ -1,3 +1,15 @@
 assignSubstitution(identifier, rhs, stateCount, resultStateCount) ::= <<
 update('<identifier>', <rhs>, State_<stateCount>, State_<resultStateCount>)
 >>
+
+ifSubstitution(condition, then, elseIf, elseSubstitution) ::= <<
+If:
+Condition: <condition>
+Then: <then>
+ElseIf: <elseIf>
+Else: <elseSubstitution>
+>>
+
+sequenceSubstitution(substitutions) ::= <<
+<substitutions; separator=",\n">
+>>

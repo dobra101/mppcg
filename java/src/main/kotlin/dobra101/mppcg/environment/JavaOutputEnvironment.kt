@@ -14,7 +14,9 @@ import dobra101.mppcg.node.predicate.BinaryPredicateOperator
 import dobra101.mppcg.node.predicate.LogicPredicate
 import dobra101.mppcg.node.predicate.QuantifierPredicate
 import dobra101.mppcg.node.substitution.AssignSubstitution
+import dobra101.mppcg.node.substitution.IfSubstitution
 import dobra101.mppcg.node.substitution.ParallelSubstitution
+import dobra101.mppcg.node.substitution.SequenceSubstitution
 import java.util.*
 
 // TODO: add constructor for generated classes
@@ -145,6 +147,14 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         )
 
         return RenderResult(stRender("assignSubstitution", map))
+    }
+
+    override fun IfSubstitution.renderSelf(): RenderResult {
+        TODO("Not yet implemented")
+    }
+
+    override fun SequenceSubstitution.renderSelf(): RenderResult {
+        TODO("Not yet implemented")
     }
 
     /* ---------- B NODES ---------- */

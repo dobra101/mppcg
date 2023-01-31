@@ -12,7 +12,9 @@ import dobra101.mppcg.node.collection.*
 import dobra101.mppcg.node.expression.*
 import dobra101.mppcg.node.predicate.*
 import dobra101.mppcg.node.substitution.AssignSubstitution
+import dobra101.mppcg.node.substitution.IfSubstitution
 import dobra101.mppcg.node.substitution.ParallelSubstitution
+import dobra101.mppcg.node.substitution.SequenceSubstitution
 
 class PrologOutputEnvironment : OutputLanguageEnvironment() {
     override val templateDir = "templates/prolog"
@@ -218,6 +220,24 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         return RenderResult("${expandedRhs.before}$rendered")
     }
 
+    override fun IfSubstitution.renderSelf(): RenderResult {
+        val map = mapOf(
+            "condition" to condition.render(),
+            "then" to then.render(),
+            "elseIf" to elseIf.render(),
+            "elseSubstitution" to elseSubstitution.render()
+        )
+
+        return RenderResult(stRender("ifSubstitution", map))
+    }
+
+    override fun SequenceSubstitution.renderSelf(): RenderResult {
+        val map = mapOf(
+            "substitutions" to substitutions.render()
+        )
+
+        return RenderResult(stRender("sequenceSubstitution", map))
+    }
 
     /* ---------- B NODES ---------- */
     override fun Function.renderSelf(): RenderResult {

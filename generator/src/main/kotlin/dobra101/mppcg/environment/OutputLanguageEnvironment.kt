@@ -10,9 +10,7 @@ import dobra101.mppcg.node.predicate.BinaryPredicate
 import dobra101.mppcg.node.predicate.LogicPredicate
 import dobra101.mppcg.node.predicate.Predicate
 import dobra101.mppcg.node.predicate.QuantifierPredicate
-import dobra101.mppcg.node.substitution.AssignSubstitution
-import dobra101.mppcg.node.substitution.ParallelSubstitution
-import dobra101.mppcg.node.substitution.Substitution
+import dobra101.mppcg.node.substitution.*
 import org.stringtemplate.v4.STGroup
 import org.stringtemplate.v4.STGroupFile
 import java.io.FileInputStream
@@ -62,6 +60,8 @@ abstract class OutputLanguageEnvironment : EnvironmentUtils(), BEnvironment {
 
     /* Substitution */
     abstract fun AssignSubstitution.renderSelf(): RenderResult
+    abstract fun IfSubstitution.renderSelf(): RenderResult
+    abstract fun SequenceSubstitution.renderSelf(): RenderResult
 
     fun call(node: MPPCGNode): RenderResult {
         return when (node) {
@@ -120,6 +120,8 @@ abstract class OutputLanguageEnvironment : EnvironmentUtils(), BEnvironment {
     private fun callSubstitution(node: Substitution): RenderResult {
         return when (node) {
             is AssignSubstitution -> node.renderSelf()
+            is IfSubstitution -> node.renderSelf()
+            is SequenceSubstitution -> node.renderSelf()
 
             /* B Substitutions */
             is Initialization -> node.renderSelf()
@@ -148,6 +150,7 @@ abstract class OutputLanguageEnvironment : EnvironmentUtils(), BEnvironment {
      * @return The rendered string
      */
     fun stRender(templateName: String, map: Map<String, Any?> = emptyMap()): String {
+        // TODO: templateName as property of node
         val st = group.getInstanceOf(templateName) ?: throw EnvironmentException("Template '$templateName' not found")
         map
             .filterValues { it != null }

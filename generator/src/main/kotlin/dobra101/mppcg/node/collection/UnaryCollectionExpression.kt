@@ -10,6 +10,9 @@ data class UnaryCollectionExpression(
 ) : Expression(TypeInteger())
 
 enum class UnaryCollectionOperator {
+    CARD,
     MIN,
-    MAX
+    MAX,
+    POW,
+    POW1
 }
