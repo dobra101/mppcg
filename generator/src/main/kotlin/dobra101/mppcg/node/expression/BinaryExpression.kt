@@ -8,7 +8,7 @@ data class BinaryExpression(
     val left: Expression,
     val right: Expression,
     val operator: BinaryExpressionOperator
-) : Expression(getType(left, right))
+) : Expression(getType(left, right), "binaryExpression")
 
 enum class BinaryExpressionOperator {
     ADD,

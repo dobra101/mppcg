@@ -8,4 +8,4 @@ data class Select(
     val then: Substitution?, // null if skip
     val whenSubstitution: List<Substitution> = emptyList(),
     val elseSubstitution: Substitution? = null
-) : Substitution()
+) : Substitution("select")

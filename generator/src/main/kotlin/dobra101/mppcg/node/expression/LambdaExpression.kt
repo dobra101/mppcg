@@ -8,4 +8,4 @@ data class LambdaExpression(
     val identifier: List<Expression> = emptyList(),
     val predicate: Predicate,
     val expression: Expression
-): Expression(TypeInteger())
+): Expression(TypeInteger(), "lambdaExpression")

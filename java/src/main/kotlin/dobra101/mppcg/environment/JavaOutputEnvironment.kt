@@ -32,7 +32,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             "elements" to elements.render()
         )
 
-        return RenderResult(stRender("anonymousSetCollectionExpression", map))
+        return RenderResult(renderTemplate(map))
     }
 
     override fun BinaryExpression.renderSelf(): RenderResult {
@@ -42,7 +42,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             "operator" to operator2String(operator)
         )
 
-        return RenderResult(stRender("binaryExpression", map))
+        return RenderResult(renderTemplate(map))
     }
 
     override fun EnumCollectionNode.renderSelf(): RenderResult {
@@ -51,7 +51,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             "elements" to elements.map { it.name.uppercase() } // TODO: refactor
         )
 
-        return RenderResult(stRender("enumCollectionExpression", map))
+        return RenderResult(renderTemplate(map))
     }
 
     override fun EnumEntry.renderSelf(): RenderResult {
@@ -60,7 +60,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             "enum" to enum.capitalize()
         )
 
-        return RenderResult(stRender("enumEntryExpression", map))
+        return RenderResult(renderTemplate(map))
     }
 
     override fun IdentifierExpression.renderSelf(): RenderResult {
@@ -68,7 +68,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             "name" to name
         )
 
-        return RenderResult(stRender("identifierExpression", map))
+        return RenderResult(renderTemplate(map))
     }
 
     override fun IntervalExpression.renderSelf(): RenderResult {
@@ -89,7 +89,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             "value" to value
         )
 
-        return RenderResult(stRender("valueExpression", map))
+        return RenderResult(renderTemplate(map))
     }
 
 
@@ -104,7 +104,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
                 "operator" to "instanceof",
                 "rhs" to (right as EnumCollectionNode).name.capitalize()
             )
-            return RenderResult(stRender("binaryPredicate", map))
+            return RenderResult(renderTemplate(map))
         }
 
         if (right is AnonymousSetCollectionNode && operator == BinaryPredicateOperator.MEMBER) {
@@ -112,7 +112,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
                 "entry" to left.render(),
                 "set" to right.render()
             )
-            return RenderResult(stRender("binaryPredicateMember", map))
+            return RenderResult(renderTemplate("binaryPredicateMember", map))
         }
 
         val map = mapOf(
@@ -121,7 +121,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             "rhs" to right.render()
         )
 
-        return RenderResult(stRender("binaryPredicate", map))
+        return RenderResult(renderTemplate(map))
     }
 
     override fun LogicPredicate.renderSelf(): RenderResult {
@@ -134,7 +134,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             "rhs" to rhs
         )
 
-        return RenderResult(stRender("logicPredicate", map))
+        return RenderResult(renderTemplate(map))
     }
 
     /* ---------- SUBSTITUTIONS ---------- */
@@ -146,7 +146,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             "rhs" to rhs.render()
         )
 
-        return RenderResult(stRender("assignSubstitution", map))
+        return RenderResult(renderTemplate(map))
     }
 
     override fun IfSubstitution.renderSelf(): RenderResult {
@@ -200,12 +200,12 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
                 "body" to predicates[idx].render(),
                 "idx" to idx
             )
-            stRender("invariant", map)
+            renderTemplate(map)
         }
 
         val map = mapOf("list" to renderedPredicates)
 
-        return RenderResult(stRender("invariants", map))
+        return RenderResult(renderTemplate("invariants", map))
     }
 
     override fun QuantifierPredicate.renderSelf(): RenderResult {
@@ -221,7 +221,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
                     "lhs" to it.lhs[0].render(), // TODO: when more than one identifier?
                     "rhs" to it.rhs.render()
                 )
-                stRender("declarationSubstitution", map)
+                renderTemplate("declarationSubstitution", map)
             } else {
                 it.render().rendered
             }
@@ -231,7 +231,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             "substitutions" to subs
         )
 
-        return RenderResult(stRender("initialization", map))
+        return RenderResult(renderTemplate(map))
     }
 
     override fun ParallelSubstitution.renderSelf(): RenderResult {
@@ -250,7 +250,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             "when" to whenSubstitution.render()
         )
 
-        return RenderResult(stRender("select", map))
+        return RenderResult(renderTemplate(map))
     }
 
     override fun Machine.renderSelf(): RenderResult {
@@ -272,7 +272,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             "transitions" to transitions.render()
         )
 
-        return RenderResult(stRender("machine", map))
+        return RenderResult(renderTemplate(map))
     }
 
     override fun Operation.renderSelf(): RenderResult {
@@ -285,7 +285,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             "body" to bodyUsed.render()
         )
 
-        return RenderResult(stRender("operation", map))
+        return RenderResult(renderTemplate(map))
     }
 
     override fun Transition.renderSelf(): RenderResult {
@@ -294,7 +294,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             "body" to body.render()
         )
 
-        return RenderResult(stRender("transition", map))
+        return RenderResult(renderTemplate(map))
     }
 
     override fun type2String(type: Type?): String {

@@ -6,4 +6,4 @@ import dobra101.mppcg.node.substitution.Substitution
 data class Precondition(
     val substitution: Substitution,
     val predicate: Predicate
-) : Substitution()
+) : Substitution("precondition")

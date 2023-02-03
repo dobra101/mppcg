@@ -7,18 +7,18 @@ import dobra101.mppcg.node.expression.Expression
 data class CallFunctionExpression(
     val expression: Expression,
     val parameters: List<Expression>
-) : Expression(TypeInteger())
+) : Expression(TypeInteger(), "callFunction")
 
 data class UnaryFunctionExpression(
     val expression: Expression,
     val operator: UnaryFunctionOperator
-) : Expression(TypeInteger())
+) : Expression(TypeInteger(), "unaryFunctionExpression")
 
 data class BinaryFunctionExpression(
     val left: Expression,
     val right: Expression,
     val operator: BinaryFunctionOperator
-) : Expression(TypeInteger())
+) : Expression(TypeInteger(), "binaryFunctionExpression")
 
 enum class UnaryFunctionOperator: BMethod {
     DOMAIN,

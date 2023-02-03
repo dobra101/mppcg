@@ -19,7 +19,8 @@ data class Machine(
     val initialization: Initialization? = null,
     val invariant: Invariant = Invariant(),
     val assertions: List<Predicate> = emptyList(),
-    val operations: List<Operation> = emptyList()
+    val operations: List<Operation> = emptyList(),
+    override val templateName: String = "machine"
 ) : MPPCGNode {
 
     // TODO: only needed when model checking ?

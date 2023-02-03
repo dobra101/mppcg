@@ -5,4 +5,4 @@ import dobra101.mppcg.node.expression.Expression
 
 data class InfiniteSet(
     override var type: Type?
-) : Expression(type)
+) : Expression(type, "infiniteSetExpression")

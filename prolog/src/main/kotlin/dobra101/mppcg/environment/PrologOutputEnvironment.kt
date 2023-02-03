@@ -37,7 +37,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
 
         if (elements.isEmpty()) {
             return RenderResult(
-                stRender("anonymousSetCollectionExpression", mapOf("elements" to emptyList<String>()))
+                renderTemplate(templateName, mapOf("elements" to emptyList<String>()))
             )
         }
 
@@ -47,7 +47,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             "elements" to expanded.expressions
         )
 
-        val rendered = stRender("anonymousSetCollectionExpression", map)
+        val rendered = renderTemplate(map)
 
         if (optimize) optimizer.evaluated[this] = rendered
         // TODO: dont remove by hand
@@ -69,7 +69,8 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             "exprCount" to exprCount,
             "math" to isMathOperator(operator)
         )
-        val rendered = stRender("binaryExpression", map)
+
+        val rendered = renderTemplate(map)
         val info = mapOf("resultExpr" to IndividualInfo("Expr_$exprCount")) // TODO: map to Int?
 
         if (optimize) optimizer.evaluated[this] = "Expr_$exprCount"
@@ -82,7 +83,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             "elements" to elements.render()
         )
 
-        return RenderResult(stRender("enumCollectionExpression", map))
+        return RenderResult(renderTemplate(map))
     }
 
     // HINT: same as SetEntry
@@ -91,7 +92,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             "name" to name
         )
 
-        return RenderResult(stRender("enumEntryExpression", map))
+        return RenderResult(renderTemplate(map))
     }
 
     override fun IdentifierExpression.renderSelf(): RenderResult {
@@ -107,13 +108,12 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             "stateCount" to stateCount,
             "exprCount" to exprCount
         )
-        val rendered = stRender("identifierExpression", map)
 
         // TODO: move before map to avoid subtraction
         if (optimize) optimizer.evaluated[this] = "Expr_$exprCount"
         val info = mapOf("resultExpr" to IndividualInfo("Expr_${exprCount++}")) // TODO: map to Int?
 
-        return RenderResult(rendered, info)
+        return RenderResult(renderTemplate(map), info)
     }
 
     override fun IntervalExpression.renderSelf(): RenderResult {
@@ -124,7 +124,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             "rhs" to expanded.rhs
         )
 
-        val rendered = stRender("intervalExpression", map)
+        val rendered = renderTemplate(map)
 
         return RenderResult("${expanded.before}$rendered")
 
@@ -140,7 +140,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             "name" to name
         )
 
-        return RenderResult(stRender("setEntryExpression", map))
+        return RenderResult(renderTemplate(map))
     }
 
     // HINT: Same for Java and Prolog
@@ -149,7 +149,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             "value" to value
         )
 
-        return RenderResult(stRender("valueExpression", map))
+        return RenderResult(renderTemplate(map))
     }
 
 
@@ -172,7 +172,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             "operator" to operator2String(operator),
             "prefixOperator" to prefixOperators.contains(operator)
         )
-        val rendered = stRender("binaryPredicate", map)
+        val rendered = renderTemplate(map)
 
         return RenderResult("${expanded.before}$rendered")
     }
@@ -186,7 +186,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             "rhs" to expanded.rhs,
             "operator" to operator2String(operator)
         )
-        val rendered = stRender("logicPredicate", map)
+        val rendered = renderTemplate(map)
 
         return RenderResult("${expanded.before}$rendered")
     }
@@ -204,7 +204,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
                 "stateCount" to stateCount,
                 "resultStateCount" to ++stateCount
             )
-            return RenderResult(stRender("assignSubstitution", map))
+            return RenderResult(renderTemplate(map))
         }
 
         val expandedRhs = ExpandedExpressionList.of(rhs) // TODO: dont expand if rhs is CollectionEntry
@@ -214,7 +214,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             "stateCount" to stateCount,
             "resultStateCount" to ++stateCount
         )
-        val rendered = stRender("assignSubstitution", map)
+        val rendered = renderTemplate(map)
 
         if (optimize) optimizer.evaluated[lhs[0]] = expandedRhs.expressions[0]
         return RenderResult("${expandedRhs.before}$rendered")
@@ -228,7 +228,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             "elseSubstitution" to elseSubstitution.render()
         )
 
-        return RenderResult(stRender("ifSubstitution", map))
+        return RenderResult(renderTemplate(map))
     }
 
     override fun SequenceSubstitution.renderSelf(): RenderResult {
@@ -236,7 +236,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             "substitutions" to substitutions.render()
         )
 
-        return RenderResult(stRender("sequenceSubstitution", map))
+        return RenderResult(renderTemplate(map))
     }
 
     /* ---------- B NODES ---------- */
@@ -248,7 +248,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             "mapType" to mapType
         )
 
-        return RenderResult(stRender("function", map))
+        return RenderResult(renderTemplate(map))
     }
 
     override fun BinaryCollectionExpression.renderSelf(): RenderResult {
@@ -262,7 +262,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             "operator" to operator2String(operator),
             "exprCount" to exprCount
         )
-        val rendered = stRender("binaryCollectionExpression", map)
+        val rendered = renderTemplate(map)
 
         if (optimize) optimizer.evaluated[this] = "Expr_$exprCount"
         return RenderResult("${expanded.before}$rendered", mapOf("resultExpr" to IndividualInfo("Expr_${exprCount++}")))
@@ -281,7 +281,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             "operator" to operator2String(operator),
             "exprCount" to exprCount
         )
-        val rendered = stRender("binaryFunctionExpression", map)
+        val rendered = renderTemplate(map)
 
         if (optimize) optimizer.evaluated[this] = "Expr_$exprCount"
         return RenderResult("${expanded.before}$rendered", mapOf("resultExpr" to IndividualInfo("Expr_${exprCount++}")))
@@ -300,7 +300,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         )
 
         val before = "${before1.before}${before2.before}"
-        val rendered = stRender("callFunction", map)
+        val rendered = renderTemplate(map)
 
         if (optimize) optimizer.evaluated[this] = "Expr_$exprCount"
         return RenderResult("$before$rendered", mapOf("resultExpr" to IndividualInfo("Expr_${exprCount++}")))
@@ -311,7 +311,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             "list" to list.render()
         )
 
-        return RenderResult(stRender("couple", map))
+        return RenderResult(renderTemplate(map))
     }
 
     override fun InfiniteSet.renderSelf(): RenderResult {
@@ -326,7 +326,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         )
 
         return RenderResult(
-            stRender("unaryCollectionExpression", map),
+            renderTemplate(map),
             mapOf("resultExpr" to IndividualInfo("Expr_${exprCount++}"))
         )
     }
@@ -343,7 +343,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             "exprCount" to exprCount
         )
 
-        val rendered = stRender("unaryFunctionExpression", map)
+        val rendered = renderTemplate(map)
 
         if (optimize) optimizer.evaluated[this] = "Expr_$exprCount"
 
@@ -364,10 +364,10 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
                 "body" to predicates[idx].render(),
                 "idx" to idx
             )
-            stRender("invariant", map)
+            renderTemplate(map)
         }
 
-        val renderedCheckInvs = stRender("invariants", mapOf("list" to checkInvs))
+        val renderedCheckInvs = renderTemplate("invariants", mapOf("list" to checkInvs))
 
         val map = mapOf(
             "invariants" to renderedCheckInvs,
@@ -375,7 +375,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         )
 
 
-        return RenderResult(stRender("props", map))
+        return RenderResult(renderTemplate("props", map))
     }
 
     override fun QuantifierPredicate.renderSelf(): RenderResult {
@@ -385,7 +385,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             "type" to type
         )
 
-        return RenderResult(stRender("quantifier", map))
+        return RenderResult(renderTemplate(map))
     }
 
     override fun Initialization.renderSelf(): RenderResult {
@@ -394,7 +394,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             "resultStateCount" to stateCount
         )
 
-        return RenderResult(stRender("initialization", map))
+        return RenderResult(renderTemplate(map))
     }
 
     override fun ParallelSubstitution.renderSelf(): RenderResult {
@@ -402,7 +402,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             "substitutions" to substitutions.render()
         )
 
-        return RenderResult(stRender("parallelSubstitution", map))
+        return RenderResult(renderTemplate(map))
     }
 
     // HINT: SAME FOR JAVA AND PROLOG
@@ -414,7 +414,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             "substitution" to substitution.render().rendered
         )
 
-        return RenderResult(stRender("precondition", map))
+        return RenderResult(renderTemplate(map))
     }
 
     override fun Select.renderSelf(): RenderResult {
@@ -424,7 +424,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             "then" to then?.render()
         )
 
-        return RenderResult(stRender("select", map))
+        return RenderResult(renderTemplate(map))
     }
 
     override fun Machine.renderSelf(): RenderResult {
@@ -446,7 +446,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             "methods" to usedBMethods.render()
         )
 
-        return RenderResult(stRender("machine", map))
+        return RenderResult(renderTemplate(map))
     }
 
     override fun Operation.renderSelf(): RenderResult {
@@ -463,7 +463,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             "resultStateCount" to stateCount
         )
 
-        return RenderResult(stRender("operation", map))
+        return RenderResult(renderTemplate(map))
     }
 
     override fun Transition.renderSelf(): RenderResult {
@@ -507,21 +507,21 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     // HINT: input language specific
     private fun UnaryFunctionOperator.render(): String {
         return when (this) {
-            UnaryFunctionOperator.DOMAIN -> stRender("domain")
-            UnaryFunctionOperator.RANGE -> stRender("range")
-            UnaryFunctionOperator.REVERSE -> stRender("reverse")
+            UnaryFunctionOperator.DOMAIN -> renderTemplate("domain")
+            UnaryFunctionOperator.RANGE -> renderTemplate("range")
+            UnaryFunctionOperator.REVERSE -> renderTemplate("reverse")
         }
     }
 
     // HINT: input language specific
     private fun BinaryFunctionOperator.render(): String {
         return when (this) {
-            BinaryFunctionOperator.DOMAIN_RESTRICTION -> stRender("domainRestriction")
-            BinaryFunctionOperator.DOMAIN_SUBTRACTION -> stRender("domainSubtraction")
-            BinaryFunctionOperator.IMAGE -> stRender("image")
-            BinaryFunctionOperator.OVERWRITE -> stRender("overwrite")
-            BinaryFunctionOperator.RANGE_RESTRICTION -> stRender("rangeRestriction")
-            BinaryFunctionOperator.RANGE_SUBTRACTION -> stRender("rangeSubtraction")
+            BinaryFunctionOperator.DOMAIN_RESTRICTION -> renderTemplate("domainRestriction")
+            BinaryFunctionOperator.DOMAIN_SUBTRACTION -> renderTemplate("domainSubtraction")
+            BinaryFunctionOperator.IMAGE -> renderTemplate("image")
+            BinaryFunctionOperator.OVERWRITE -> renderTemplate("overwrite")
+            BinaryFunctionOperator.RANGE_RESTRICTION -> renderTemplate("rangeRestriction")
+            BinaryFunctionOperator.RANGE_SUBTRACTION -> renderTemplate("rangeSubtraction")
         }
     }
 }

@@ -7,4 +7,4 @@ data class IfSubstitution(
     val then: Substitution,
     val elseIf: List<Substitution>,
     val elseSubstitution: Substitution
-) : Substitution()
+) : Substitution("ifSubstitution")

@@ -6,4 +6,4 @@ import dobra101.mppcg.node.expression.Expression
 data class AssignSubstitution(
     val lhs: List<Expression> = emptyList(),
     val rhs: List<Expression> = emptyList()
-) : Substitution()
+) : Substitution("assignSubstitution")

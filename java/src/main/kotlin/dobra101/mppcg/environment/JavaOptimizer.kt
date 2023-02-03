@@ -51,7 +51,7 @@ class JavaOptimizer(private val environment: JavaOutputEnvironment) {
                     "rhs" to right.render()
                 )
             }
-            return RenderResult(environment.stRender("optimizedAssignSubstitution", map))
+            return RenderResult(environment.renderTemplate("optimizedAssignSubstitution", map))
         }
         return null
     }

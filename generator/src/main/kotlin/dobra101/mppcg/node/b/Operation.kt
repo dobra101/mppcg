@@ -8,5 +8,6 @@ data class Operation(
     val name: String,
     val parameters: List<Expression> = emptyList(),
     val returnValues: List<Expression> = emptyList(),
-    val body: Substitution
+    val body: Substitution,
+    override val templateName: String = "operation"
 ) : MPPCGNode

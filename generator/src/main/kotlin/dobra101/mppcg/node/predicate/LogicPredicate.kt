@@ -4,7 +4,7 @@ data class LogicPredicate(
     val left: Predicate,
     val right: Predicate,
     val operator: LogicPredicateOperator
-) : Predicate()
+) : Predicate("logicPredicate")
 
 enum class LogicPredicateOperator {
     AND,

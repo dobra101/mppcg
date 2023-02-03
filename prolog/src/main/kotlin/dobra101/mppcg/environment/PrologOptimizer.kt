@@ -39,7 +39,7 @@ class PrologOptimizer(private val environment: PrologOutputEnvironment) {
                 "rhs" to rhs,
                 "stateCount" to environment.stateCount
             )
-            return RenderResult(environment.stRender("optimizedBinaryPredicateEqual", map))
+            return RenderResult(environment.renderTemplate("optimizedBinaryPredicateEqual", map))
         }
         return null
     }

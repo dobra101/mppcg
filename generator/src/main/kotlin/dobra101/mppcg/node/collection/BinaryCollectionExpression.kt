@@ -7,7 +7,7 @@ data class BinaryCollectionExpression(
     val left: Expression,
     val right: Expression,
     val operator: BinaryCollectionOperator
-) : Expression(TypeInteger())
+) : Expression(TypeInteger(), "binaryCollectionExpression")
 
 enum class BinaryCollectionOperator {
     INTERSECTION,

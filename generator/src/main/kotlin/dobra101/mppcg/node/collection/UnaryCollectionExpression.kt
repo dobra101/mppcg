@@ -7,7 +7,7 @@ import dobra101.mppcg.node.expression.Expression
 data class UnaryCollectionExpression(
     val collection: Expression,
     val operator: UnaryCollectionOperator
-) : Expression(TypeInteger())
+) : Expression(TypeInteger(), "unaryCollectionExpression")
 
 enum class UnaryCollectionOperator {
     CARD,

@@ -8,7 +8,7 @@ import dobra101.mppcg.node.TypeInterval
 data class IntervalExpression(
     val left: Expression,
     val right: Expression
-) : Expression(getType(left, right))
+) : Expression(getType(left, right), "intervalExpression")
 
 // TODO: replace by type inference
 private fun getType(left: Expression, right: Expression): Type {

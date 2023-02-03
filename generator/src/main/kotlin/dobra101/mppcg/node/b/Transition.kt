@@ -5,5 +5,6 @@ import dobra101.mppcg.node.predicate.Predicate
 
 data class Transition(
     val name: String,
-    val body: Predicate
+    val body: Predicate,
+    override val templateName: String = "transition"
 ) : MPPCGNode

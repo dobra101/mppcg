@@ -6,7 +6,7 @@ import dobra101.mppcg.node.predicate.Predicate
 
 data class Invariant(
     val predicates: List<Predicate> = emptyList()
-) : Predicate() {
+) : Predicate("invariant") {
     companion object {
         fun of(predicate: Predicate?): Invariant {
             if (predicate == null) return Invariant()

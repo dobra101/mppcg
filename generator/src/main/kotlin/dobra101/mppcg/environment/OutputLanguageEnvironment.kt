@@ -149,8 +149,8 @@ abstract class OutputLanguageEnvironment : EnvironmentUtils(), BEnvironment {
      * @param map The arguments as key (name) - value pairs
      * @return The rendered string
      */
-    fun stRender(templateName: String, map: Map<String, Any?> = emptyMap()): String {
-        // TODO: templateName as property of node
+    fun renderTemplate(templateName: String, map: Map<String, Any?> = emptyMap()): String {
+        // TODO: rename -> renderTemplate
         val st = group.getInstanceOf(templateName) ?: throw EnvironmentException("Template '$templateName' not found")
         map
             .filterValues { it != null }
@@ -158,5 +158,9 @@ abstract class OutputLanguageEnvironment : EnvironmentUtils(), BEnvironment {
                 st.add(it.key, (it.value as? RenderResult)?.rendered ?: it.value)
             }
         return st.render()
+    }
+
+    fun MPPCGNode.renderTemplate(map: Map<String, Any?> = emptyMap()): String {
+        return renderTemplate(templateName, map)
     }
 }

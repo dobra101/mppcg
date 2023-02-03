@@ -6,7 +6,7 @@ class QuantifierPredicate(
     val identifier: IdentifierExpression,
     val predicate: Predicate,
     val type: QuantifierType
-) : Predicate()
+) : Predicate("quantifier")
 
 enum class QuantifierType {
     FORALL,

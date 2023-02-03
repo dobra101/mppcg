@@ -5,4 +5,4 @@ import dobra101.mppcg.node.expression.Expression
 
 data class Couple(
     val list: List<Expression>
-): Expression(TypeCouple())
+): Expression(TypeCouple(), "couple")

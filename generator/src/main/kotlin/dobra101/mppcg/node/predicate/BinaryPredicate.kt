@@ -6,7 +6,7 @@ data class BinaryPredicate(
     val left: Expression,
     val right: Expression,
     val operator: BinaryPredicateOperator
-) : Predicate()
+) : Predicate("binaryPredicate")
 
 enum class BinaryPredicateOperator {
     GREATER,

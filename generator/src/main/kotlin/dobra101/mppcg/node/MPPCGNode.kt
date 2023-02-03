@@ -12,4 +12,6 @@ interface MPPCGNode {
     fun render(): RenderResult {
         return environment.call(this)
     }
+
+    val templateName: String
 }

@@ -8,7 +8,7 @@ data class Function(
     val right: Expression,
     override var type: Type?,
     val mapType: FunctionMapType
-): Expression(type)
+): Expression(type, "function")
 
 enum class FunctionType {
     TOTAL,
