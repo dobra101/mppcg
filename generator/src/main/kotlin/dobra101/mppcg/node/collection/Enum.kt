@@ -5,7 +5,11 @@ import dobra101.mppcg.node.TypeCollection
 data class EnumCollectionNode(
     override val name: String,
     override val elements: List<EnumEntry>
-) : CollectionNode(name, elements, CollectionType.Enum, "enumCollectionExpression")
+) : CollectionNode(name, elements, CollectionType.Enum, "enumCollectionExpression") {
+    override fun copy(): CollectionNode {
+        return EnumCollectionNode(name, elements)
+    }
+}
 
 data class EnumEntry(
     override val name: String,

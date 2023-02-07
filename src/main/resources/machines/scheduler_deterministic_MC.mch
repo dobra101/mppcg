@@ -29,35 +29,6 @@ new(pp) =
 		pp /: (ready \/ waiting) 
 	THEN
 		waiting := (waiting \/ { pp })
-	END;
+	END
 
-del(pp) =
-	SELECT
-		pp : waiting 
-	THEN
-		waiting := waiting - { pp }
-	END;
-	
-ready(rr) =
-        SELECT
-                rr : waiting
-        THEN
-                waiting := (waiting - {rr});
-                IF (active = {}) THEN
-                   active := {rr}
-                ELSE
-                   ready := ready \/ {rr}
-                END
-        END; 
-        	
-swap(pp) =
-        PRE pp : PID & ((ready /= {}) => pp : ready) & active /= {} THEN
-                waiting := (waiting \/ active);
-                IF (ready = {}) THEN
-                   active := {}
-                ELSE
-                    active := {pp};
-                    ready := ready - {pp}
-                END
-        END
 END

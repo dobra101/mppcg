@@ -1,8 +1,8 @@
 package dobra101.mppcg.adapter.sablecc
 
 import de.be4.classicalb.core.parser.node.*
-import dobra101.mppcg.node.expression.BinaryExpression
-import dobra101.mppcg.node.expression.BinaryExpressionOperator
+import dobra101.mppcg.node.collection.CollectionNode
+import dobra101.mppcg.node.expression.Expression
 import dobra101.mppcg.node.expression.IdentifierExpression
 import dobra101.mppcg.node.predicate.*
 
@@ -35,11 +35,19 @@ class PredicateVisitor : AbstractVisitor() {
     }
 
     override fun caseAMemberPredicate(node: AMemberPredicate) {
-        result = BinaryPredicate(node.left.convert()!!, node.right.convert()!!, BinaryPredicateOperator.MEMBER)
+        result = BinaryPredicate(
+            node.left.convert()!!.setParameterIfCollection(),
+            node.right.convert()!!.setParameterIfCollection(),
+            BinaryPredicateOperator.MEMBER
+        )
     }
 
     override fun caseANotMemberPredicate(node: ANotMemberPredicate) {
-        result = BinaryPredicate(node.left.convert()!!, node.right.convert()!!, BinaryPredicateOperator.NOT_MEMBER)
+        result = BinaryPredicate(
+            node.left.convert()!!.setParameterIfCollection(),
+            node.right.convert()!!.setParameterIfCollection(),
+            BinaryPredicateOperator.NOT_MEMBER
+        )
     }
 
     override fun caseAConjunctPredicate(node: AConjunctPredicate) {
@@ -150,5 +158,12 @@ class PredicateVisitor : AbstractVisitor() {
 
     override fun caseAOperatorPredicate(node: AOperatorPredicate) {
         TODO("Not implemented ${node::class.simpleName}")
+    }
+
+    private fun Expression.setParameterIfCollection(): Expression {
+        if (this is CollectionNode) {
+            this.isParameter = true
+        }
+        return this
     }
 }

@@ -15,8 +15,10 @@ binaryCollectionExpression(lhs, rhs, operator, exprCount) ::= <<
 <operator>(<lhs>, <rhs>, Expr_<exprCount>)
 >>
 
-enumCollectionExpression(name, elements) ::= <<
-s_<name>([<elements; separator = ", ">])
+enumCollectionExpression(name, elements, isParameter, exprCount) ::= <<
+<if(isParameter)>
+s_<name>(Expr_<exprCount>)<else>
+s_<name>([<elements; separator = ", ">])<endif>
 >>
 
 // TODO: add enum name?

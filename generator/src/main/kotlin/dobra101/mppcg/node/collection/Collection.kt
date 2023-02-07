@@ -8,8 +8,11 @@ abstract class CollectionNode(
     open val name: String,
     open val elements: List<CollectionEntry>,
     private val collectionType: CollectionType,
-    override val templateName: String
-) : Expression(type = TypeCollection(collectionType, name), templateName)
+    override val templateName: String,
+    var isParameter: Boolean = false
+) : Expression(type = TypeCollection(collectionType, name), templateName) {
+    abstract fun copy(): CollectionNode
+}
 
 abstract class CollectionEntry(
     open val name: String,

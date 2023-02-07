@@ -21,7 +21,7 @@ class ExpressionVisitor : AbstractVisitor() {
             return
         }
 
-        result = machineVisitor.sets.findByName(node.text) ?: machineVisitor.sets.findEntryByName(node.text)
+        result = machineVisitor.sets.findByName(node.text)?.copy() ?: machineVisitor.sets.findEntryByName(node.text)
                 ?: IdentifierExpression(name = node.text)
     }
 

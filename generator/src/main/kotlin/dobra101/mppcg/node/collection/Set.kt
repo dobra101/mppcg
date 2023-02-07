@@ -5,7 +5,11 @@ import dobra101.mppcg.node.expression.Expression
 data class SetCollectionNode(
     override val name: String,
     override val elements: List<SetEntry>
-) : CollectionNode(name, elements, CollectionType.Set, "setCollectionExpression")
+) : CollectionNode(name, elements, CollectionType.Set, "setCollectionExpression") {
+    override fun copy(): CollectionNode {
+        return SetCollectionNode(name, elements)
+    }
+}
 
 data class SetEntry(
     override val name: String,
