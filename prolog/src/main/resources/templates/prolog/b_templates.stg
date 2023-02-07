@@ -133,3 +133,11 @@ rangeRestriction() ::= <<
 
 rangeSubtraction() ::= <<
 >>
+
+updateStateCount(newCount, oldCount) ::= <<
+State_<newCount> = State_<oldCount>
+>>
+
+updateExprCount(newCount, oldCount) ::= <<
+Expr_<newCount> = Expr_<oldCount>
+>>

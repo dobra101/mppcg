@@ -15,6 +15,7 @@ import dobra101.mppcg.node.substitution.AssignSubstitution
 import dobra101.mppcg.node.substitution.IfSubstitution
 import dobra101.mppcg.node.substitution.ParallelSubstitution
 import dobra101.mppcg.node.substitution.SequenceSubstitution
+import kotlin.math.max
 
 class PrologOutputEnvironment : OutputLanguageEnvironment() {
     override val templateDir = "templates/prolog"
@@ -80,10 +81,18 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     override fun EnumCollectionNode.renderSelf(): RenderResult {
         val map = mapOf(
             "name" to name,
-            "elements" to elements.render()
+            "elements" to elements.render(),
+            "isParameter" to isParameter,
+            "exprCount" to exprCount
         )
 
-        return RenderResult(renderTemplate(map))
+        val rendered = renderTemplate(map)
+        if (isParameter) {
+            val info = mapOf("resultExpr" to IndividualInfo("Expr_$exprCount")) // TODO: map to Int?
+            exprCount++
+            return RenderResult(rendered, info)
+        }
+        return RenderResult(rendered)
     }
 
     // HINT: same as SetEntry
@@ -221,12 +230,77 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun IfSubstitution.renderSelf(): RenderResult {
-        val map = mapOf(
+        val map = mutableMapOf(
             "condition" to condition.render(),
-            "then" to then.render(),
-            "elseIf" to elseIf.render(),
-            "elseSubstitution" to elseSubstitution.render()
+            "elseIf" to elseIf.render()
         )
+
+        val stateCountBefore = stateCount
+        val exprCountBefore = exprCount
+
+        val thenRendered = then.render()
+        val stateCountAfterThen = stateCount
+        val exprCountAfterThen = exprCount
+
+        stateCount = stateCountBefore
+        exprCount = exprCountBefore
+
+        val elseRendered = elseSubstitution.render()
+        val stateCountAfterElse = stateCount
+        val exprCountAfterElse = exprCount
+
+        stateCount = max(stateCountAfterThen, stateCountAfterElse)
+        exprCount = max(exprCountAfterThen, exprCountAfterElse)
+
+        // set the stateCount and exprCount for the main branch
+        val thenStringBuilder = StringBuilder(thenRendered.rendered)
+        val elseStringBuilder = StringBuilder(elseRendered.rendered)
+        if (stateCountAfterThen < stateCountAfterElse) {
+            thenStringBuilder.append(EXPRESSION_SEPARATOR)
+                .append(
+                    renderTemplate(
+                        "updateStateCount", mapOf(
+                            "newCount" to stateCount,
+                            "oldCount" to stateCountAfterThen
+                        )
+                    )
+                )
+        } else if (stateCountAfterThen > stateCountAfterElse) {
+            elseStringBuilder.append(EXPRESSION_SEPARATOR)
+                .append(
+                    renderTemplate(
+                        "updateStateCount", mapOf(
+                            "newCount" to stateCount,
+                            "oldCount" to stateCountAfterElse
+                        )
+                    )
+                )
+        }
+
+        if (exprCountAfterThen < exprCountAfterElse) {
+            thenStringBuilder.append(EXPRESSION_SEPARATOR)
+                .append(
+                    renderTemplate(
+                        "updateExprCount", mapOf(
+                            "newCount" to exprCount - 1,
+                            "oldCount" to exprCountAfterThen - 1
+                        )
+                    )
+                )
+        } else if (exprCountAfterThen > exprCountAfterElse) {
+            elseStringBuilder.append(EXPRESSION_SEPARATOR)
+                .append(
+                    renderTemplate(
+                        "updateExprCount", mapOf(
+                            "newCount" to exprCount - 1,
+                            "oldCount" to exprCountAfterElse - 1
+                        )
+                    )
+                )
+        }
+
+        map["then"] = RenderResult(thenStringBuilder.toString(), thenRendered.info)
+        map["elseSubstitution"] = RenderResult(elseStringBuilder.toString(), elseRendered.info)
 
         return RenderResult(renderTemplate(map))
     }

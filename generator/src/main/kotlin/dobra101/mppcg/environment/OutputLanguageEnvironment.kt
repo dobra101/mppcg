@@ -150,7 +150,6 @@ abstract class OutputLanguageEnvironment : EnvironmentUtils(), BEnvironment {
      * @return The rendered string
      */
     fun renderTemplate(templateName: String, map: Map<String, Any?> = emptyMap()): String {
-        // TODO: rename -> renderTemplate
         val st = group.getInstanceOf(templateName) ?: throw EnvironmentException("Template '$templateName' not found")
         map
             .filterValues { it != null }
