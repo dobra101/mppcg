@@ -43,11 +43,13 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         }
 
         val expanded = ExpandedExpressionList.of(elements)
+        if (expanded.before.isBlank()) {
+            return RenderResult(
+                renderTemplate(templateName, mapOf("elements" to expanded.expressions))
+            )
+        }
 
-        val map = mapOf(
-            "elements" to expanded.expressions
-        )
-
+        val map = mapOf("elements" to expanded.expressions)
         val rendered = renderTemplate(map)
 
         if (optimize) optimizer.evaluated[this] = rendered
@@ -394,13 +396,19 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun UnaryCollectionExpression.renderSelf(): RenderResult {
-        val map = mapOf(
-            "collection" to collection.render(),
-            "operator" to operator2String(operator)
+        if (optimize) optimizer.loadIfEvaluated(this)?.let { return it }
+        val expanded = ExpandedExpression.of(collection)
+
+        val map = mutableMapOf(
+            "collection" to expanded.expression,
+            "operator" to operator2String(operator),
+            "exprCount" to exprCount
         )
 
+        if (optimize) optimizer.evaluated[this] = "Expr_$exprCount"
+
         return RenderResult(
-            renderTemplate(map),
+            "${expanded.before}${renderTemplate(map)}",
             mapOf("resultExpr" to IndividualInfo("Expr_${exprCount++}"))
         )
     }
@@ -429,11 +437,10 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
 
     // HINT: SAME FOR JAVA AND PROLOG
     override fun Invariant.renderSelf(): RenderResult {
-        if (optimize) optimizer.evaluated = hashMapOf()
-        stateCount = 0
-        exprCount = 0
-
         val checkInvs = List(predicates.size) { idx ->
+            if (optimize) optimizer.evaluated = hashMapOf()
+            exprCount = 0
+            stateCount = 0
             val map = mapOf(
                 "body" to predicates[idx].render(),
                 "idx" to idx

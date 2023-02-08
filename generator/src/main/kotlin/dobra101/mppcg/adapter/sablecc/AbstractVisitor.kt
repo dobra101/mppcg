@@ -3,6 +3,8 @@ package dobra101.mppcg.adapter.sablecc
 import de.be4.classicalb.core.parser.analysis.DepthFirstAdapter
 import de.be4.classicalb.core.parser.node.Node
 import dobra101.mppcg.node.MPPCGNode
+import dobra101.mppcg.node.collection.CollectionNode
+import dobra101.mppcg.node.expression.Expression
 import java.io.FileInputStream
 import java.io.IOException
 import java.util.logging.LogManager
@@ -27,6 +29,13 @@ abstract class AbstractVisitor: DepthFirstAdapter() {
 
     override fun defaultCase(node: Node) {
         throw VisitorException("Not implemented ${node::class}")
+    }
+
+    protected fun Expression.setParameterIfCollection(): Expression {
+        if (this is CollectionNode) {
+            this.isParameter = true
+        }
+        return this
     }
 }
 

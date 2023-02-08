@@ -290,15 +290,15 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseAMaxExpression(node: AMaxExpression) {
-        result = UnaryCollectionExpression(node.expression.convert()!!, UnaryCollectionOperator.MAX)
+        result = UnaryCollectionExpression(node.expression.convert()!!.setParameterIfCollection(), UnaryCollectionOperator.MAX)
     }
 
     override fun caseAMinExpression(node: AMinExpression) {
-        result = UnaryCollectionExpression(node.expression.convert()!!, UnaryCollectionOperator.MIN)
+        result = UnaryCollectionExpression(node.expression.convert()!!.setParameterIfCollection(), UnaryCollectionOperator.MIN)
     }
 
     override fun caseACardExpression(node: ACardExpression) {
-        result = UnaryCollectionExpression(node.expression.convert()!!, UnaryCollectionOperator.CARD)
+        result = UnaryCollectionExpression(node.expression.convert()!!.setParameterIfCollection(), UnaryCollectionOperator.CARD)
     }
 
     override fun caseAConvertIntFloorExpression(node: AConvertIntFloorExpression) {
@@ -342,11 +342,11 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseAPowSubsetExpression(node: APowSubsetExpression) {
-        result = UnaryCollectionExpression(node.expression.convert()!!, UnaryCollectionOperator.POW)
+        result = UnaryCollectionExpression(node.expression.convert()!!.setParameterIfCollection(), UnaryCollectionOperator.POW)
     }
 
     override fun caseAPow1SubsetExpression(node: APow1SubsetExpression) {
-        result = UnaryCollectionExpression(node.expression.convert()!!, UnaryCollectionOperator.POW1)
+        result = UnaryCollectionExpression(node.expression.convert()!!.setParameterIfCollection(), UnaryCollectionOperator.POW1)
     }
 
     override fun caseAFinSubsetExpression(node: AFinSubsetExpression) {
@@ -362,15 +362,15 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseAUnionExpression(node: AUnionExpression) {
-        result = BinaryCollectionExpression(node.left.convert()!!, node.right.convert()!!, BinaryCollectionOperator.UNION)
+        result = BinaryCollectionExpression(node.left.convert()!!.setParameterIfCollection(), node.right.convert()!!.setParameterIfCollection(), BinaryCollectionOperator.UNION)
     }
 
     override fun caseAIntersectionExpression(node: AIntersectionExpression) {
-        result = BinaryCollectionExpression(node.left.convert()!!, node.right.convert()!!, BinaryCollectionOperator.INTERSECTION)
+        result = BinaryCollectionExpression(node.left.convert()!!.setParameterIfCollection(), node.right.convert()!!.setParameterIfCollection(), BinaryCollectionOperator.INTERSECTION)
     }
 
     override fun caseASetSubtractionExpression(node: ASetSubtractionExpression) {
-        result = BinaryCollectionExpression(node.left.convert()!!, node.right.convert()!!, BinaryCollectionOperator.SUBTRACTION)
+        result = BinaryCollectionExpression(node.left.convert()!!.setParameterIfCollection(), node.right.convert()!!.setParameterIfCollection(), BinaryCollectionOperator.SUBTRACTION)
     }
 
     override fun caseAGeneralUnionExpression(node: AGeneralUnionExpression) {

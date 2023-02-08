@@ -59,7 +59,11 @@ class PredicateVisitor : AbstractVisitor() {
     }
 
     override fun caseASubsetPredicate(node: ASubsetPredicate) {
-        result = BinaryPredicate(node.left.convert()!!, node.right.convert()!!, BinaryPredicateOperator.SUBSET)
+        result = BinaryPredicate(
+            node.left.convert()!!.setParameterIfCollection(),
+            node.right.convert()!!.setParameterIfCollection(),
+            BinaryPredicateOperator.SUBSET
+        )
     }
 
     override fun caseAForallPredicate(node: AForallPredicate) {
@@ -158,12 +162,5 @@ class PredicateVisitor : AbstractVisitor() {
 
     override fun caseAOperatorPredicate(node: AOperatorPredicate) {
         TODO("Not implemented ${node::class.simpleName}")
-    }
-
-    private fun Expression.setParameterIfCollection(): Expression {
-        if (this is CollectionNode) {
-            this.isParameter = true
-        }
-        return this
     }
 }
