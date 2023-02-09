@@ -527,6 +527,8 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             "methods" to usedBMethods.render()
         )
 
+        logger.info("Used methods: $usedBMethods")
+
         return RenderResult(renderTemplate(map))
     }
 

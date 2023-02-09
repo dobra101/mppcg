@@ -23,7 +23,7 @@ dependencies {
 }
 
 application {
-    mainClass.set("LauncherKt")
+    mainClass.set("dobra101.mppcg.LauncherKt")
 }
 
 tasks {

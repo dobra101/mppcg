@@ -1,6 +1,6 @@
 // TODO: use remaining variables
 machine(name, parameters, constraints, sets, constants, concrete_constants, properties, definitions, variables, concrete_variables, invariant, assertions, initialization, operations, methods) ::= <<
-:- use_module(environment).
+:- use_module(library(avl)).
 
 <if(sets)>
 <sets; separator=".\n\n">.
@@ -15,6 +15,18 @@ start(st).
 
 % Invariant
 <invariant>
+
+% AVL
+get(State, Key, Value) :-
+    avl:avl_fetch(Key, State, Value).
+
+empty(T) :- avl:empty_avl(T).
+
+update(Key, Value, AVL, NewAVL) :-
+    avl:avl_store(Key, AVL, Value, NewAVL).
+
+avl2List(AVL, List) :-
+    avl:avl_to_list(AVL, List).
 >>
 
 // TODO: add returnValues ?
@@ -97,11 +109,15 @@ props(invariants, indices) ::= <<
 prop(st, uninitialized) :- !.
 prop(State, unsafe) :-
     State \= st,
-    <indices :{ idx | \+ check_inv_<idx>(State);}; separator="\n">
+    \+ check_inv(State),
     !.
 prop(State, List) :-
     State \= st,
     avl2List(State, List),
+    !.
+
+check_inv(State) :-
+    <indices :{ idx | check_inv_<idx>(State),}; separator="\n">
     !.
 
 <invariants>

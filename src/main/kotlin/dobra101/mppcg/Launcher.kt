@@ -1,5 +1,6 @@
+package dobra101.mppcg
+
 import de.be4.classicalb.core.parser.BParser
-import dobra101.mppcg.Generator
 import dobra101.mppcg.environment.*
 import kotlinx.cli.ArgParser
 import kotlinx.cli.ArgType
@@ -7,12 +8,14 @@ import kotlinx.cli.default
 import kotlinx.cli.required
 import java.io.File
 
+// TODO: generate multiple at once
 fun main(args: Array<String>) {
     val argParser = ArgParser("generator")
     val lang by argParser.option(ArgType.Choice<Language>(), description = "Language").required()
     val file by argParser.option(ArgType.String, description = "File").required()
     val parser by argParser.option(ArgType.Choice<Parser>(), description = "Parser").default(Parser.SableCC)
     val optimize by argParser.option(ArgType.Boolean, description = "Optimization").default(false)
+    val benchmark by argParser.option(ArgType.Boolean, description = "Run Benchmarks").default(false)
 
     argParser.parse(args)
 
@@ -25,7 +28,13 @@ fun main(args: Array<String>) {
 
     Generator.environment = environmentOf(lang)
     Generator.environment.optimize = optimize
-    Generator().generate(start)
+    val generated = Generator().generate(start)
+
+    if (benchmark) {
+        if (lang == Language.PROLOG) {
+            benchmarkProlog(generated)
+        }
+    }
 }
 
 private fun environmentOf(language: Language): OutputLanguageEnvironment {
@@ -38,4 +47,24 @@ private fun environmentOf(language: Language): OutputLanguageEnvironment {
 enum class Parser {
     SableCC,
     ANTLR
+}
+
+private fun benchmarkProlog(generated: File) {
+    val prologResourcesPath = "prolog/src/main/resources"
+    val probPath = "$prologResourcesPath/ProB_Signed/probcli.sh"
+    val probArgs = "--model-check -disable-time-out -p OPERATION_REUSE full -pref_group model_check unlimited -p COMPRESSION TRUE -noass -memory"
+
+    val probFile = File("$prologResourcesPath/${generated.nameWithoutExtension}.P")
+
+    if (probFile.exists()) probFile.delete()
+    generated.copyTo(probFile)
+
+    val cmd = "$probPath $probArgs ${probFile.absolutePath}"
+    val process: Process = Runtime.getRuntime().exec(cmd)
+    process.waitFor()
+
+    // TODO: store results
+    println(process.inputReader().readText())
+
+    probFile.deleteOnExit()
 }

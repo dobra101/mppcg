@@ -11,7 +11,7 @@ class Generator {
         lateinit var environment: OutputLanguageEnvironment
     }
 
-    fun generate(start: Start) {
+    fun generate(start: Start): File {
         val machine: Machine = start.convert()
 
         val result = machine.render()
@@ -19,5 +19,6 @@ class Generator {
         val file = File("generator/build/generated/${machine.name}.${environment.fileExtension}")
         file.createNewFile()
         file.writeText(result.rendered)
+        return file
     }
 }
