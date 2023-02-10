@@ -18,8 +18,8 @@ dependencies {
     implementation(project(":prolog"))
 
     implementation("de.hhu.stups:bparser:2.12.1")
-
-    testImplementation(kotlin("test"))
+    testImplementation("io.kotest:kotest-runner-junit5:5.5.5")
+    implementation("io.kotest:kotest-property:5.5.5")
 }
 
 application {
@@ -32,4 +32,8 @@ tasks {
             mkdir("generator/build/generated")
         }
     }
+}
+
+tasks.withType<Test>().configureEach {
+    useJUnitPlatform()
 }

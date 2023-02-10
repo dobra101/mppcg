@@ -2,6 +2,8 @@ package dobra101.mppcg
 
 import de.be4.classicalb.core.parser.BParser
 import dobra101.mppcg.environment.*
+import dobra101.mppcg.prob.ProBResult
+import dobra101.mppcg.prob.ProBResultAnalyser
 import kotlinx.cli.ArgParser
 import kotlinx.cli.ArgType
 import kotlinx.cli.default
@@ -9,6 +11,53 @@ import kotlinx.cli.required
 import java.io.File
 
 // TODO: generate multiple at once
+object Launcher {
+    fun launch(lang: Language, file: String, parser: Parser, optimize: Boolean, benchmark: Boolean): File {
+        val filename = if (file.endsWith(".mch")) file else "$file.mch"
+        val machine = File("build/resources/main/machines/$filename")
+        val start = when (parser) {
+            Parser.SableCC -> BParser(machine.name).parseFile(machine, false)
+            Parser.ANTLR -> throw NotImplementedError("No antlr adapter implemented")
+        }
+
+        Generator.environment = environmentOf(lang)
+        Generator.environment.optimize = optimize
+        val generated = Generator().generate(start)
+
+        if (benchmark) {
+            if (lang == Language.PROLOG) {
+                benchmarkProlog(generated)
+            }
+        }
+
+        return generated
+    }
+
+    fun benchmarkProlog(file: File): ProBResult {
+        val prologResourcesPath = "prolog/src/main/resources"
+        val probPath = "$prologResourcesPath/ProB_Signed/probcli.sh"
+        val probArgs =
+            "--model-check -disable-time-out -p OPERATION_REUSE full -pref_group model_check unlimited -p COMPRESSION TRUE -noass -memory"
+
+        val probFile = File("$prologResourcesPath/${file.nameWithoutExtension}.P")
+
+        if (probFile.exists()) probFile.delete()
+        file.copyTo(probFile)
+
+        val cmd = "$probPath $probArgs ${probFile.absolutePath}"
+        val process: Process = Runtime.getRuntime().exec(cmd)
+        process.waitFor()
+
+        // TODO: store results
+        val probOutput = process.inputReader().readText()
+        val proBResult = ProBResultAnalyser.analyze(probOutput)
+        println(proBResult)
+
+        probFile.deleteOnExit()
+        return proBResult
+    }
+}
+
 fun main(args: Array<String>) {
     val argParser = ArgParser("generator")
     val lang by argParser.option(ArgType.Choice<Language>(), description = "Language").required()
@@ -19,22 +68,7 @@ fun main(args: Array<String>) {
 
     argParser.parse(args)
 
-    val filename = if (file.endsWith(".mch")) file else "$file.mch"
-    val machine = File("build/resources/main/machines/$filename")
-    val start = when (parser) {
-        Parser.SableCC -> BParser(machine.name).parseFile(machine, false)
-        Parser.ANTLR -> throw NotImplementedError("No antlr adapter implemented")
-    }
-
-    Generator.environment = environmentOf(lang)
-    Generator.environment.optimize = optimize
-    val generated = Generator().generate(start)
-
-    if (benchmark) {
-        if (lang == Language.PROLOG) {
-            benchmarkProlog(generated)
-        }
-    }
+    Launcher.launch(lang, file, parser, optimize, benchmark)
 }
 
 private fun environmentOf(language: Language): OutputLanguageEnvironment {
@@ -47,24 +81,4 @@ private fun environmentOf(language: Language): OutputLanguageEnvironment {
 enum class Parser {
     SableCC,
     ANTLR
-}
-
-private fun benchmarkProlog(generated: File) {
-    val prologResourcesPath = "prolog/src/main/resources"
-    val probPath = "$prologResourcesPath/ProB_Signed/probcli.sh"
-    val probArgs = "--model-check -disable-time-out -p OPERATION_REUSE full -pref_group model_check unlimited -p COMPRESSION TRUE -noass -memory"
-
-    val probFile = File("$prologResourcesPath/${generated.nameWithoutExtension}.P")
-
-    if (probFile.exists()) probFile.delete()
-    generated.copyTo(probFile)
-
-    val cmd = "$probPath $probArgs ${probFile.absolutePath}"
-    val process: Process = Runtime.getRuntime().exec(cmd)
-    process.waitFor()
-
-    // TODO: store results
-    println(process.inputReader().readText())
-
-    probFile.deleteOnExit()
 }
