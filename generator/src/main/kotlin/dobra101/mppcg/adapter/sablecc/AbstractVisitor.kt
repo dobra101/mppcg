@@ -15,6 +15,9 @@ import java.util.logging.Logger
  * when the visitor finished.
  */
 abstract class AbstractVisitor: DepthFirstAdapter() {
+    companion object {
+        var result: MPPCGNode? = null
+    }
     abstract val result: MPPCGNode?
     protected val logger: Logger = Logger.getLogger(this::class.simpleName)
 

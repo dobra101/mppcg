@@ -10,6 +10,8 @@ interface TypeNumber : Type
 
 class TypeReal : TypeNumber
 
+class TypeNatural : TypeNumber
+
 class TypeInteger : TypeNumber {
     override fun equals(other: Any?): Boolean {
         return other is TypeInteger
@@ -19,6 +21,8 @@ class TypeInteger : TypeNumber {
         return javaClass.hashCode()
     }
 }
+
+class TypeBoolean(val value: BooleanValue? = null) : Type
 
 class TypeString : Type
 
@@ -41,6 +45,11 @@ enum class SetType {
     NATURAL,
     NAT,
     BOOL
+}
+
+enum class BooleanValue {
+    TRUE,
+    FALSE
 }
 
 class UnknownTypeException(msg: String): Exception("Unknown type $msg")

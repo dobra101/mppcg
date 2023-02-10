@@ -4,8 +4,16 @@ binaryPredicate(lhs, operator, rhs, prefixOperator) ::= <<
 <lhs> <operator> <rhs><endif>
 >>
 
-// TODO: add parenthesis
-logicPredicate(lhs, operator, rhs) ::= <<
+binaryLogicPredicate(lhs, operator, rhs, addParentheses, inline) ::= <<
+<if(addParentheses)>
+<if(inline)>(<lhs><operator><rhs>)<else>
+(<lhs><operator>
+<rhs>)<endif><else>
+<if(inline)><lhs><operator><rhs><else>
 <lhs><operator>
-<rhs>
+<rhs><endif><endif>
+>>
+
+unaryLogicPredicate(predicate, operator) ::= <<
+<operator><predicate>
 >>

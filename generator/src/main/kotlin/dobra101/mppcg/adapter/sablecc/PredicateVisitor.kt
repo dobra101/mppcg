@@ -1,8 +1,6 @@
 package dobra101.mppcg.adapter.sablecc
 
 import de.be4.classicalb.core.parser.node.*
-import dobra101.mppcg.node.collection.CollectionNode
-import dobra101.mppcg.node.expression.Expression
 import dobra101.mppcg.node.expression.IdentifierExpression
 import dobra101.mppcg.node.predicate.*
 
@@ -51,11 +49,11 @@ class PredicateVisitor : AbstractVisitor() {
     }
 
     override fun caseAConjunctPredicate(node: AConjunctPredicate) {
-        result = LogicPredicate(node.left.convert()!!, node.right.convert()!!, LogicPredicateOperator.AND)
+        result = BinaryLogicPredicate(node.left.convert()!!, node.right.convert()!!, LogicPredicateOperator.AND)
     }
 
     override fun caseADisjunctPredicate(node: ADisjunctPredicate) {
-        result = LogicPredicate(node.left.convert()!!, node.right.convert()!!, LogicPredicateOperator.OR)
+        result = BinaryLogicPredicate(node.left.convert()!!, node.right.convert()!!, LogicPredicateOperator.OR)
     }
 
     override fun caseASubsetPredicate(node: ASubsetPredicate) {
@@ -97,15 +95,15 @@ class PredicateVisitor : AbstractVisitor() {
     }
 
     override fun caseANegationPredicate(node: ANegationPredicate) {
-        TODO("Not implemented ${node::class.simpleName}")
+        result = UnaryLogicPredicate(node.predicate.convert()!!, LogicPredicateOperator.NOT)
     }
 
     override fun caseAImplicationPredicate(node: AImplicationPredicate) {
-        result = LogicPredicate(node.left.convert()!!, node.right.convert()!!, LogicPredicateOperator.IMPLIES)
+        result = BinaryLogicPredicate(node.left.convert()!!, node.right.convert()!!, LogicPredicateOperator.IMPLIES)
     }
 
     override fun caseAEquivalencePredicate(node: AEquivalencePredicate) {
-        TODO("Not implemented ${node::class.simpleName}")
+        result = BinaryLogicPredicate(node.left.convert()!!, node.right.convert()!!, LogicPredicateOperator.EQUIVALENCE)
     }
 
     override fun caseASubsetStrictPredicate(node: ASubsetStrictPredicate) {

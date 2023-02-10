@@ -2,9 +2,11 @@ package dobra101.mppcg.environment
 
 import dobra101.mppcg.RenderResult
 import dobra101.mppcg.node.MPPCGNode
+import dobra101.mppcg.node.TypeBoolean
 import dobra101.mppcg.node.collection.CollectionEntry
 import dobra101.mppcg.node.collection.SetEntry
 import dobra101.mppcg.node.expression.IdentifierExpression
+import dobra101.mppcg.node.expression.ValueExpression
 import dobra101.mppcg.node.predicate.BinaryPredicate
 import dobra101.mppcg.node.predicate.BinaryPredicateOperator
 
@@ -23,14 +25,24 @@ class PrologOptimizer(private val environment: PrologOutputEnvironment) {
      */
     fun renderOptimized(node: BinaryPredicate): RenderResult? {
         if (node.operator == BinaryPredicateOperator.EQUAL &&
-            (node.right is IdentifierExpression || node.right is SetEntry || node.right is CollectionEntry)
+            (node.right is IdentifierExpression
+                    || node.right is SetEntry
+                    || node.right is CollectionEntry
+                    || node.right is ValueExpression)
         ) {
             if (node.left !is IdentifierExpression) return null
 
             val rhs = when (node.right) {
-                is IdentifierExpression -> (node.right as IdentifierExpression).name
-                is SetEntry -> (node.right as SetEntry).name
-                is CollectionEntry -> (node.right as CollectionEntry).name
+                is IdentifierExpression -> "'${(node.right as IdentifierExpression).name}'"
+                is SetEntry -> "'${(node.right as SetEntry).name}'"
+                is CollectionEntry -> "'${(node.right as CollectionEntry).name}'"
+                is ValueExpression -> {
+                    if((node.right as ValueExpression).type is TypeBoolean) {
+                        node.right.render().rendered
+                    } else {
+                        ""
+                    }
+                }
                 else -> "" // when is exhaustive
             }
 

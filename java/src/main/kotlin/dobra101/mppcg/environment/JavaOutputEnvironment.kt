@@ -9,10 +9,7 @@ import dobra101.mppcg.node.expression.BinaryExpression
 import dobra101.mppcg.node.expression.IdentifierExpression
 import dobra101.mppcg.node.expression.IntervalExpression
 import dobra101.mppcg.node.expression.ValueExpression
-import dobra101.mppcg.node.predicate.BinaryPredicate
-import dobra101.mppcg.node.predicate.BinaryPredicateOperator
-import dobra101.mppcg.node.predicate.LogicPredicate
-import dobra101.mppcg.node.predicate.QuantifierPredicate
+import dobra101.mppcg.node.predicate.*
 import dobra101.mppcg.node.substitution.AssignSubstitution
 import dobra101.mppcg.node.substitution.IfSubstitution
 import dobra101.mppcg.node.substitution.ParallelSubstitution
@@ -124,9 +121,9 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         return RenderResult(renderTemplate(map))
     }
 
-    override fun LogicPredicate.renderSelf(): RenderResult {
-        val lhs = if (left is LogicPredicate) "(${left.render().rendered})" else left.render().rendered
-        val rhs = if (right is LogicPredicate) "(${right.render().rendered})" else right.render().rendered
+    override fun BinaryLogicPredicate.renderSelf(): RenderResult {
+        val lhs = if (left is BinaryLogicPredicate) "(${left.render().rendered})" else left.render().rendered
+        val rhs = if (right is BinaryLogicPredicate) "(${right.render().rendered})" else right.render().rendered
 
         val map = mapOf(
             "lhs" to lhs,
@@ -135,6 +132,10 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         )
 
         return RenderResult(renderTemplate(map))
+    }
+
+    override fun UnaryLogicPredicate.renderSelf(): RenderResult {
+        TODO("Not yet implemented")
     }
 
     /* ---------- SUBSTITUTIONS ---------- */

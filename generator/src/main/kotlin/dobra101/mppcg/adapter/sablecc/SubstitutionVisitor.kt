@@ -73,7 +73,7 @@ class SubstitutionVisitor : AbstractVisitor() {
             node.condition.convert()!!,
             node.then.convert()!!,
             node.elsifSubstitutions.convert(),
-            node.`else`.convert()!!
+            node.`else`.convert()
         )
     }
 

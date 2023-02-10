@@ -45,6 +45,8 @@ abstract class EnvironmentUtils {
             LogicPredicateOperator.AND -> "&&"
             LogicPredicateOperator.OR -> "||"
             LogicPredicateOperator.IMPLIES -> "=>"
+            LogicPredicateOperator.EQUIVALENCE -> "<=>"
+            LogicPredicateOperator.NOT -> "!"
         }
     }
 

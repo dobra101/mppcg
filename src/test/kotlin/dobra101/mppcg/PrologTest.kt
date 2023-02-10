@@ -27,7 +27,6 @@ class PrologTest : ExpectSpec({
         return ProBResultAnalyser.analyze(probOutput)
     }
 
-    // TODO: ProB result auf .P müsste dem von .mch entsprechen, aber bei .P states+1 und transitions+1
     listOf("Lift_PG", "TrafficLight").forAll { machineName ->
         context(machineName) {
             val mchResult = runProB(machineName)
@@ -51,5 +50,4 @@ class PrologTest : ExpectSpec({
             }
         }
     }
-
 })

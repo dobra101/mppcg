@@ -1,6 +1,6 @@
 package dobra101.mppcg.node.b
 
-import dobra101.mppcg.node.predicate.LogicPredicate
+import dobra101.mppcg.node.predicate.BinaryLogicPredicate
 import dobra101.mppcg.node.predicate.LogicPredicateOperator
 import dobra101.mppcg.node.predicate.Predicate
 
@@ -11,7 +11,7 @@ data class Invariant(
         fun of(predicate: Predicate?): Invariant {
             if (predicate == null) return Invariant()
 
-            if (predicate !is LogicPredicate) {
+            if (predicate !is BinaryLogicPredicate) {
                 throw InvariantException("Predicate is not a LogicPredicate. (${predicate::class.simpleName})")
             }
 
@@ -27,7 +27,7 @@ data class Invariant(
         }
 
         private fun Predicate.asList(): List<Predicate> {
-            if (this !is LogicPredicate) return listOf(this)
+            if (this !is BinaryLogicPredicate) return listOf(this)
 
             if (operator != LogicPredicateOperator.AND) return listOf(this)
 

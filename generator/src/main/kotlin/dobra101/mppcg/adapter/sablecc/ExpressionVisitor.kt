@@ -10,6 +10,10 @@ import dobra101.mppcg.node.expression.*
 class ExpressionVisitor : AbstractVisitor() {
 
     override var result: Expression? = null
+        set(value) {
+            AbstractVisitor.result = value
+            field = value
+        }
 
     override fun caseTIdentifierLiteral(node: TIdentifierLiteral) {
         val parent = node.parent().parent() // first "parent" is AIdentifierExpression
@@ -127,11 +131,23 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseAIntegerSetExpression(node: AIntegerSetExpression) {
-        result = InfiniteSet(TypeSet(SetType.INTEGER))
+        if (node.parent() is AMemberPredicate && AbstractVisitor.result is Expression) {
+            // is type info
+            (AbstractVisitor.result as Expression).type = TypeInteger()
+            result = AbstractVisitor.result as Expression
+        } else {
+            result = InfiniteSet(TypeSet(SetType.INTEGER))
+        }
     }
 
     override fun caseANaturalSetExpression(node: ANaturalSetExpression) {
-        result = InfiniteSet(TypeSet(SetType.NATURAL))
+        if (node.parent() is AMemberPredicate && AbstractVisitor.result is Expression) {
+            // is type info
+            (AbstractVisitor.result as Expression).type = TypeNatural()
+            result = AbstractVisitor.result as Expression
+        } else {
+            result = InfiniteSet(TypeSet(SetType.NATURAL))
+        }
     }
 
     override fun caseASetExtensionExpression(node: ASetExtensionExpression) {
@@ -173,11 +189,11 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseABooleanTrueExpression(node: ABooleanTrueExpression) {
-        TODO("Not implemented ${node::class.simpleName}")
+        result = ValueExpression("", type = TypeBoolean(BooleanValue.TRUE))
     }
 
     override fun caseABooleanFalseExpression(node: ABooleanFalseExpression) {
-        TODO("Not implemented ${node::class.simpleName}")
+        result = ValueExpression("", type = TypeBoolean(BooleanValue.FALSE))
     }
 
     override fun caseAIntegerExpression(node: AIntegerExpression) {
@@ -226,7 +242,19 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseABoolSetExpression(node: ABoolSetExpression) {
-        TODO("Not implemented ${node::class.simpleName}")
+        if (AbstractVisitor.result is Expression) {
+            if ((AbstractVisitor.result as Expression).type != null) {
+                logger.severe("Cannot reassign type Bool of ${AbstractVisitor.result}")
+                return
+            }
+            (AbstractVisitor.result as Expression).type = TypeBoolean()
+            result = AnonymousSetCollectionNode(
+                listOf(
+                    ValueExpression("", TypeBoolean(BooleanValue.TRUE)),
+                    ValueExpression("", TypeBoolean(BooleanValue.FALSE))
+                )
+            )
+        }
     }
 
     override fun caseAStringSetExpression(node: AStringSetExpression) {
@@ -290,15 +318,24 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseAMaxExpression(node: AMaxExpression) {
-        result = UnaryCollectionExpression(node.expression.convert()!!.setParameterIfCollection(), UnaryCollectionOperator.MAX)
+        result = UnaryCollectionExpression(
+            node.expression.convert()!!.setParameterIfCollection(),
+            UnaryCollectionOperator.MAX
+        )
     }
 
     override fun caseAMinExpression(node: AMinExpression) {
-        result = UnaryCollectionExpression(node.expression.convert()!!.setParameterIfCollection(), UnaryCollectionOperator.MIN)
+        result = UnaryCollectionExpression(
+            node.expression.convert()!!.setParameterIfCollection(),
+            UnaryCollectionOperator.MIN
+        )
     }
 
     override fun caseACardExpression(node: ACardExpression) {
-        result = UnaryCollectionExpression(node.expression.convert()!!.setParameterIfCollection(), UnaryCollectionOperator.CARD)
+        result = UnaryCollectionExpression(
+            node.expression.convert()!!.setParameterIfCollection(),
+            UnaryCollectionOperator.CARD
+        )
     }
 
     override fun caseAConvertIntFloorExpression(node: AConvertIntFloorExpression) {
@@ -342,11 +379,17 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseAPowSubsetExpression(node: APowSubsetExpression) {
-        result = UnaryCollectionExpression(node.expression.convert()!!.setParameterIfCollection(), UnaryCollectionOperator.POW)
+        result = UnaryCollectionExpression(
+            node.expression.convert()!!.setParameterIfCollection(),
+            UnaryCollectionOperator.POW
+        )
     }
 
     override fun caseAPow1SubsetExpression(node: APow1SubsetExpression) {
-        result = UnaryCollectionExpression(node.expression.convert()!!.setParameterIfCollection(), UnaryCollectionOperator.POW1)
+        result = UnaryCollectionExpression(
+            node.expression.convert()!!.setParameterIfCollection(),
+            UnaryCollectionOperator.POW1
+        )
     }
 
     override fun caseAFinSubsetExpression(node: AFinSubsetExpression) {
@@ -362,15 +405,27 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseAUnionExpression(node: AUnionExpression) {
-        result = BinaryCollectionExpression(node.left.convert()!!.setParameterIfCollection(), node.right.convert()!!.setParameterIfCollection(), BinaryCollectionOperator.UNION)
+        result = BinaryCollectionExpression(
+            node.left.convert()!!.setParameterIfCollection(),
+            node.right.convert()!!.setParameterIfCollection(),
+            BinaryCollectionOperator.UNION
+        )
     }
 
     override fun caseAIntersectionExpression(node: AIntersectionExpression) {
-        result = BinaryCollectionExpression(node.left.convert()!!.setParameterIfCollection(), node.right.convert()!!.setParameterIfCollection(), BinaryCollectionOperator.INTERSECTION)
+        result = BinaryCollectionExpression(
+            node.left.convert()!!.setParameterIfCollection(),
+            node.right.convert()!!.setParameterIfCollection(),
+            BinaryCollectionOperator.INTERSECTION
+        )
     }
 
     override fun caseASetSubtractionExpression(node: ASetSubtractionExpression) {
-        result = BinaryCollectionExpression(node.left.convert()!!.setParameterIfCollection(), node.right.convert()!!.setParameterIfCollection(), BinaryCollectionOperator.SUBTRACTION)
+        result = BinaryCollectionExpression(
+            node.left.convert()!!.setParameterIfCollection(),
+            node.right.convert()!!.setParameterIfCollection(),
+            BinaryCollectionOperator.SUBTRACTION
+        )
     }
 
     override fun caseAGeneralUnionExpression(node: AGeneralUnionExpression) {
@@ -474,23 +529,40 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseADomainRestrictionExpression(node: ADomainRestrictionExpression) {
-        result = BinaryFunctionExpression(node.left.convert()!!, node.right.convert()!!, BinaryFunctionOperator.DOMAIN_RESTRICTION)
+        result = BinaryFunctionExpression(
+            node.left.convert()!!,
+            node.right.convert()!!,
+            BinaryFunctionOperator.DOMAIN_RESTRICTION
+        )
     }
 
     override fun caseADomainSubtractionExpression(node: ADomainSubtractionExpression) {
-        result = BinaryFunctionExpression(node.left.convert()!!, node.right.convert()!!, BinaryFunctionOperator.DOMAIN_SUBTRACTION)
+        result = BinaryFunctionExpression(
+            node.left.convert()!!,
+            node.right.convert()!!,
+            BinaryFunctionOperator.DOMAIN_SUBTRACTION
+        )
     }
 
     override fun caseARangeRestrictionExpression(node: ARangeRestrictionExpression) {
-        result = BinaryFunctionExpression(node.left.convert()!!, node.right.convert()!!, BinaryFunctionOperator.RANGE_RESTRICTION)
+        result = BinaryFunctionExpression(
+            node.left.convert()!!,
+            node.right.convert()!!,
+            BinaryFunctionOperator.RANGE_RESTRICTION
+        )
     }
 
     override fun caseARangeSubtractionExpression(node: ARangeSubtractionExpression) {
-        result = BinaryFunctionExpression(node.left.convert()!!, node.right.convert()!!, BinaryFunctionOperator.RANGE_SUBTRACTION)
+        result = BinaryFunctionExpression(
+            node.left.convert()!!,
+            node.right.convert()!!,
+            BinaryFunctionOperator.RANGE_SUBTRACTION
+        )
     }
 
     override fun caseAOverwriteExpression(node: AOverwriteExpression) {
-        result = BinaryFunctionExpression(node.left.convert()!!, node.right.convert()!!, BinaryFunctionOperator.OVERWRITE)
+        result =
+            BinaryFunctionExpression(node.left.convert()!!, node.right.convert()!!, BinaryFunctionOperator.OVERWRITE)
     }
 
     override fun caseATotalRelationExpression(node: ATotalRelationExpression) {

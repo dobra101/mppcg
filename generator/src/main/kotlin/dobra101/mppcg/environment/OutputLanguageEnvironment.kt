@@ -6,10 +6,7 @@ import dobra101.mppcg.node.b.*
 import dobra101.mppcg.node.b.Function
 import dobra101.mppcg.node.collection.*
 import dobra101.mppcg.node.expression.*
-import dobra101.mppcg.node.predicate.BinaryPredicate
-import dobra101.mppcg.node.predicate.LogicPredicate
-import dobra101.mppcg.node.predicate.Predicate
-import dobra101.mppcg.node.predicate.QuantifierPredicate
+import dobra101.mppcg.node.predicate.*
 import dobra101.mppcg.node.substitution.*
 import org.stringtemplate.v4.STGroup
 import org.stringtemplate.v4.STGroupFile
@@ -56,7 +53,8 @@ abstract class OutputLanguageEnvironment : EnvironmentUtils(), BEnvironment {
 
     /* Predicate */
     abstract fun BinaryPredicate.renderSelf(): RenderResult
-    abstract fun LogicPredicate.renderSelf(): RenderResult
+    abstract fun BinaryLogicPredicate.renderSelf(): RenderResult
+    abstract fun UnaryLogicPredicate.renderSelf(): RenderResult
 
     /* Substitution */
     abstract fun AssignSubstitution.renderSelf(): RenderResult
@@ -107,7 +105,8 @@ abstract class OutputLanguageEnvironment : EnvironmentUtils(), BEnvironment {
     private fun callPredicate(node: Predicate): RenderResult {
         return when (node) {
             is BinaryPredicate -> node.renderSelf()
-            is LogicPredicate -> node.renderSelf()
+            is BinaryLogicPredicate -> node.renderSelf()
+            is UnaryLogicPredicate -> node.renderSelf()
 
             /* B Predicates */
             is Invariant -> node.renderSelf()

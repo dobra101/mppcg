@@ -6,5 +6,5 @@ data class IfSubstitution(
     val condition: Predicate,
     val then: Substitution,
     val elseIf: List<Substitution>,
-    val elseSubstitution: Substitution
+    val elseSubstitution: Substitution?
 ) : Substitution("ifSubstitution")
