@@ -16,7 +16,7 @@ data class Invariant(
             }
 
             if (predicate.operator != LogicPredicateOperator.AND) {
-                throw InvariantException("Can not split invariant at operator ${predicate.operator}")
+                return Invariant(listOf(predicate))
             }
 
             val list: MutableList<Predicate> = mutableListOf()

@@ -27,7 +27,7 @@ class PrologTest : ExpectSpec({
         return ProBResultAnalyser.analyze(probOutput)
     }
 
-    listOf("Lift_PG", "TrafficLight").forAll { machineName ->
+    listOf("Lift_PG", "TrafficLight", "Cruise_finite1_deterministic_MC").forAll { machineName ->
         context(machineName) {
             val mchResult = runProB(machineName)
             listOf(true, false).forAll { optimize ->

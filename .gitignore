@@ -14,5 +14,6 @@
 .DS_Store
 .AppleDouble
 .LSOverride
-/benchmarks/Prolog/ProB_Signed/
-/benchmarks/*/runtimes.txt
+
+/prolog/src/main/resources/ProB_Signed/
+/prolog/src/main/resources/runtimes.txt

@@ -188,20 +188,24 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
 
     // HINT: SAME AS BINARY PREDICATE (except optimization)
     override fun BinaryLogicPredicate.renderSelf(): RenderResult {
+        fun inline(lineBreaks: Int): Boolean {
+            if (lineBreaks != 0) return false
+            if (operator == LogicPredicateOperator.AND) return false
+            if (left !is BinaryPredicate) return false
+            if (right !is BinaryPredicate) return false
+            return true
+        }
+
         val expanded = ExpandedBinary.of(left, right)
 
         val lineBreaksTotal = expanded.lhs.count { it == '\n' } + expanded.rhs.count { it == '\n' }
-        if (lineBreaksTotal == 0) {
-            println(left)
-            println(right)
-            println("======")
-        }
         val map = mapOf(
             "lhs" to expanded.lhs,
             "rhs" to expanded.rhs,
             "operator" to operator2String(operator),
+            "equivalence" to (operator == LogicPredicateOperator.EQUIVALENCE),
             "addParentheses" to (operator == LogicPredicateOperator.IMPLIES),
-            "inline" to (lineBreaksTotal == 0 && left is BinaryPredicate && right is BinaryPredicate)
+            "inline" to inline(lineBreaksTotal)
         )
 
         val rendered = renderTemplate(map)
@@ -247,6 +251,69 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun IfSubstitution.renderSelf(): RenderResult {
+        fun addStateAndExprCountFixingElseBranch(
+            stateCountBefore: Int,
+            exprCountBefore: Int,
+            map: MutableMap<String, Any>,
+            thenRendered: RenderResult
+        ) {
+            val elseBranch = StringBuilder()
+            if (stateCountBefore < stateCount) {
+                val countMap = mapOf("newCount" to stateCount, "oldCount" to stateCountBefore)
+                elseBranch.append(renderTemplate("updateStateCount", countMap))
+            }
+
+            if (exprCountBefore < exprCount) {
+                val countMap = mapOf("newCount" to exprCount, "oldCount" to exprCountBefore)
+                elseBranch.append(renderTemplate("updateExprCount", countMap))
+            }
+            map["then"] = thenRendered
+            if (elseBranch.isNotBlank()) {
+                map["elseSubstitution"] = elseBranch.toString()
+            }
+        }
+
+        fun fixStateAndExprCountInBranches(
+            thenRendered: RenderResult,
+            elseRendered: RenderResult,
+            stateCountAfterThen: Int,
+            exprCountAfterThen: Int,
+            map: MutableMap<String, Any>
+        ) {
+            // set the stateCount and exprCount for the main branch
+            val thenStringBuilder = StringBuilder(thenRendered.rendered)
+            val elseStringBuilder = StringBuilder(elseRendered.rendered)
+
+            // stateCount
+            if (stateCountAfterThen < stateCount) {
+                val countMap = mapOf("newCount" to stateCount, "oldCount" to stateCountAfterThen)
+                thenStringBuilder
+                    .append(EXPRESSION_SEPARATOR)
+                    .append(renderTemplate("updateStateCount", countMap))
+            } else if (stateCountAfterThen > stateCount) {
+                val countMap = mapOf("newCount" to stateCountAfterThen, "oldCount" to stateCount)
+                elseStringBuilder
+                    .append(EXPRESSION_SEPARATOR)
+                    .append(renderTemplate("updateStateCount", countMap))
+            }
+
+            // exprCount
+            if (exprCountAfterThen < exprCount) {
+                val countMap = mapOf("newCount" to exprCount - 1, "oldCount" to exprCountAfterThen - 1)
+                thenStringBuilder
+                    .append(EXPRESSION_SEPARATOR)
+                    .append(renderTemplate("updateExprCount", countMap))
+            } else if (exprCountAfterThen > exprCount) {
+                val countMap = mapOf("newCount" to exprCountAfterThen - 1, "oldCount" to exprCount - 1)
+                elseStringBuilder
+                    .append(EXPRESSION_SEPARATOR)
+                    .append(renderTemplate("updateExprCount", countMap))
+            }
+
+            map["then"] = RenderResult(thenStringBuilder.toString(), thenRendered.info)
+            map["elseSubstitution"] = RenderResult(elseStringBuilder.toString(), elseRendered.info)
+        }
+
         val map = mutableMapOf(
             "condition" to condition.render(),
             "elseIf" to elseIf.render()
@@ -256,107 +323,30 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         val exprCountBefore = exprCount
 
         val thenRendered = then.render()
-        var before = ""
 
         if (elseSubstitution == null) {
-            val mainBranch = StringBuilder("")
-            // TODO: extract to function
-            // set the stateCount and exprCount for the main branch
-            if (stateCountBefore < stateCount) {
-                mainBranch.append(
-                    renderTemplate(
-                        "updateStateCount", mapOf(
-                            "newCount" to stateCount,
-                            "oldCount" to stateCountBefore
-                        )
-                    )
-                )
-                    .append(EXPRESSION_SEPARATOR)
-            }
-
-            if (exprCountBefore < exprCount) {
-                mainBranch.append(
-                    renderTemplate(
-                        "updateExprCount", mapOf(
-                            "newCount" to exprCount,
-                            "oldCount" to exprCountBefore
-                        )
-                    )
-                )
-                    .append(EXPRESSION_SEPARATOR)
-            }
-            map["then"] = thenRendered
-            before = mainBranch.toString()
+            addStateAndExprCountFixingElseBranch(stateCountBefore, exprCountBefore, map, thenRendered)
         } else {
-            // TODO: extract to function
-
             val stateCountAfterThen = stateCount
             val exprCountAfterThen = exprCount
             stateCount = stateCountBefore
             exprCount = exprCountBefore
 
             val elseRendered = elseSubstitution!!.render()
-            val stateCountAfterElse = stateCount
-            val exprCountAfterElse = exprCount
 
-            stateCount = max(stateCountAfterThen, stateCountAfterElse)
-            exprCount = max(exprCountAfterThen, exprCountAfterElse)
+            fixStateAndExprCountInBranches(
+                thenRendered = thenRendered,
+                elseRendered = elseRendered,
+                stateCountAfterThen = stateCountAfterThen,
+                exprCountAfterThen = exprCountAfterThen,
+                map = map
+            )
 
-            // set the stateCount and exprCount for the main branch
-            val thenStringBuilder = StringBuilder(thenRendered.rendered)
-            val elseStringBuilder = StringBuilder(elseRendered.rendered)
-
-            // stateCount
-            if (stateCountAfterThen < stateCountAfterElse) {
-                thenStringBuilder.append(EXPRESSION_SEPARATOR)
-                    .append(
-                        renderTemplate(
-                            "updateStateCount", mapOf(
-                                "newCount" to stateCount,
-                                "oldCount" to stateCountAfterThen
-                            )
-                        )
-                    )
-            } else if (stateCountAfterThen > stateCountAfterElse) {
-                elseStringBuilder.append(EXPRESSION_SEPARATOR)
-                    .append(
-                        renderTemplate(
-                            "updateStateCount", mapOf(
-                                "newCount" to stateCount,
-                                "oldCount" to stateCountAfterElse
-                            )
-                        )
-                    )
-            }
-
-            // exprCount
-            if (exprCountAfterThen < exprCountAfterElse) {
-                thenStringBuilder.append(EXPRESSION_SEPARATOR)
-                    .append(
-                        renderTemplate(
-                            "updateExprCount", mapOf(
-                                "newCount" to exprCount - 1,
-                                "oldCount" to exprCountAfterThen - 1
-                            )
-                        )
-                    )
-            } else if (exprCountAfterThen > exprCountAfterElse) {
-                elseStringBuilder.append(EXPRESSION_SEPARATOR)
-                    .append(
-                        renderTemplate(
-                            "updateExprCount", mapOf(
-                                "newCount" to exprCount - 1,
-                                "oldCount" to exprCountAfterElse - 1
-                            )
-                        )
-                    )
-            }
-
-            map["then"] = RenderResult(thenStringBuilder.toString(), thenRendered.info)
-            map["elseSubstitution"] = RenderResult(elseStringBuilder.toString(), elseRendered.info)
+            stateCount = max(stateCountAfterThen, stateCount)
+            exprCount = max(exprCountAfterThen, exprCount)
         }
 
-        return RenderResult("$before${renderTemplate(map)}")
+        return RenderResult(renderTemplate(map))
     }
 
     override fun SequenceSubstitution.renderSelf(): RenderResult {

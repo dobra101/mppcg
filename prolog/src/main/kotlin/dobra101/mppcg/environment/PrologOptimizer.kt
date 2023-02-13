@@ -3,6 +3,7 @@ package dobra101.mppcg.environment
 import dobra101.mppcg.RenderResult
 import dobra101.mppcg.node.MPPCGNode
 import dobra101.mppcg.node.TypeBoolean
+import dobra101.mppcg.node.TypeInteger
 import dobra101.mppcg.node.collection.CollectionEntry
 import dobra101.mppcg.node.collection.SetEntry
 import dobra101.mppcg.node.expression.IdentifierExpression
@@ -36,13 +37,7 @@ class PrologOptimizer(private val environment: PrologOutputEnvironment) {
                 is IdentifierExpression -> "'${(node.right as IdentifierExpression).name}'"
                 is SetEntry -> "'${(node.right as SetEntry).name}'"
                 is CollectionEntry -> "'${(node.right as CollectionEntry).name}'"
-                is ValueExpression -> {
-                    if((node.right as ValueExpression).type is TypeBoolean) {
-                        node.right.render().rendered
-                    } else {
-                        ""
-                    }
-                }
+                is ValueExpression -> (node.right as ValueExpression).rendered()
                 else -> "" // when is exhaustive
             }
 
@@ -54,6 +49,14 @@ class PrologOptimizer(private val environment: PrologOutputEnvironment) {
             return RenderResult(environment.renderTemplate("optimizedBinaryPredicateEqual", map))
         }
         return null
+    }
+
+    private fun ValueExpression.rendered(): String {
+        return when (type) {
+            is TypeBoolean -> render().rendered
+            is TypeInteger -> render().rendered
+            else -> ""
+        }
     }
 
     fun loadIfEvaluated(node: MPPCGNode): RenderResult? {
