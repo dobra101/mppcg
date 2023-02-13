@@ -1,6 +1,7 @@
 // TODO: use remaining variables
 machine(name, parameters, constraints, sets, constants, concrete_constants, properties, definitions, variables, concrete_variables, invariant, assertions, initialization, operations, methods) ::= <<
 :- use_module(library(avl)).
+:- use_module(library(lists)).
 
 <if(sets)>
 <sets; separator=".\n\n">.
@@ -15,6 +16,9 @@ start(st).
 
 % Invariant
 <invariant>
+
+% Custom predicates
+<methods; separator="\n\n">
 
 % AVL
 get(State, Key, Value) :-
@@ -123,6 +127,16 @@ check_inv(State) :-
 <invariants>
 >>
 
+member(name) ::= <<
+<name>(Element, List) :-
+    is_list(List), !,
+    member(Element, List).
+<name>(Element, 'NAT') :-
+    between(0, infinite, Element).
+<name>(Element, (A, B)) :-
+    between(A, B, Element).
+>>
+
 domain() ::= <<
 >>
 
@@ -156,4 +170,8 @@ State_<newCount> = State_<oldCount>
 
 updateExprCount(newCount, oldCount) ::= <<
 Expr_<newCount> = Expr_<oldCount>
+>>
+
+infiniteSetExpression(type) ::= <<
+<type>
 >>

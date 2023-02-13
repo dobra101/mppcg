@@ -46,10 +46,18 @@ object Launcher {
 
         val cmd = "$probPath $probArgs ${probFile.absolutePath}"
         val process: Process = Runtime.getRuntime().exec(cmd)
-        process.waitFor()
+        val exitValue = process.waitFor()
+
+        val probOutput = process.inputReader().readText()
+
+        if (exitValue != 0) {
+            val error = process.errorReader().readText()
+            val msg = "$probOutput\n$error"
+            probFile.deleteOnExit()
+            throw RuntimeException(msg)
+        }
 
         // TODO: store results
-        val probOutput = process.inputReader().readText()
         val proBResult = ProBResultAnalyser.analyze(probOutput)
         println(proBResult)
 

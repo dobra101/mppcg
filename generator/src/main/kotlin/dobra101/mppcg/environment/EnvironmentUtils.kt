@@ -25,8 +25,8 @@ abstract class EnvironmentUtils {
             BinaryPredicateOperator.LESS_EQUAL -> "=<"
             BinaryPredicateOperator.EQUAL -> "="
             BinaryPredicateOperator.NOT_EQUAL -> "\\="
-            BinaryPredicateOperator.MEMBER -> "member"
-            BinaryPredicateOperator.NOT_MEMBER -> "notmember"
+            BinaryPredicateOperator.MEMBER -> "mppcg_member"
+            BinaryPredicateOperator.NOT_MEMBER -> "mppcg_notmember"
             BinaryPredicateOperator.SUBSET -> "subset"
         }
     }

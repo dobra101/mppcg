@@ -134,20 +134,16 @@ class ExpressionVisitor : AbstractVisitor() {
         if (node.parent() is AMemberPredicate && AbstractVisitor.result is Expression) {
             // is type info
             (AbstractVisitor.result as Expression).type = TypeInteger()
-            result = AbstractVisitor.result as Expression
-        } else {
-            result = InfiniteSet(TypeSet(SetType.INTEGER))
         }
+        result = InfiniteSet(TypeInteger())
     }
 
     override fun caseANaturalSetExpression(node: ANaturalSetExpression) {
         if (node.parent() is AMemberPredicate && AbstractVisitor.result is Expression) {
             // is type info
             (AbstractVisitor.result as Expression).type = TypeNatural()
-            result = AbstractVisitor.result as Expression
-        } else {
-            result = InfiniteSet(TypeSet(SetType.NATURAL))
         }
+        result = InfiniteSet(TypeNatural())
     }
 
     override fun caseASetExtensionExpression(node: ASetExtensionExpression) {

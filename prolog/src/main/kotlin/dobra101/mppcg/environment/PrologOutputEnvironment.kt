@@ -27,7 +27,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     var exprCount = 0
     var stateCount = 0
     var operationParameters: List<IdentifierExpression> = emptyList() // HINT: only for B
-    var usedBMethods: HashSet<BMethod> = hashSetOf() // HINT: only for B
+    var usedBMethods: HashSet<CustomMethodOperator> = hashSetOf() // HINT: only for B
 
     /* ---------- EXPRESSIONS ---------- */
     override fun AnonymousSetCollectionNode.renderSelf(): RenderResult {
@@ -183,6 +183,10 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         )
         val rendered = renderTemplate(map)
 
+        if (needsCustomMethod(operator)) {
+            usedBMethods.add(operator)
+        }
+
         return RenderResult("${expanded.before}$rendered")
     }
 
@@ -204,7 +208,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             "rhs" to expanded.rhs,
             "operator" to operator2String(operator),
             "equivalence" to (operator == LogicPredicateOperator.EQUIVALENCE),
-            "addParentheses" to (operator == LogicPredicateOperator.IMPLIES),
+            "addParentheses" to (operator == LogicPredicateOperator.IMPLIES || operator == LogicPredicateOperator.OR),
             "inline" to inline(lineBreaksTotal)
         )
 
@@ -433,7 +437,11 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun InfiniteSet.renderSelf(): RenderResult {
-        TODO("Infinite Set not implemented")
+        // TODO: not hardcoded type
+        if (type is TypeNatural) {
+            return RenderResult(renderTemplate(mapOf("type" to "'NAT'")))
+        }
+        TODO("Infinite Set not implemented (${type!!::class.simpleName}")
     }
 
     override fun UnaryCollectionExpression.renderSelf(): RenderResult {
@@ -568,8 +576,6 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             "methods" to usedBMethods.render()
         )
 
-        logger.info("Used methods: $usedBMethods")
-
         return RenderResult(renderTemplate(map))
     }
 
@@ -619,19 +625,32 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         }
     }
 
+    private fun needsCustomMethod(operator: CustomMethodOperator): Boolean {
+        if (operator is BMethod) return true
+        return when (operator) {
+            BinaryPredicateOperator.MEMBER,
+            BinaryPredicateOperator.NOT_MEMBER,
+            BinaryPredicateOperator.SUBSET -> true
+
+            else -> false
+        }
+    }
+
     // HINT: input language specific
-    private fun HashSet<BMethod>.render(): List<String> {
+    private fun HashSet<CustomMethodOperator>.render(): List<String> {
         return map {
             when (it) {
                 is UnaryFunctionOperator -> it.render()
                 is BinaryFunctionOperator -> it.render()
-                else -> throw EnvironmentException("Rendering of BMethod $it is not implemented")
+                is BinaryPredicateOperator -> it.render()
+                else -> throw EnvironmentException("Rendering of custom method for operator '$it' (${it::class.simpleName}) is not implemented.")
             }
         }
     }
 
     // HINT: input language specific
     private fun UnaryFunctionOperator.render(): String {
+        throw EnvironmentException("Rendering of custom method for operator '${name}' (${this::class.simpleName}) is not implemented.")
         return when (this) {
             UnaryFunctionOperator.DOMAIN -> renderTemplate("domain")
             UnaryFunctionOperator.RANGE -> renderTemplate("range")
@@ -641,6 +660,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
 
     // HINT: input language specific
     private fun BinaryFunctionOperator.render(): String {
+        throw EnvironmentException("Rendering of custom method for operator '${name}' (${this::class.simpleName}) is not implemented.")
         return when (this) {
             BinaryFunctionOperator.DOMAIN_RESTRICTION -> renderTemplate("domainRestriction")
             BinaryFunctionOperator.DOMAIN_SUBTRACTION -> renderTemplate("domainSubtraction")
@@ -648,6 +668,14 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             BinaryFunctionOperator.OVERWRITE -> renderTemplate("overwrite")
             BinaryFunctionOperator.RANGE_RESTRICTION -> renderTemplate("rangeRestriction")
             BinaryFunctionOperator.RANGE_SUBTRACTION -> renderTemplate("rangeSubtraction")
+        }
+    }
+
+    // HINT: input language specific
+    private fun BinaryPredicateOperator.render(): String {
+        return when (this) {
+            BinaryPredicateOperator.MEMBER -> renderTemplate("member", mapOf("name" to operator2String(this)))
+            else -> throw EnvironmentException("Rendering of custom method for operator '${name}' (${this::class.simpleName}) is not implemented.")
         }
     }
 }
