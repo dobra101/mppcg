@@ -1,7 +1,6 @@
 // TODO: use remaining variables
 machine(name, parameters, constraints, sets, constants, concrete_constants, properties, definitions, variables, concrete_variables, invariant, assertions, initialization, operations, methods) ::= <<
 :- use_module(library(avl)).
-:- use_module(library(lists)).
 
 <if(sets)>
 <sets; separator=".\n\n">.
@@ -19,6 +18,10 @@ start(st).
 
 % Custom predicates
 <methods; separator="\n\n">
+
+is_list([]) :- !.
+is_list([_ | Tail]) :-
+    is_list(Tail).
 
 % AVL
 get(State, Key, Value) :-
@@ -128,13 +131,56 @@ check_inv(State) :-
 >>
 
 member(name) ::= <<
+<name>(Element, 'NAT') :-
+    between(0, infinite, Element).
 <name>(Element, List) :-
     is_list(List), !,
     member(Element, List).
-<name>(Element, 'NAT') :-
-    between(0, infinite, Element).
 <name>(Element, (A, B)) :-
     between(A, B, Element).
+
+between(A, B, Element) :-
+    var(Element),
+    gen_int_between(A, B, Element).
+between(A, B, Element) :-
+    integer(Element),
+    Element >= A,
+    (B \= infinite -> Element =\< B; true).
+
+gen_int_between(Start, infinite, Start).
+gen_int_between(Start, End, Start) :-
+    End \= infinite,
+    Start =\< End.
+gen_int_between(Start, infinite, Int) :-
+    Start1 is Start + 1,
+    gen_int_between(Start1, infinite, Int).
+gen_int_between(Start, End, Int) :-
+    End \= infinite,
+    Start =\< End,
+    Start1 is Start + 1,
+    gen_int_between(Start1, End, Int).
+>>
+
+setSubtraction(name) ::= <<
+<name>([], _, []) :- !.
+<name>([Head | Tail], Minus, [Head | NewTail]) :-
+    is_list(Minus),
+    \+ member(Head, Minus),
+    <name>(Tail, Minus, NewTail),
+    !.
+<name>([_ | Tail], Minus, NewTail) :-
+    is_list(Minus),
+    <name>(Tail, Minus, NewTail),
+    !.
+<name>([Head | Tail], Head, NewTail) :-
+    \+ is_list(Head),
+    <name>(Tail, Head, NewTail),
+    !.
+<name>([Head | Tail], Minus, [Head | NewTail]) :-
+    \+ is_list(Minus),
+    Head \= Minus,
+    <name>(Tail, Minus, NewTail),
+    !.
 >>
 
 domain() ::= <<

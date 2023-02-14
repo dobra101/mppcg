@@ -10,7 +10,7 @@ ifSubstitution(condition, then, elseIf, elseSubstitution) ::= <<
 ;
 (<elseSubstitution>)<else>
 (<condition>) ->
-(<then>)<endif>
+(<then>); true<endif>
 >>
 
 sequenceSubstitution(substitutions) ::= <<

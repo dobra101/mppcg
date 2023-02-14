@@ -49,9 +49,14 @@ class ExpressionVisitor : AbstractVisitor() {
         result = BinaryExpression(node.left.convert()!!, node.right.convert()!!, BinaryExpressionOperator.MINUS)
     }
 
-    // TODO: fix for sets
     override fun caseAMinusOrSetSubtractExpression(node: AMinusOrSetSubtractExpression) {
-        result = BinaryExpression(node.left.convert()!!, node.right.convert()!!, BinaryExpressionOperator.MINUS)
+        val left = node.left.convert()!!.setParameterIfCollection()
+        val right = node.right.convert()!!.setParameterIfCollection()
+        result = if (left is CollectionNode) {
+            BinaryCollectionExpression(left, right, BinaryCollectionOperator.SUBTRACTION)
+        } else {
+            BinaryExpression(left, right, BinaryExpressionOperator.MINUS)
+        }
     }
 
     override fun caseATotalInjectionExpression(node: ATotalInjectionExpression) {
