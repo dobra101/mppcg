@@ -26,8 +26,8 @@ abstract class EnvironmentUtils {
             BinaryPredicateOperator.EQUAL -> "="
             BinaryPredicateOperator.NOT_EQUAL -> "\\="
             BinaryPredicateOperator.MEMBER -> "mppcg_member"
-            BinaryPredicateOperator.NOT_MEMBER -> "mppcg_notmember"
-            BinaryPredicateOperator.SUBSET -> "subset"
+            BinaryPredicateOperator.NOT_MEMBER -> "\\+ ${operator2String(BinaryPredicateOperator.MEMBER)}"
+            BinaryPredicateOperator.SUBSET -> "mppcg_subset"
         }
     }
 
@@ -74,7 +74,7 @@ abstract class EnvironmentUtils {
         return when (operator) {
             UnaryCollectionOperator.MAX -> "max"
             UnaryCollectionOperator.MIN -> "min"
-            UnaryCollectionOperator.CARD -> "card"
+            UnaryCollectionOperator.CARD -> "length"
             UnaryCollectionOperator.POW -> "pow"
             UnaryCollectionOperator.POW1 -> "pow1"
         }

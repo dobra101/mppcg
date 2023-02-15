@@ -154,6 +154,13 @@ gen_int_between(Start, End, Int) :-
     gen_int_between(Start1, End, Int).
 >>
 
+subset(name, memberName) ::= <<
+<name>([Head | Tail], Set) :-
+    <memberName>(Head, Set),
+    <name>(Tail, Set),
+    !.
+>>
+
 setSubtraction(name) ::= <<
 <name>([], _, []) :- !.
 <name>([Head | Tail], Minus, [Head | NewTail]) :-
@@ -173,6 +180,29 @@ setSubtraction(name) ::= <<
     \+ is_list(Minus),
     Head \= Minus,
     <name>(Tail, Minus, NewTail),
+    !.
+>>
+
+setIntersection(name) ::= <<
+<name>([], _, []) :- !.
+<name>(_, [], []) :- !.
+<name>([Head | Tail], List, [Head | NewTail]) :-
+    member(Head, List),
+    <name>(Tail, List, NewTail),
+    !.
+<name>([_ | Tail], List, NewTail) :-
+    <name>(Tail, List, NewTail),
+    !.
+>>
+
+setUnion(name) ::= <<
+<name>([], Set, Set) :- !.
+<name>([Head | Tail], Set, [Head | NewTail]) :-
+    \+ member(Head, Set),
+    <name>(Tail, Set, NewTail),
+    !.
+<name>([_ | Tail], Set, NewTail) :-
+    <name>(Tail, Set, NewTail),
     !.
 >>
 
@@ -201,6 +231,17 @@ rangeRestriction() ::= <<
 >>
 
 rangeSubtraction() ::= <<
+>>
+
+powerSet(name, subsetName) ::= <<
+<name>(Set, PowerSet) :-
+    is_list(PowerSet),
+    findall(Subset, <subsetName>(Subset, Set), PowerSet),
+    !.
+>>
+
+cardinality(name) ::= <<
+<name>
 >>
 
 updateStateCount(newCount, oldCount) ::= <<

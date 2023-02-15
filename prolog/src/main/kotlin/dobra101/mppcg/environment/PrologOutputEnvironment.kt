@@ -183,8 +183,12 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         )
         val rendered = renderTemplate(map)
 
+        // TODO: function which knows all dependencies
         if (needsCustomMethod(operator)) {
             usedBMethods.add(operator)
+            if (operator == BinaryPredicateOperator.SUBSET) {
+                usedBMethods.add(BinaryPredicateOperator.MEMBER)
+            }
         }
 
         return RenderResult("${expanded.before}$rendered")
@@ -214,6 +218,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
                 map["inline"] = inline(lineBreaksTotal)
                 renderTemplate("implication", map)
             }
+
             else -> {
                 map["operator"] = operator2String(operator)
                 map["addParentheses"] = operator == LogicPredicateOperator.OR
@@ -471,6 +476,14 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
 
         if (optimize) optimizer.evaluated[this] = "Expr_$exprCount"
 
+        if (needsCustomMethod(operator)) {
+            usedBMethods.add(operator)
+            if (operator == UnaryCollectionOperator.POW) {
+                usedBMethods.add(BinaryPredicateOperator.MEMBER)
+                usedBMethods.add(BinaryPredicateOperator.SUBSET)
+            }
+        }
+
         return RenderResult(
             "${expanded.before}${renderTemplate(map)}",
             mapOf("resultExpr" to IndividualInfo("Expr_${exprCount++}"))
@@ -644,10 +657,13 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         if (operator is BMethod) return true
         return when (operator) {
             BinaryPredicateOperator.MEMBER,
-            BinaryPredicateOperator.NOT_MEMBER,
             BinaryPredicateOperator.SUBSET -> true
 
             is BinaryCollectionOperator -> true
+            UnaryCollectionOperator.MAX,
+            UnaryCollectionOperator.MIN,
+            UnaryCollectionOperator.POW,
+            UnaryCollectionOperator.POW1 -> true
 
             else -> false
         }
@@ -657,12 +673,27 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     private fun HashSet<CustomMethodOperator>.render(): List<String> {
         return map {
             when (it) {
+                is UnaryCollectionOperator -> it.render()
                 is UnaryFunctionOperator -> it.render()
+                is BinaryCollectionOperator -> it.render()
                 is BinaryFunctionOperator -> it.render()
                 is BinaryPredicateOperator -> it.render()
-                is BinaryCollectionOperator -> it.render()
                 else -> throw EnvironmentException("Rendering of custom method for operator '$it' (${it::class.simpleName}) is not implemented.")
             }
+        }
+    }
+
+    private fun UnaryCollectionOperator.render(): String {
+        return when (this) {
+            UnaryCollectionOperator.POW -> renderTemplate(
+                "powerSet",
+                mapOf(
+                    "name" to operator2String(this),
+                    "subsetName" to operator2String(BinaryPredicateOperator.SUBSET)
+                )
+            )
+
+            else -> throw EnvironmentException("Rendering of custom method for operator '${name}' (${this::class.simpleName}) is not implemented.")
         }
     }
 
@@ -693,6 +724,14 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     private fun BinaryPredicateOperator.render(): String {
         return when (this) {
             BinaryPredicateOperator.MEMBER -> renderTemplate("member", mapOf("name" to operator2String(this)))
+            BinaryPredicateOperator.SUBSET -> renderTemplate(
+                "subset",
+                mapOf(
+                    "name" to operator2String(this),
+                    "memberName" to operator2String(BinaryPredicateOperator.MEMBER)
+                )
+            )
+
             else -> throw EnvironmentException("Rendering of custom method for operator '${name}' (${this::class.simpleName}) is not implemented.")
         }
     }
@@ -704,7 +743,15 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
                 mapOf("name" to operator2String(this))
             )
 
-            else -> throw EnvironmentException("Rendering of custom method for operator '${name}' (${this::class.simpleName}) is not implemented.")
+            BinaryCollectionOperator.INTERSECTION -> renderTemplate(
+                "setIntersection",
+                mapOf("name" to operator2String(this))
+            )
+
+            BinaryCollectionOperator.UNION -> renderTemplate(
+                "setUnion",
+                mapOf("name" to operator2String(this))
+            )
         }
     }
 }

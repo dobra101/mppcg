@@ -1,5 +1,6 @@
 package dobra101.mppcg.node.collection
 
+import dobra101.mppcg.node.CustomMethodOperator
 import dobra101.mppcg.node.TypeInteger
 import dobra101.mppcg.node.expression.Expression
 
@@ -9,10 +10,10 @@ data class UnaryCollectionExpression(
     val operator: UnaryCollectionOperator
 ) : Expression(TypeInteger(), "unaryCollectionExpression")
 
-enum class UnaryCollectionOperator {
+enum class UnaryCollectionOperator: CustomMethodOperator {
     CARD,
-    MIN,
     MAX,
+    MIN,
     POW,
     POW1
 }
