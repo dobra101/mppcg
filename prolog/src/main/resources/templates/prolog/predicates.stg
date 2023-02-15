@@ -28,7 +28,6 @@ implication(lhs, rhs, inline) ::= <<
 <rhs>; true)<endif>
 >>
 
-
 unaryLogicPredicate(predicate, operator) ::= <<
 <operator><predicate>
 >>

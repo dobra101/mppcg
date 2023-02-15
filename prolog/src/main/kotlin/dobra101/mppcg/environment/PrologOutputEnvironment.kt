@@ -277,6 +277,9 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
 
             if (exprCountBefore < exprCount) {
                 val countMap = mapOf("newCount" to exprCount, "oldCount" to exprCountBefore)
+                if (elseBranch.isNotBlank()) {
+                    elseBranch.append(EXPRESSION_SEPARATOR)
+                }
                 elseBranch.append(renderTemplate("updateExprCount", countMap))
             }
             map["then"] = thenRendered

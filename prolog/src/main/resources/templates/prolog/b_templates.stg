@@ -6,11 +6,9 @@ machine(name, parameters, constraints, sets, constants, concrete_constants, prop
 <sets; separator=".\n\n">.
 <endif>
 
-start(st).
-
-% Transitions
 <initialization>
 
+% Transitions
 <operations; separator="\n\n">
 
 % Invariant
@@ -39,8 +37,6 @@ avl2List(AVL, List) :-
 // TODO: add returnValues ?
 operation(name, parameters, body, resultStateCount) ::= <<
 trans('<name>', State_0, State_<resultStateCount>) :-
-    State_0 \= st,
-
     <body>.
 >>
 
@@ -88,7 +84,7 @@ Type: <type>
 >>
 
 initialization(body, resultStateCount) ::= <<
-trans(initialize, st, State_<resultStateCount>) :-
+start(State_<resultStateCount>) :-
     empty(State_0),
     <body; separator=",\n">.
 >>
@@ -113,13 +109,10 @@ select(condition, then, elseSubstitution, when) ::= <<
 
 /* XTL */
 props(invariants, indices) ::= <<
-prop(st, uninitialized) :- !.
 prop(State, unsafe) :-
-    State \= st,
     \+ check_inv(State),
     !.
 prop(State, List) :-
-    State \= st,
     avl2List(State, List),
     !.
 

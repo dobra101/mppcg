@@ -5,12 +5,12 @@ update('<identifier>', <rhs>, State_<stateCount>, State_<resultStateCount>)
 // TODO: implement elseif
 ifSubstitution(condition, then, elseIf, elseSubstitution) ::= <<
 <if(elseSubstitution)>
-(<condition>) ->
+((<condition>) ->
 (<then>)
 ;
-(<elseSubstitution>)<else>
-(<condition>) ->
-(<then>); true<endif>
+(<elseSubstitution>))<else>
+((<condition>) ->
+(<then>); true)<endif>
 >>
 
 sequenceSubstitution(substitutions) ::= <<
