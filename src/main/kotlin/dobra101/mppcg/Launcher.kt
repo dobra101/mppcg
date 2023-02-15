@@ -9,9 +9,11 @@ import kotlinx.cli.ArgType
 import kotlinx.cli.default
 import kotlinx.cli.required
 import java.io.File
+import java.util.logging.Logger
 
 // TODO: generate multiple at once
 object Launcher {
+    private val logger: Logger = Logger.getLogger(Launcher::class.simpleName)
     fun launch(lang: Language, file: String, parser: Parser, optimize: Boolean, benchmark: Boolean): File {
         val filename = if (file.endsWith(".mch")) file else "$file.mch"
         val machine = File("build/resources/main/machines/$filename")
@@ -46,6 +48,11 @@ object Launcher {
 
         val cmd = "$probPath $probArgs ${probFile.absolutePath}"
         val process: Process = Runtime.getRuntime().exec(cmd)
+
+        // store pid to kill prob if needed
+        val pid = File("build/pid.txt")
+        pid.writeText("${process.pid()}")
+        logger.info("Started ProB with pid ${process.pid()}")
         val exitValue = process.waitFor()
 
         val probOutput = process.inputReader().readText()

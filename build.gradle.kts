@@ -1,3 +1,5 @@
+import org.apache.tools.ant.taskdefs.condition.Os
+
 plugins {
     kotlin("jvm") version "1.7.10"
     application
@@ -26,11 +28,37 @@ application {
     mainClass.set("dobra101.mppcg.LauncherKt")
 }
 
+val killProB = tasks.register("killProB") {
+    if (!Os.isFamily(Os.FAMILY_MAC)) {
+        exec {
+            commandLine("echo", "Killing processes only supported for macOS")
+        }
+    } else {
+        val pidFile = file("$buildDir/pid.txt")
+        if (pidFile.exists()) {
+            val pid = pidFile.readText()
+            logger.lifecycle("Shutting down old ProB process with pid $pid")
+            exec {
+                commandLine("kill", pid)
+            }
+            pidFile.delete()
+        }
+    }
+}
+
 tasks {
     named("run") {
+        dependsOn(killProB)
         doFirst {
             mkdir("generator/build/generated")
         }
+        doLast{
+            killProB
+        }
+    }
+
+    named("clean") {
+        dependsOn(killProB)
     }
 }
 
