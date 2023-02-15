@@ -186,9 +186,6 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         // TODO: function which knows all dependencies
         if (needsCustomMethod(operator)) {
             usedBMethods.add(operator)
-            if (operator == BinaryPredicateOperator.SUBSET) {
-                usedBMethods.add(BinaryPredicateOperator.MEMBER)
-            }
         }
 
         return RenderResult("${expanded.before}$rendered")
@@ -479,7 +476,6 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         if (needsCustomMethod(operator)) {
             usedBMethods.add(operator)
             if (operator == UnaryCollectionOperator.POW) {
-                usedBMethods.add(BinaryPredicateOperator.MEMBER)
                 usedBMethods.add(BinaryPredicateOperator.SUBSET)
             }
         }
@@ -724,13 +720,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     private fun BinaryPredicateOperator.render(): String {
         return when (this) {
             BinaryPredicateOperator.MEMBER -> renderTemplate("member", mapOf("name" to operator2String(this)))
-            BinaryPredicateOperator.SUBSET -> renderTemplate(
-                "subset",
-                mapOf(
-                    "name" to operator2String(this),
-                    "memberName" to operator2String(BinaryPredicateOperator.MEMBER)
-                )
-            )
+            BinaryPredicateOperator.SUBSET -> renderTemplate("subset", mapOf("name" to operator2String(this)))
 
             else -> throw EnvironmentException("Rendering of custom method for operator '${name}' (${this::class.simpleName}) is not implemented.")
         }

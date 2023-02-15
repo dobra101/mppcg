@@ -154,11 +154,12 @@ gen_int_between(Start, End, Int) :-
     gen_int_between(Start1, End, Int).
 >>
 
-subset(name, memberName) ::= <<
-<name>([Head | Tail], Set) :-
-    <memberName>(Head, Set),
-    <name>(Tail, Set),
-    !.
+subset(name) ::= <<
+<name>([], []).
+<name>([Head | NewTail], [Head | Tail]) :-
+    <name>(NewTail, Tail).
+<name>(NewTail, [_ | Tail]) :-
+    <name>(NewTail, Tail).
 >>
 
 setSubtraction(name) ::= <<
@@ -234,9 +235,8 @@ rangeSubtraction() ::= <<
 >>
 
 powerSet(name, subsetName) ::= <<
-<name>(Set, PowerSet) :-
-    is_list(PowerSet),
-    findall(Subset, <subsetName>(Subset, Set), PowerSet),
+<name>(Set, Powerset) :-
+    findall(Subset, <subsetName>(Subset, Set), Powerset),
     !.
 >>
 

@@ -69,6 +69,7 @@ object Launcher {
         println(proBResult)
 
         probFile.deleteOnExit()
+        pid.deleteOnExit()
         return proBResult
     }
 }

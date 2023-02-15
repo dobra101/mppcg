@@ -52,11 +52,13 @@ class ExpressionVisitor : AbstractVisitor() {
     override fun caseAMinusOrSetSubtractExpression(node: AMinusOrSetSubtractExpression) {
         val left = node.left.convert()!!.setParameterIfCollection()
         val right = node.right.convert()!!.setParameterIfCollection()
-        result = if (left is CollectionNode) {
-            BinaryCollectionExpression(left, right, BinaryCollectionOperator.SUBTRACTION)
-        } else {
-            BinaryExpression(left, right, BinaryExpressionOperator.MINUS)
-        }
+        result =
+            // TODO: refactor classes
+            if (left is CollectionNode || right is CollectionNode || left is AnonymousCollectionNode || right is AnonymousSetCollectionNode) {
+                BinaryCollectionExpression(left, right, BinaryCollectionOperator.SUBTRACTION)
+            } else {
+                BinaryExpression(left, right, BinaryExpressionOperator.MINUS)
+            }
     }
 
     override fun caseATotalInjectionExpression(node: ATotalInjectionExpression) {

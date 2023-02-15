@@ -37,11 +37,11 @@ val killProB = tasks.register("killProB") {
         val pidFile = file("$buildDir/pid.txt")
         if (pidFile.exists()) {
             val pid = pidFile.readText()
+            pidFile.delete()
             logger.lifecycle("Shutting down old ProB process with pid $pid")
             exec {
                 commandLine("kill", pid)
             }
-            pidFile.delete()
         }
     }
 }
