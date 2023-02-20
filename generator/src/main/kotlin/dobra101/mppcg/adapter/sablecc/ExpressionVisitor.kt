@@ -362,7 +362,12 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseACoupleExpression(node: ACoupleExpression) {
-        result = Couple(node.list.convert())
+        val list = node.list.convert()
+        if (list.size != 2) {
+            throw VisitorException("Cannot create Couple from $list")
+        }
+
+        result = Couple(from = list[0], to = list[1])
     }
 
     override fun caseAComprehensionSetExpression(node: AComprehensionSetExpression) {

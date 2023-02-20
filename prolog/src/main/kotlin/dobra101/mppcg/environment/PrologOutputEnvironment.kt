@@ -240,18 +240,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     override fun AssignSubstitution.renderSelf(): RenderResult {
         val identifier = (lhs[0] as IdentifierExpression).name // TODO: when more than one identifier?
 
-        // don't expand collection entries
-        if (rhs.size == 1 && (rhs[0] is CollectionEntry || rhs[0] is AnonymousCollectionNode)) {
-            val map = mapOf(
-                "identifier" to identifier,
-                "rhs" to rhs[0].render(),
-                "stateCount" to stateCount,
-                "resultStateCount" to ++stateCount
-            )
-            return RenderResult(renderTemplate(map))
-        }
-
-        val expandedRhs = ExpandedExpressionList.of(rhs) // TODO: dont expand if rhs is CollectionEntry
+        val expandedRhs = ExpandedExpressionList.of(rhs)
         val map = mapOf(
             "identifier" to identifier,
             "rhs" to expandedRhs.expressions[0], // TODO: more than one entry?
@@ -410,7 +399,6 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     // TODO: reuse BinaryExpression?
     override fun BinaryFunctionExpression.renderSelf(): RenderResult {
         if (optimize) optimizer.loadIfEvaluated(this)?.let { return it }
-        usedBMethods.add(operator)
 
         val expanded = ExpandedBinary.of(left, right)
 
@@ -421,6 +409,12 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             "exprCount" to exprCount
         )
         val rendered = renderTemplate(map)
+
+        usedBMethods.add(operator)
+        if (operator == BinaryFunctionOperator.OVERWRITE) {
+            usedBMethods.add(BinaryFunctionOperator.DOMAIN_SUBTRACTION)
+            usedBMethods.add(UnaryFunctionOperator.DOMAIN)
+        }
 
         if (optimize) optimizer.evaluated[this] = "Expr_$exprCount"
         return RenderResult("${expanded.before}$rendered", mapOf("resultExpr" to IndividualInfo("Expr_${exprCount++}")))
@@ -446,11 +440,13 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun Couple.renderSelf(): RenderResult {
+        val expanded = ExpandedBinary.of(from, to)
         val map = mapOf(
-            "list" to list.render()
+            "from" to expanded.lhs,
+            "to" to expanded.rhs
         )
 
-        return RenderResult(renderTemplate(map))
+        return RenderResult(renderTemplate(map), info = mapOf("before" to IndividualInfo(expanded.before)))
     }
 
     override fun InfiniteSet.renderSelf(): RenderResult {
@@ -604,6 +600,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun Operation.renderSelf(): RenderResult {
+        if (name == "final_evt") println(this)
         if (optimize) optimizer.evaluated = hashMapOf()
         stateCount = 0
         exprCount = 0
@@ -689,30 +686,47 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
                 )
             )
 
+            UnaryCollectionOperator.MIN -> renderTemplate(
+                "minSet",
+                mapOf(
+                    "name" to operator2String(this)
+                )
+            )
+
             else -> throw EnvironmentException("Rendering of custom method for operator '${name}' (${this::class.simpleName}) is not implemented.")
         }
     }
 
     // HINT: input language specific
     private fun UnaryFunctionOperator.render(): String {
-        throw EnvironmentException("Rendering of custom method for operator '${name}' (${this::class.simpleName}) is not implemented.")
         return when (this) {
-            UnaryFunctionOperator.DOMAIN -> renderTemplate("domain")
-            UnaryFunctionOperator.RANGE -> renderTemplate("range")
-            UnaryFunctionOperator.REVERSE -> renderTemplate("reverse")
+            UnaryFunctionOperator.DOMAIN -> renderTemplate("domain", mapOf("name" to operator2String(this)))
+            UnaryFunctionOperator.RANGE -> renderTemplate("range", mapOf("name" to operator2String(this)))
+//            UnaryFunctionOperator.REVERSE -> renderTemplate("reverse", mapOf("name" to operator2String(this)))
+            else -> throw EnvironmentException("Rendering of custom method for operator '${name}' (${this::class.simpleName}) is not implemented.")
         }
     }
 
     // HINT: input language specific
     private fun BinaryFunctionOperator.render(): String {
-        throw EnvironmentException("Rendering of custom method for operator '${name}' (${this::class.simpleName}) is not implemented.")
         return when (this) {
-            BinaryFunctionOperator.DOMAIN_RESTRICTION -> renderTemplate("domainRestriction")
-            BinaryFunctionOperator.DOMAIN_SUBTRACTION -> renderTemplate("domainSubtraction")
-            BinaryFunctionOperator.IMAGE -> renderTemplate("image")
-            BinaryFunctionOperator.OVERWRITE -> renderTemplate("overwrite")
-            BinaryFunctionOperator.RANGE_RESTRICTION -> renderTemplate("rangeRestriction")
-            BinaryFunctionOperator.RANGE_SUBTRACTION -> renderTemplate("rangeSubtraction")
+//            BinaryFunctionOperator.DOMAIN_RESTRICTION -> renderTemplate("domainRestriction")
+            BinaryFunctionOperator.DOMAIN_SUBTRACTION -> renderTemplate(
+                "domainSubtraction",
+                mapOf("name" to operator2String(this))
+            )
+
+            BinaryFunctionOperator.IMAGE -> renderTemplate("image", mapOf("name" to operator2String(this)))
+            BinaryFunctionOperator.OVERWRITE -> renderTemplate(
+                "overwrite", mapOf(
+                    "name" to operator2String(this),
+                    "domainName" to operator2String(UnaryFunctionOperator.DOMAIN),
+                    "domainSubtractionName" to operator2String(BinaryFunctionOperator.DOMAIN_SUBTRACTION)
+                )
+            )
+//            BinaryFunctionOperator.RANGE_RESTRICTION -> renderTemplate("rangeRestriction", mapOf("name" to operator2String(this)))
+//            BinaryFunctionOperator.RANGE_SUBTRACTION -> renderTemplate("rangeSubtraction", mapOf("name" to operator2String(this)))
+            else -> throw EnvironmentException("Rendering of custom method for operator '${name}' (${this::class.simpleName}) is not implemented.")
         }
     }
 
@@ -754,11 +768,14 @@ private data class ExpandedExpressionList(val before: String = "", val expressio
             val expression = expressions.map {
                 val result = it.render()
 
-                if ((it is IdentifierExpression) || it is ValueExpression || it is SetEntry) {
+                if (it is ValueExpression || it is SetEntry) {
                     result.rendered
                 } else {
                     if (result.rendered.isNotBlank() && result.containsKey("resultExpr")) {
                         before += "${result.rendered}${PrologOutputEnvironment.EXPRESSION_SEPARATOR}"
+                    }
+                    if (result.containsKey("before")) {
+                        before += result["before"].info
                     }
                     if (result.info.containsKey("resultExpr")) result["resultExpr"].info
                     else result.rendered

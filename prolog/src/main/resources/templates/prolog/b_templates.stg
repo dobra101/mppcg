@@ -57,9 +57,8 @@ callFunction(expression, parameters, exprCount) ::= <<
 callFunction(<expression>, <parameters>, Expr_<exprCount>)
 >>
 
-couple(list) ::= <<
-Couple:
-List: <list>
+couple(from, to) ::= <<
+(<from>/<to>)
 >>
 
 unaryFunctionExpression(expression, operator, exprCount) ::= <<
@@ -103,7 +102,7 @@ precondition(predicate, substitution) ::= <<
 // TODO: add else, when
 select(condition, then, elseSubstitution, when) ::= <<
 <condition>,
-<then>
+<if(then)><then><else>true<endif>
 >>
 
 
@@ -207,10 +206,16 @@ setUnion(name) ::= <<
     !.
 >>
 
-domain() ::= <<
+domain(name) ::= <<
+<name>([], []) :- !.
+<name>([(X/_) | Tail], [X | NewTail]) :-
+    <name>(Tail, NewTail).
 >>
 
-range() ::= <<
+range(name) ::= <<
+<name>([], []) :- !.
+<name>([(_/Y) | Tail], [Y | NewTail]) :-
+    <name>(Tail, NewTail).
 >>
 
 reverse() ::= <<
@@ -219,13 +224,33 @@ reverse() ::= <<
 domainRestriction() ::= <<
 >>
 
-domainSubtraction() ::= <<
+domainSubtraction(name) ::= <<
+<name>(_, [], []) :- !.
+<name>(Set, [(X/Y) | Tail], [(X/Y) | NewTail]) :-
+    \+ member(X, Set),
+    <name>(Set, Tail, NewTail),
+    !.
+<name>(Set, [_ | Tail], NewTail) :-
+    <name>(Set, Tail, NewTail),
+    !.
 >>
 
-image() ::= <<
+image(name) ::= <<
+<name>([], _, []) :- !.
+<name>(Relation, [X | Rest], [Y | NewTail]) :-
+    member((X/Y), Relation),
+    <name>(Relation, Rest, NewTail),
+    !.
+<name>(Relation, [_ | Rest], NewTail) :-
+    <name>(Relation, Rest, NewTail),
+    !.
 >>
 
-overwrite() ::= <<
+overwrite(name, domainName, domainSubtractionName) ::= <<
+<name>(Overridden, Set, Result) :-
+    <domainName>(Set, Domain),
+    <domainSubtractionName>(Domain, Overridden, Tail),
+    append(Set, Tail, Result).
 >>
 
 rangeRestriction() ::= <<
@@ -237,6 +262,24 @@ rangeSubtraction() ::= <<
 powerSet(name, subsetName) ::= <<
 <name>(Set, Powerset) :-
     findall(Subset, <subsetName>(Subset, Set), Powerset),
+    !.
+>>
+
+minSet(name) ::= <<
+<name>(Set, Min) ->
+    <name>(Set, unset, Min),
+    !.
+<name>([], unset, unset) :- fail, !.
+<name>([Head | Tail], unset, Min) :-
+    <name>(Tail, Head, Min),
+    !.
+<name>([], Acc, Acc) :- !.
+<name>([Head | Tail], Acc, Min) :-
+    Head \< Acc,
+    <name>(Tail, Head, Min),
+    !.
+<name>([_ | Tail], Acc, Min) :-
+    <name>(Tail, Acc, Min),
     !.
 >>
 
