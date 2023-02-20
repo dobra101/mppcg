@@ -12,7 +12,7 @@ data class Invariant(
             if (predicate == null) return Invariant()
 
             if (predicate !is BinaryLogicPredicate) {
-                throw InvariantException("Predicate is not a LogicPredicate. (${predicate::class.simpleName})")
+                return Invariant(listOf(predicate))
             }
 
             if (predicate.operator != LogicPredicateOperator.AND) {
