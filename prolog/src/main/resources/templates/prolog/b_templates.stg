@@ -40,7 +40,7 @@ avl2List(AVL, List) :-
 
 // TODO: add returnValues ?
 operation(name, parameters, body, resultStateCount) ::= <<
-trans('<name>', State_0, State_<resultStateCount>) :-
+trans('<name>'(<parameters :{ p | <p>=Expr_<p>}; separator=", ">), State_0, State_<resultStateCount>) :-
     <body>.
 >>
 

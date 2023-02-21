@@ -112,16 +112,17 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         }
 
         // TODO: not hardcoded and not always
-        val rendered = if (concreteConstants.contains(this) || concreteConstants.find { (it as? ConcreteIdentifierExpression)?.name == name } != null) {
-            "$name(Expr_$exprCount)"
-        } else {
-            val map = mapOf(
-                "name" to name,
-                "stateCount" to stateCount,
-                "exprCount" to exprCount
-            )
-            renderTemplate(map)
-        }
+        val rendered =
+            if (concreteConstants.contains(this) || concreteConstants.find { (it as? ConcreteIdentifierExpression)?.name == name } != null) {
+                "$name(Expr_$exprCount)"
+            } else {
+                val map = mapOf(
+                    "name" to name,
+                    "stateCount" to stateCount,
+                    "exprCount" to exprCount
+                )
+                renderTemplate(map)
+            }
         if (optimize) optimizer.evaluated[this] = "Expr_$exprCount"
         val info = mapOf("resultExpr" to IndividualInfo("Expr_${exprCount++}")) // TODO: map to Int?
 
@@ -575,6 +576,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun ParallelSubstitution.renderSelf(): RenderResult {
+        // TODO: for all identifiers in needTempVar, create temp variables and store values there
         val map = mapOf(
             "substitutions" to substitutions.render()
         )
@@ -635,7 +637,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
 
         val map = mapOf(
             "name" to name,
-            "parameters" to parameters.render(),
+            "parameters" to operationParameters.map { it.name.lowercase() },
 //            "returnValues" to returnValues.render(), // TODO: add returnValues?
             "body" to body.render(),
             "resultStateCount" to stateCount
