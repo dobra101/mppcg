@@ -6,18 +6,19 @@ data class ParallelSubstitution(
     val substitutions: List<Substitution>
 ) : Substitution("parallelSubstitution") {
     val needTempVar: Set<IdentifierExpression>
-        get() {
-            val assignments = substitutions.filterIsInstance<AssignSubstitution>()
 
-            val identifierOnLhs = assignments.flatMap {
-                it.lhs.filterIsInstance<IdentifierExpression>()
-            }.toSet()
+    init {
+        val assignments = substitutions.filterIsInstance<AssignSubstitution>()
 
-            // TODO: stimmt nicht für z.b. x := y + 1
-            val identifierOnRhs = assignments.flatMap {
-                it.rhs.filterIsInstance<IdentifierExpression>()
-            }.toSet()
+        val identifierOnLhs = assignments.flatMap {
+            it.lhs.filterIsInstance<IdentifierExpression>()
+        }.toSet()
 
-            return identifierOnLhs.intersect(identifierOnRhs)
-        }
+        // TODO: stimmt nicht für z.b. x := y + 1
+        val identifierOnRhs = assignments.flatMap {
+            it.rhs.filterIsInstance<IdentifierExpression>()
+        }.toSet()
+
+        needTempVar = identifierOnLhs.intersect(identifierOnRhs)
+    }
 }

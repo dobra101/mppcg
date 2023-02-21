@@ -27,6 +27,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     var exprCount = 0
     var stateCount = 0
     var operationParameters: List<IdentifierExpression> = emptyList() // HINT: only for B
+    var temporaryVariables: Set<IdentifierExpression> = hashSetOf() // HINT: only for B
     var concreteConstants: List<Expression> = emptyList() // HINT: only for B
     var usedBMethods: HashSet<CustomMethodOperator> = hashSetOf() // HINT: only for B
 
@@ -109,6 +110,11 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         // TODO: not hardcoded and not always
         if (operationParameters.contains(this)) {
             return RenderResult("Expr_$name")
+        }
+
+        // TODO: not hardcoded and not always
+        if (temporaryVariables.contains(this)) {
+            return RenderResult("Expr_tmp_$name")
         }
 
         // TODO: not hardcoded and not always
@@ -250,7 +256,9 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         )
         val rendered = renderTemplate(map)
 
-        if (optimize) optimizer.evaluated[lhs[0]] = expandedRhs.expressions[0]
+        if (optimize && !temporaryVariables.contains(lhs[0])) {
+            optimizer.evaluated[lhs[0]] = expandedRhs.expressions[0]
+        }
         return RenderResult("${expandedRhs.before}$rendered")
     }
 
@@ -479,10 +487,11 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
 
     override fun InfiniteSet.renderSelf(): RenderResult {
         // TODO: not hardcoded type
-        if (type is TypeNatural) {
-            return RenderResult(renderTemplate(mapOf("type" to "'NAT'")))
+        return when (type) {
+            is TypeNatural -> RenderResult(renderTemplate(mapOf("type" to "'NAT'")))
+            is TypeInteger -> RenderResult(renderTemplate(mapOf("type" to "'INT'")))
+            else -> TODO("Infinite Set not implemented (${type!!::class.simpleName})")
         }
-        TODO("Infinite Set not implemented (${type!!::class.simpleName}")
     }
 
     override fun UnaryCollectionExpression.renderSelf(): RenderResult {
@@ -576,8 +585,18 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun ParallelSubstitution.renderSelf(): RenderResult {
-        // TODO: for all identifiers in needTempVar, create temp variables and store values there
+        temporaryVariables = needTempVar
+        val tempVars = needTempVar.map {
+            val map = mapOf(
+                "name" to it.name,
+                "stateCount" to stateCount,
+                "exprCount" to "tmp_${it.name}"
+            )
+            renderTemplate(it.templateName, map)
+        }
+
         val map = mapOf(
+            "tempVars" to tempVars,
             "substitutions" to substitutions.render()
         )
 
@@ -634,6 +653,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         stateCount = 0
         exprCount = 0
         operationParameters = parameters.map { it as IdentifierExpression }
+        temporaryVariables = hashSetOf()
 
         val map = mapOf(
             "name" to name,

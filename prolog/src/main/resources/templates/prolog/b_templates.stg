@@ -40,7 +40,7 @@ avl2List(AVL, List) :-
 
 // TODO: add returnValues ?
 operation(name, parameters, body, resultStateCount) ::= <<
-trans('<name>'(<parameters :{ p | <p>=Expr_<p>}; separator=", ">), State_0, State_<resultStateCount>) :-
+trans('<name>'<if(parameters)>(<parameters :{ p | <p>=Expr_<p>}; separator=", ">)<endif>, State_0, State_<resultStateCount>) :-
     <body>.
 >>
 
@@ -93,8 +93,9 @@ start(State_<resultStateCount>) :-
 >>
 
 // TODO: make parallel
-parallelSubstitution(substitutions) ::= <<
+parallelSubstitution(tempVars, substitutions) ::= <<
 % Parallel Substitution:
+<if(tempVars)><tempVars; separator=",\n">,<endif>
 <substitutions; separator=",\n">
 >>
 
@@ -131,7 +132,10 @@ check_inv(State) :-
 
 // TODO: function: check if e.g. only one solution is found
 member(name) ::= <<
+<name>(Element, 'INT') :-
+    integer(Element).
 <name>(Element, 'NAT') :-
+    integer(Element),
     between(0, infinite, Element).
 <name>(Element, List) :-
     is_list(List), !,

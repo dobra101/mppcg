@@ -254,7 +254,7 @@ class ExpressionVisitor : AbstractVisitor() {
                 return
             }
             (AbstractVisitor.result as Expression).type = TypeInteger()
-            result = AnonymousSetCollectionNode(listOf())
+            result = InfiniteSet(TypeInteger())
         }
     }
 
