@@ -23,6 +23,8 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
 
     private val optimizer = JavaOptimizer(this)
 
+    private var codeRepresentation: Any? = null
+
     /* ---------- EXPRESSIONS ---------- */
     override fun AnonymousSetCollectionNode.renderSelf(): RenderResult {
         val map = mapOf(
@@ -155,7 +157,29 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun SequenceSubstitution.renderSelf(): RenderResult {
-        TODO("Not yet implemented")
+        val map = mapOf(
+            "substitutions" to substitutions.render()
+        )
+
+        return RenderResult(renderTemplate(map))
+    }
+
+    /* ---------- CLASS BLOCK ---------- */
+    override fun ClassVariables.renderSelf(): RenderResult {
+        val declarations = variables.filterIsInstance<IdentifierExpression>()
+            .map {
+                val map = mapOf(
+                    "type" to type2String(it.type),
+                    "lhs" to it.name
+                )
+                renderTemplate("declarationSubstitution", map)
+            }
+
+        val map = mapOf(
+            "variables" to declarations
+        )
+
+        return RenderResult(renderTemplate(map))
     }
 
     /* ---------- B NODES ---------- */
@@ -218,22 +242,9 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun Initialization.renderSelf(): RenderResult {
-        val subs = substitutions.map {
-            // TODO: convert to declarationSubstitutionNode while converting?
-            if (it is AssignSubstitution) {
-                val map = mapOf(
-                    "type" to type2String(it.lhs[0].type), // TODO: when more than one identifier?
-                    "lhs" to it.lhs[0].render(), // TODO: when more than one identifier?
-                    "rhs" to it.rhs.render()
-                )
-                renderTemplate("declarationSubstitution", map)
-            } else {
-                it.render().rendered
-            }
-        }
-
         val map = mapOf(
-            "substitutions" to subs
+            "substitutions" to substitutions.render(),
+            "name" to (codeRepresentation as Machine).name
         )
 
         return RenderResult(renderTemplate(map))
@@ -259,6 +270,8 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun Machine.renderSelf(): RenderResult {
+        codeRepresentation = this
+
         val map = mapOf(
             "name" to name,
             "parameters" to parameters.render(),

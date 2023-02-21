@@ -7,6 +7,8 @@ public class <name> {
 
     <constants>
     <concrete_constants>
+    <variables; separator="\n">
+
     <properties>
     <definitions>
     <concrete_variables>
@@ -48,8 +50,10 @@ invariants(list) ::= <<
 <list; separator="\n\n">
 >>
 
-initialization(substitutions) ::= <<
-<substitutions; separator="\n">
+initialization(substitutions, name) ::= <<
+public <name>() {
+    <substitutions; separator="\n">
+}
 >>
 
 precondition(predicate, substitution) ::= <<

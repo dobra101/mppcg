@@ -105,7 +105,10 @@ precondition(predicate, substitution) ::= <<
 
 // TODO: add else, when
 select(condition, then, elseSubstitution, when) ::= <<
+% Select
 <condition>,
+
+% Then
 <if(then)><then><else>true<endif>
 >>
 

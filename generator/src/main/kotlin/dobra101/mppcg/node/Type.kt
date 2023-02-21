@@ -3,6 +3,7 @@ package dobra101.mppcg.node
 import dobra101.mppcg.node.b.FunctionType
 import dobra101.mppcg.node.collection.AnonymousCollectionType
 import dobra101.mppcg.node.collection.CollectionType
+import java.util.Objects
 
 interface Type
 
@@ -28,9 +29,27 @@ class TypeString : Type
 
 class TypeVoid : Type
 
-class TypeCollection(val type: CollectionType, val name: String = "") : Type
+class TypeCollection(val type: CollectionType, val name: String = "") : Type {
+    override fun equals(other: Any?): Boolean {
+        if (other !is TypeCollection) return false
+        return type == other.type && name == other.name
+    }
 
-class TypeAnonymousCollection(val type: AnonymousCollectionType) : Type
+    override fun hashCode(): Int {
+        return Objects.hash(type, name)
+    }
+}
+
+class TypeAnonymousCollection(val type: AnonymousCollectionType) : Type {
+    override fun equals(other: Any?): Boolean {
+        if (other !is TypeAnonymousCollection) return false
+        return type == other.type
+    }
+
+    override fun hashCode(): Int {
+        return Objects.hash(type)
+    }
+}
 
 class TypeFunction(val type: FunctionType) : Type
 

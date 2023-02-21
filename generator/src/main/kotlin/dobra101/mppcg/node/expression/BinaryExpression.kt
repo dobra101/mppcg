@@ -1,5 +1,6 @@
 package dobra101.mppcg.node.expression
 
+import dobra101.mppcg.node.InvalidTypeException
 import dobra101.mppcg.node.Type
 import dobra101.mppcg.node.TypeReal
 import dobra101.mppcg.node.TypeInteger
@@ -18,7 +19,13 @@ enum class BinaryExpressionOperator {
 }
 
 // TODO: replace by type inference
-private fun getType(left: Expression, right: Expression): Type {
+private fun getType(left: Expression, right: Expression): Type? {
+    if (left.type == null) return right.type
+    if (right.type == null) return left.type
+
+    // number type
     if (left.type is TypeReal || right.type is TypeReal) return TypeReal()
-    return TypeInteger()
+
+    if (left.type != right.type) throw InvalidTypeException("Types ${left.type} and ${right.type} to not match.")
+    return left.type
 }

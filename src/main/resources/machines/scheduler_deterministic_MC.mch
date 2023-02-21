@@ -1,4 +1,4 @@
-MACHINE scheduler_deterministic
+MACHINE scheduler_deterministic_MC
 
 SETS
 	PID  = {process1,process2,process3}
@@ -16,28 +16,28 @@ INVARIANT  active : POW(PID) & ready : POW(PID) & waiting: POW(PID) & /* the typ
            (ready /\ waiting) = {} &
            active /\ (ready \/ waiting) = {} &
            card(active) <= 1
-              
-INITIALISATION  
+
+INITIALISATION
 	active := {}; ready := {}; waiting := {}
-	
+
 OPERATIONS
 
 new(pp) =
 	SELECT
 		pp : PID  &
 		pp /: active &
-		pp /: (ready \/ waiting) 
+		pp /: (ready \/ waiting)
 	THEN
 		waiting := (waiting \/ { pp })
 	END;
 
 del(pp) =
 	SELECT
-		pp : waiting 
+		pp : waiting
 	THEN
 		waiting := waiting - { pp }
 	END;
-	
+
 ready(rr) =
         SELECT
                 rr : waiting
@@ -48,20 +48,16 @@ ready(rr) =
                 ELSE
                    ready := ready \/ {rr}
                 END
-        END; 
-        	
+        END;
+
 swap(pp) =
-        PRE (ready /= {}) => pp : ready THEN
-            SELECT
-                    active /= {}
-            THEN
-                    waiting := (waiting \/ active);
-                    IF (ready = {}) THEN
-                       active := {}
-                    ELSE
-                        active := {pp};
-                        ready := ready - {pp}
-                    END
-            END
+        PRE pp : PID & ((ready /= {}) => pp : ready) & active /= {} THEN
+                waiting := (waiting \/ active);
+                IF (ready = {}) THEN
+                   active := {}
+                ELSE
+                    active := {pp};
+                    ready := ready - {pp}
+                END
         END
 END

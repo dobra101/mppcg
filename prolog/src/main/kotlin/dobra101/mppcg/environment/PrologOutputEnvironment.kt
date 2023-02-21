@@ -363,6 +363,12 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         return RenderResult(renderTemplate(map))
     }
 
+    /* ---------- CLASS BLOCK ---------- */
+    override fun ClassVariables.renderSelf(): RenderResult {
+        // not needed in prolog
+        return RenderResult()
+    }
+
     /* ---------- B NODES ---------- */
     override fun Function.renderSelf(): RenderResult {
         val lhs = left.render()

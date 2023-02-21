@@ -1,6 +1,7 @@
 package dobra101.mppcg.adapter.sablecc
 
 import de.be4.classicalb.core.parser.node.*
+import dobra101.mppcg.node.ClassVariables
 import dobra101.mppcg.node.b.*
 import dobra101.mppcg.node.collection.CollectionNode
 import dobra101.mppcg.node.expression.Expression
@@ -162,7 +163,7 @@ class MachineVisitor : AbstractVisitor() {
             concreteConstants = concreteConstants,
             properties = properties,
             definitions = definitions,
-            variables = variables,
+            variables = ClassVariables(variables),
             concreteVariables = concreteVariables,
             initialization = initialization,
             invariant = invariant,

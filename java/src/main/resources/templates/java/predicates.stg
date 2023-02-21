@@ -7,6 +7,6 @@ binaryPredicateMember(entry, set) ::= <<
 >>
 
 // TODO: add parenthesis
-logicPredicate(lhs, operator, rhs) ::= <<
+binaryLogicPredicate(lhs, operator, rhs) ::= <<
 <lhs> <operator> <rhs>
 >>

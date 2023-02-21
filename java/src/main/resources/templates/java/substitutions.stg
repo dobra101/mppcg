@@ -3,5 +3,11 @@ assignSubstitution(identifier, rhs) ::= <<
 >>
 
 declarationSubstitution(type, lhs, rhs) ::= <<
-private <type> <lhs> = <rhs>;
+<if(rhs)>
+private <type> <lhs> = <rhs>;<else>
+private <type> <lhs>;<endif>
+>>
+
+sequenceSubstitution(substitutions) ::= <<
+<substitutions; separator="\n">
 >>

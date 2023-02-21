@@ -11,16 +11,24 @@ class SubstitutionVisitor : AbstractVisitor() {
     override var result: Substitution? = null
 
     override fun caseAAssignSubstitution(node: AAssignSubstitution) {
-        val assign = AssignSubstitution(node.lhsExpression.convert(), node.rhsExpressions.convert())
-
         // TODO: when more than one entry?
-        val rightType = assign.rhs[0].type
+        val left = node.lhsExpression.convert().toMutableList()
+        val right = node.rhsExpressions.convert()
+        val rightType = right[0].type
 
+        val index = machineVisitor.variables.indexOf(left[0])
+        // left is variable
+        if (index != -1) {
+           left[0] = machineVisitor.variables[index]
+        }
+
+        val assign = AssignSubstitution(left, right)
         if (assign.lhs[0].type == null) {
             assign.lhs[0].type = rightType
-        }
-        if (assign.lhs[0].type != rightType) {
-            throw InvalidTypeException("Types ${assign.lhs[0].type} and $rightType to not match.\n$assign")
+        } else if (assign.lhs[0].type != rightType) {
+            println("Calculated Right ($rightType -- ${right[0]::class.simpleName}) ${right[0]}")
+            println(assign)
+            throw InvalidTypeException("Types ${assign.lhs[0].type} and $rightType to not match.")
         }
 
         result = assign

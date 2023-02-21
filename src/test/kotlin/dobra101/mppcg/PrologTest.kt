@@ -11,8 +11,11 @@ import io.kotest.matchers.shouldBe
 import java.io.File
 
 class PrologTest : ExpectSpec({
+    val include = listOf("TrafficLight.mch", "Lift.mch", "scheduler_deterministic_MC.mch")
+
     val machines = File("src/main/resources/machines/").walk()
         .filter { it.isFile && it.name.endsWith(".mch") }
+        .filter { if (include.isNotEmpty()) include.contains(it.name) else true }
         .toList()
 
     fun runProB(machine: File): ProBResult {

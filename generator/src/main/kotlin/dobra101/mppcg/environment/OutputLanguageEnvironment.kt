@@ -1,6 +1,7 @@
 package dobra101.mppcg.environment
 
 import dobra101.mppcg.RenderResult
+import dobra101.mppcg.node.ClassVariables
 import dobra101.mppcg.node.MPPCGNode
 import dobra101.mppcg.node.b.*
 import dobra101.mppcg.node.b.Function
@@ -61,11 +62,14 @@ abstract class OutputLanguageEnvironment : EnvironmentUtils(), BEnvironment {
     abstract fun IfSubstitution.renderSelf(): RenderResult
     abstract fun SequenceSubstitution.renderSelf(): RenderResult
 
+    abstract fun ClassVariables.renderSelf(): RenderResult
+
     fun call(node: MPPCGNode): RenderResult {
         return when (node) {
             is Expression -> callExpression(node)
             is Predicate -> callPredicate(node)
             is Substitution -> callSubstitution(node)
+            is ClassVariables -> node.renderSelf()
 
             /* B Nodes */
             is Machine -> node.renderSelf()
@@ -139,6 +143,7 @@ abstract class OutputLanguageEnvironment : EnvironmentUtils(), BEnvironment {
         st.importTemplates(STGroupFile("$templateDir/predicates.stg"))
         st.importTemplates(STGroupFile("$templateDir/substitutions.stg"))
         st.importTemplates(STGroupFile("$templateDir/optimizer.stg"))
+        st.importTemplates(STGroupFile("$templateDir/common.stg"))
         return st
     }
 

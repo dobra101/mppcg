@@ -1,5 +1,6 @@
 package dobra101.mppcg.node.b
 
+import dobra101.mppcg.node.ClassVariables
 import dobra101.mppcg.node.MPPCGNode
 import dobra101.mppcg.node.collection.CollectionNode
 import dobra101.mppcg.node.expression.Expression
@@ -14,7 +15,7 @@ data class Machine(
     val concreteConstants: List<Expression> = emptyList(),
     val properties: List<Predicate> = emptyList(),
     val definitions: Predicate? = null,
-    val variables: List<Expression> = emptyList(),
+    val variables: ClassVariables = ClassVariables(),
     val concreteVariables: List<Expression> = emptyList(),
     val initialization: Initialization? = null,
     val invariant: Invariant = Invariant(),
