@@ -27,6 +27,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     var exprCount = 0
     var stateCount = 0
     var operationParameters: List<IdentifierExpression> = emptyList() // HINT: only for B
+    var concreteConstants: List<Expression> = emptyList() // HINT: only for B
     var usedBMethods: HashSet<CustomMethodOperator> = hashSetOf() // HINT: only for B
 
     /* ---------- EXPRESSIONS ---------- */
@@ -50,7 +51,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         val rendered = renderTemplate(map)
 
         if (optimize) optimizer.evaluated[this] = rendered
-        // TODO: dont remove by hand
+        // TODO: don't remove by hand
         return RenderResult(
             expanded.before.removeSuffix(EXPRESSION_SEPARATOR),
             mapOf("resultExpr" to IndividualInfo(rendered))
@@ -105,36 +106,35 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
 
     override fun IdentifierExpression.renderSelf(): RenderResult {
         if (optimize) optimizer.loadIfEvaluated(this)?.let { return it }
-
         // TODO: not hardcoded and not always
         if (operationParameters.contains(this)) {
             return RenderResult("Expr_$name")
         }
 
-        val map = mapOf(
-            "name" to name,
-            "stateCount" to stateCount,
-            "exprCount" to exprCount
-        )
-
+        // TODO: not hardcoded and not always
+        val rendered = if (concreteConstants.contains(this) || concreteConstants.find { (it as? ConcreteIdentifierExpression)?.name == name } != null) {
+            "$name(Expr_$exprCount)"
+        } else {
+            val map = mapOf(
+                "name" to name,
+                "stateCount" to stateCount,
+                "exprCount" to exprCount
+            )
+            renderTemplate(map)
+        }
         if (optimize) optimizer.evaluated[this] = "Expr_$exprCount"
         val info = mapOf("resultExpr" to IndividualInfo("Expr_${exprCount++}")) // TODO: map to Int?
 
-        return RenderResult(renderTemplate(map), info)
+        return RenderResult(rendered, info)
     }
 
     override fun IntervalExpression.renderSelf(): RenderResult {
         val expanded = ExpandedBinary.of(left, right)
-
         val map = mapOf(
             "lhs" to expanded.lhs,
             "rhs" to expanded.rhs
         )
-
-        val rendered = renderTemplate(map)
-
-        return RenderResult("${expanded.before}$rendered")
-
+        return RenderResult(renderTemplate(map), info = mapOf("before" to IndividualInfo(expanded.before)))
     }
 
     override fun SetCollectionNode.renderSelf(): RenderResult {
@@ -365,6 +365,9 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
 
     /* ---------- B NODES ---------- */
     override fun Function.renderSelf(): RenderResult {
+        val lhs = left.render()
+        val rhs = right.render()
+
         val map = mapOf(
             "lhs" to left.render(),
             "rhs" to right.render(),
@@ -372,7 +375,15 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             "mapType" to mapType
         )
 
-        return RenderResult(renderTemplate(map))
+        var before = ""
+        if (lhs.containsKey("before")) {
+            before += lhs["before"].info
+        }
+        if (rhs.containsKey("before")) {
+            before += lhs["before"].info
+        }
+
+        return RenderResult(renderTemplate(map), info = mapOf("before" to IndividualInfo(before)))
     }
 
     override fun BinaryCollectionExpression.renderSelf(): RenderResult {
@@ -414,6 +425,8 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         if (operator == BinaryFunctionOperator.OVERWRITE) {
             usedBMethods.add(BinaryFunctionOperator.DOMAIN_SUBTRACTION)
             usedBMethods.add(UnaryFunctionOperator.DOMAIN)
+        } else if (operator == BinaryFunctionOperator.IMAGE) {
+            usedBMethods.add(BinaryPredicateOperator.MEMBER)
         }
 
         if (optimize) optimizer.evaluated[this] = "Expr_$exprCount"
@@ -437,6 +450,14 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
 
         if (optimize) optimizer.evaluated[this] = "Expr_$exprCount"
         return RenderResult("$before$rendered", mapOf("resultExpr" to IndividualInfo("Expr_${exprCount++}")))
+    }
+
+    override fun ConcreteIdentifierExpression.renderSelf(): RenderResult {
+        val map = mapOf(
+            "name" to name,
+            "value" to (value as? ValueExpression)?.value // TODO: fix nullable
+        )
+        return RenderResult(renderTemplate(map))
     }
 
     override fun Couple.renderSelf(): RenderResult {
@@ -578,6 +599,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun Machine.renderSelf(): RenderResult {
+        this@PrologOutputEnvironment.concreteConstants = concreteConstants
         val map = mapOf(
             "name" to name,
             "parameters" to parameters.render(),
@@ -600,7 +622,6 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun Operation.renderSelf(): RenderResult {
-        if (name == "final_evt") println(this)
         if (optimize) optimizer.evaluated = hashMapOf()
         stateCount = 0
         exprCount = 0
@@ -716,7 +737,14 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
                 mapOf("name" to operator2String(this))
             )
 
-            BinaryFunctionOperator.IMAGE -> renderTemplate("image", mapOf("name" to operator2String(this)))
+            BinaryFunctionOperator.IMAGE -> renderTemplate(
+                "image",
+                mapOf(
+                    "name" to operator2String(this),
+                    "memberName" to operator2String(BinaryPredicateOperator.MEMBER)
+                )
+            )
+
             BinaryFunctionOperator.OVERWRITE -> renderTemplate(
                 "overwrite", mapOf(
                     "name" to operator2String(this),
@@ -803,6 +831,9 @@ private data class ExpandedBinary(val before: String = "", val lhs: String = "",
             } else {
                 lhs = lhsRendered.rendered
             }
+            if (lhsRendered.containsKey("before")) {
+                before += lhsRendered["before"].info
+            }
 
             if (rhsRendered.containsKey("resultExpr")) {
                 rhs = rhsRendered["resultExpr"].info
@@ -811,6 +842,9 @@ private data class ExpandedBinary(val before: String = "", val lhs: String = "",
                 }
             } else {
                 rhs = rhsRendered.rendered
+            }
+            if (rhsRendered.containsKey("before")) {
+                before += rhsRendered["before"].info
             }
             return ExpandedBinary(before, lhs, rhs)
         }

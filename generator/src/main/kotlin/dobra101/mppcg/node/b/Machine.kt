@@ -12,7 +12,7 @@ data class Machine(
     val sets: List<CollectionNode> = emptyList(),
     val constants: List<Expression> = emptyList(),
     val concreteConstants: List<Expression> = emptyList(),
-    val properties: Predicate? = null,
+    val properties: List<Predicate> = emptyList(),
     val definitions: Predicate? = null,
     val variables: List<Expression> = emptyList(),
     val concreteVariables: List<Expression> = emptyList(),

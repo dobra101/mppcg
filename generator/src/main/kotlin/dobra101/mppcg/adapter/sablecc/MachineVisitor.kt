@@ -1,12 +1,13 @@
 package dobra101.mppcg.adapter.sablecc
 
 import de.be4.classicalb.core.parser.node.*
-import dobra101.mppcg.node.b.Initialization
-import dobra101.mppcg.node.b.Invariant
-import dobra101.mppcg.node.b.Machine
-import dobra101.mppcg.node.b.Operation
+import dobra101.mppcg.node.b.*
 import dobra101.mppcg.node.collection.CollectionNode
 import dobra101.mppcg.node.expression.Expression
+import dobra101.mppcg.node.expression.IdentifierExpression
+import dobra101.mppcg.node.expression.ValueExpression
+import dobra101.mppcg.node.predicate.BinaryPredicate
+import dobra101.mppcg.node.predicate.BinaryPredicateOperator
 import dobra101.mppcg.node.predicate.Predicate
 
 class MachineVisitor : AbstractVisitor() {
@@ -17,8 +18,8 @@ class MachineVisitor : AbstractVisitor() {
     private var constraints: Predicate? = null
     var sets: List<CollectionNode> = emptyList()
     var constants: List<Expression> = emptyList()
-    var concreteConstants: List<Expression> = emptyList()
-    private var properties: Predicate? = null
+    var concreteConstants: MutableList<Expression> = mutableListOf()
+    private var properties: List<Predicate> = emptyList()
     private var definitions: Predicate? = null
     var variables: List<Expression> = emptyList()
     var concreteVariables: List<Expression> = emptyList()
@@ -46,12 +47,23 @@ class MachineVisitor : AbstractVisitor() {
     }
 
     override fun caseAConstantsMachineClause(node: AConstantsMachineClause) {
-        concreteConstants = node.identifiers.convert()
+        concreteConstants = node.identifiers.convert().toMutableList()
     }
 
+    // TODO: add other cases
     override fun caseAPropertiesMachineClause(node: APropertiesMachineClause) {
-        // TODO: split into multiple
-        properties = node.predicates.convert()
+        properties = node.predicates.convert()?.asList() ?: emptyList()
+        properties.forEach {
+            if ((it as? BinaryPredicate)?.operator == BinaryPredicateOperator.EQUAL) {
+                if (it.left is IdentifierExpression && it.right is ValueExpression) {
+                    val cc = concreteConstants.find { cc -> (cc as? IdentifierExpression)?.name == it.left.name }
+                    if (cc != null) {
+                        concreteConstants.remove(cc)
+                        concreteConstants.add(ConcreteIdentifierExpression(it.left.name, value = it.right, type = cc.type))
+                    }
+                }
+            }
+        }
     }
 
     override fun caseADefinitionsMachineClause(node: ADefinitionsMachineClause) {

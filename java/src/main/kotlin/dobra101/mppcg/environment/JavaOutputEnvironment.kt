@@ -175,6 +175,10 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         TODO("Not yet implemented")
     }
 
+    override fun ConcreteIdentifierExpression.renderSelf(): RenderResult {
+        TODO("Not yet implemented")
+    }
+
     override fun Couple.renderSelf(): RenderResult {
         TODO("Not yet implemented")
     }

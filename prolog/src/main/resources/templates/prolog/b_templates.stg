@@ -6,6 +6,10 @@ machine(name, parameters, constraints, sets, constants, concrete_constants, prop
 <sets; separator=".\n\n">.
 <endif>
 
+<if(concrete_constants)>
+<concrete_constants; separator=".\n">.
+<endif>
+
 <initialization>
 
 % Transitions
@@ -40,13 +44,9 @@ trans('<name>', State_0, State_<resultStateCount>) :-
     <body>.
 >>
 
-// TODO: implement
+// TODO: use type and mapType
 function(lhs, rhs, type, mapType) ::= <<
-Function:
-lhs: <lhs>
-rhs: <rhs>
-Type: <type>
-mapType: <mapType>
+function(<lhs>, <rhs>)
 >>
 
 binaryFunctionExpression(lhs, rhs, operator, exprCount) ::= <<
@@ -55,6 +55,10 @@ binaryFunctionExpression(lhs, rhs, operator, exprCount) ::= <<
 
 callFunction(expression, parameters, exprCount) ::= <<
 callFunction(<expression>, <parameters>, Expr_<exprCount>)
+>>
+
+concreteIdentifier(name, value) ::= <<
+<name>(<value>)
 >>
 
 couple(from, to) ::= <<
@@ -122,6 +126,7 @@ check_inv(State) :-
 <invariants>
 >>
 
+// TODO: function: check if e.g. only one solution is found
 member(name) ::= <<
 <name>(Element, 'NAT') :-
     between(0, infinite, Element).
@@ -130,6 +135,9 @@ member(name) ::= <<
     member(Element, List).
 <name>(Element, (A, B)) :-
     between(A, B, Element).
+<name>((X/Y), function(From, To)) :-
+    <name>(X, From),
+    <name>(Y, To).
 
 between(A, B, Element) :-
     var(Element),
@@ -235,14 +243,19 @@ domainSubtraction(name) ::= <<
     !.
 >>
 
-image(name) ::= <<
+image(name, memberName) ::= <<
 <name>([], _, []) :- !.
+% image of set
 <name>(Relation, [X | Rest], [Y | NewTail]) :-
-    member((X/Y), Relation),
+    <memberName>((X/Y), Relation),
     <name>(Relation, Rest, NewTail),
     !.
 <name>(Relation, [_ | Rest], NewTail) :-
-    <name>(Relation, Rest, NewTail),
+    <name>(Relation, Rest, NewTail).
+% image of interval
+<name>(Relation, (A, B), Result) :-
+    findall(Element, <memberName>(Element, (A, B)), Set),
+    <name>(Relation, Set, Result),
     !.
 >>
 
@@ -266,7 +279,7 @@ powerSet(name, subsetName) ::= <<
 >>
 
 minSet(name) ::= <<
-<name>(Set, Min) ->
+<name>(Set, Min) :-
     <name>(Set, unset, Min),
     !.
 <name>([], unset, unset) :- fail, !.

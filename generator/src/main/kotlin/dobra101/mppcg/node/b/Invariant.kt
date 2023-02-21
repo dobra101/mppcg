@@ -25,18 +25,6 @@ data class Invariant(
 
             return Invariant(list)
         }
-
-        private fun Predicate.asList(): List<Predicate> {
-            if (this !is BinaryLogicPredicate) return listOf(this)
-
-            if (operator != LogicPredicateOperator.AND) return listOf(this)
-
-            val list: MutableList<Predicate> = mutableListOf()
-            list.addAll(left.asList())
-            list.addAll(right.asList())
-
-            return list
-        }
     }
 }
 
