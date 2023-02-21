@@ -153,7 +153,13 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun IfSubstitution.renderSelf(): RenderResult {
-        TODO("Not yet implemented")
+        val map = mapOf(
+            "condition" to condition.render(),
+            "then" to then.render(),
+            "elseIf" to elseIf.render(),
+            "elseSubstitution" to elseSubstitution?.render()
+        )
+        return RenderResult(renderTemplate(map))
     }
 
     override fun SequenceSubstitution.renderSelf(): RenderResult {
@@ -188,7 +194,12 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun BinaryCollectionExpression.renderSelf(): RenderResult {
-        TODO("Not yet implemented")
+        val map = mapOf(
+            "lhs" to left.render(),
+            "rhs" to right.render(),
+            "operator" to operator2String(operator)
+        )
+        return RenderResult(renderTemplate(map))
     }
 
     override fun BinaryFunctionExpression.renderSelf(): RenderResult {
@@ -215,7 +226,11 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun UnaryCollectionExpression.renderSelf(): RenderResult {
-        TODO("Not yet implemented")
+        val map = mapOf(
+            "collection" to collection.render(),
+            "operator" to operator2String(operator)
+        )
+        return RenderResult(renderTemplate(map))
     }
 
     override fun UnaryFunctionExpression.renderSelf(): RenderResult {
@@ -251,7 +266,11 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun ParallelSubstitution.renderSelf(): RenderResult {
-        TODO("Not yet implemented")
+        val map = mapOf(
+            "substitutions" to substitutions.render()
+        )
+
+        return RenderResult(renderTemplate(map))
     }
 
     override fun Precondition.renderSelf(): RenderResult {
@@ -318,11 +337,14 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     override fun type2String(type: Type?): String {
         if (type == null) throw InvalidTypeException("Null as type found")
         return when (type) {
-            is TypeReal -> "double"
+            is TypeAnonymousCollection -> "anonymous type"
+            is TypeBoolean -> "boolean"
+            is TypeCollection -> if (type.type == CollectionType.Enum) type.name.capitalize() else type.name
             is TypeInteger -> "int"
+            is TypeNatural -> "int"
+            is TypeReal -> "double"
             is TypeString -> "String"
             is TypeVoid -> "void"
-            is TypeCollection -> if (type.type == CollectionType.Enum) type.name.capitalize() else type.name
             else -> throw UnknownTypeException(type::class.simpleName!!)
         }
     }

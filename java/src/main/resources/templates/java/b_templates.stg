@@ -65,3 +65,9 @@ precondition(predicate, substitution) ::= <<
 select(condition, then, elseSubstitution, when) ::= <<
 <then>
 >>
+
+// TODO: make parallel
+parallelSubstitution(substitutions) ::= <<
+% Parallel Substitution:
+<substitutions; separator="\n">
+>>

@@ -20,9 +20,14 @@ private fun getType(left: Expression, right: Expression): Type? {
     if (left.type == null) return right.type
     if (right.type == null) return left.type
 
-    // number type
+    // number type TODO: other has to be number
     if (left.type is TypeReal || right.type is TypeReal) return TypeReal()
 
-    if (left.type != right.type) throw InvalidTypeException("Types ${left.type} and ${right.type} to not match.")
+    if (left.type != right.type) {
+        if (right.type is TypeAnonymousCollection) {
+            return left.type
+        }
+        throw InvalidTypeException("Types ${left.type} and ${right.type} to not match.")
+    }
     return left.type
 }

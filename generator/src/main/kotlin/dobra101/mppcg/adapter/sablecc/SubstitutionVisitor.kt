@@ -2,6 +2,8 @@ package dobra101.mppcg.adapter.sablecc
 
 import de.be4.classicalb.core.parser.node.*
 import dobra101.mppcg.node.InvalidTypeException
+import dobra101.mppcg.node.TypeInteger
+import dobra101.mppcg.node.TypeNumber
 import dobra101.mppcg.node.b.Precondition
 import dobra101.mppcg.node.b.Select
 import dobra101.mppcg.node.substitution.*
@@ -25,10 +27,10 @@ class SubstitutionVisitor : AbstractVisitor() {
         val assign = AssignSubstitution(left, right)
         if (assign.lhs[0].type == null) {
             assign.lhs[0].type = rightType
-        } else if (assign.lhs[0].type != rightType) {
-            println("Calculated Right ($rightType -- ${right[0]::class.simpleName}) ${right[0]}")
-            println(assign)
-            throw InvalidTypeException("Types ${assign.lhs[0].type} and $rightType to not match.")
+        } else if (rightType != null && assign.lhs[0].type!!::class != rightType::class) {
+            if (assign.lhs[0].type !is TypeNumber || rightType !is TypeInteger) {
+                throw InvalidTypeException("Types ${assign.lhs[0].type} and $rightType to not match.")
+            }
         }
 
         result = assign

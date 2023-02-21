@@ -2,6 +2,14 @@ assignSubstitution(identifier, rhs) ::= <<
 <identifier> = <rhs>;
 >>
 
+ifSubstitution(condition, then, elseIf, elseSubstitution) ::= <<
+if(<condition>) {
+    <then>
+}<if(elseSubstitution)> else <if(elseIf)>if(<elseIf>)<endif>{
+    <elseSubstitution>
+}<endif>
+>>
+
 declarationSubstitution(type, lhs, rhs) ::= <<
 <if(rhs)>
 private <type> <lhs> = <rhs>;<else>

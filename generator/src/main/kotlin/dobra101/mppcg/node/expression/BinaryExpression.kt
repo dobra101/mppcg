@@ -1,9 +1,6 @@
 package dobra101.mppcg.node.expression
 
-import dobra101.mppcg.node.InvalidTypeException
-import dobra101.mppcg.node.Type
-import dobra101.mppcg.node.TypeReal
-import dobra101.mppcg.node.TypeInteger
+import dobra101.mppcg.node.*
 
 data class BinaryExpression(
     val left: Expression,
@@ -26,6 +23,19 @@ private fun getType(left: Expression, right: Expression): Type? {
     // number type
     if (left.type is TypeReal || right.type is TypeReal) return TypeReal()
 
-    if (left.type != right.type) throw InvalidTypeException("Types ${left.type} and ${right.type} to not match.")
+    if (left.type != right.type) {
+        if (left.type is TypeNatural && right.canBeNatural()) {
+            return left.type
+        }
+
+        throw InvalidTypeException("Types ${left.type} and ${right.type} to not match.")
+    }
     return left.type
+}
+
+private fun Expression.canBeNatural(): Boolean {
+    if (type !is TypeInteger) return false
+    if (this !is ValueExpression) return false
+    if (value.toIntOrNull() == null) return false
+    return value.toInt() >= 0
 }

@@ -6,6 +6,14 @@ binaryExpression(lhs, rhs, operator) ::= <<
 <lhs> <operator> <rhs>
 >>
 
+unaryCollectionExpression(collection, operator) ::= <<
+<operator>(<collection>)
+>>
+
+binaryCollectionExpression(lhs, rhs, operator) ::= <<
+<operator>(<lhs>, <rhs>)
+>>
+
 enumCollectionExpression(name, elements) ::= <<
 private enum <name> {
     <elements; separator=", ">

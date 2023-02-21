@@ -20,6 +20,8 @@ class ExpressionVisitor : AbstractVisitor() {
 
         if (parent is AEnumeratedSetSet) {
             // TODO: when more than one identifier?
+
+            // a, b, c = 1, 2, 3
             val enumName = parent.identifier[0].text
             result = IdentifierExpression(name = node.text, type = TypeCollection(CollectionType.Enum, enumName))
             return
@@ -246,7 +248,14 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseAIntSetExpression(node: AIntSetExpression) {
-        TODO("Not implemented ${node::class.simpleName}")
+        if (AbstractVisitor.result is Expression) {
+            if ((AbstractVisitor.result as Expression).type != null) {
+                logger.severe("Cannot reassign type Int of ${AbstractVisitor.result}")
+                return
+            }
+            (AbstractVisitor.result as Expression).type = TypeInteger()
+            result = AnonymousSetCollectionNode(listOf())
+        }
     }
 
     override fun caseABoolSetExpression(node: ABoolSetExpression) {
