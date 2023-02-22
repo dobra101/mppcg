@@ -18,4 +18,4 @@ data class SetEntry(
 
 data class AnonymousSetCollectionNode(
     override val elements: List<Expression> = emptyList(),
-) : AnonymousCollectionNode(elements, AnonymousCollectionType.Set)
+) : AnonymousCollectionNode(elements, CollectionType.Set)

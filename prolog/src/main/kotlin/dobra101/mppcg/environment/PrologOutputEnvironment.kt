@@ -755,7 +755,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         return when (this) {
             UnaryFunctionOperator.DOMAIN -> renderTemplate("domain", mapOf("name" to operator2String(this)))
             UnaryFunctionOperator.RANGE -> renderTemplate("range", mapOf("name" to operator2String(this)))
-//            UnaryFunctionOperator.REVERSE -> renderTemplate("reverse", mapOf("name" to operator2String(this)))
+            UnaryFunctionOperator.REVERSE -> renderTemplate("reverse", mapOf("name" to operator2String(this)))
             else -> throw EnvironmentException("Rendering of custom method for operator '${name}' (${this::class.simpleName}) is not implemented.")
         }
     }
@@ -763,7 +763,11 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     // HINT: input language specific
     private fun BinaryFunctionOperator.render(): String {
         return when (this) {
-//            BinaryFunctionOperator.DOMAIN_RESTRICTION -> renderTemplate("domainRestriction")
+            BinaryFunctionOperator.DOMAIN_RESTRICTION -> renderTemplate(
+                "domainRestriction",
+                mapOf("name" to operator2String(this))
+            )
+
             BinaryFunctionOperator.DOMAIN_SUBTRACTION -> renderTemplate(
                 "domainSubtraction",
                 mapOf("name" to operator2String(this))
@@ -784,8 +788,17 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
                     "domainSubtractionName" to operator2String(BinaryFunctionOperator.DOMAIN_SUBTRACTION)
                 )
             )
-//            BinaryFunctionOperator.RANGE_RESTRICTION -> renderTemplate("rangeRestriction", mapOf("name" to operator2String(this)))
-//            BinaryFunctionOperator.RANGE_SUBTRACTION -> renderTemplate("rangeSubtraction", mapOf("name" to operator2String(this)))
+
+            BinaryFunctionOperator.RANGE_RESTRICTION -> renderTemplate(
+                "rangeRestriction",
+                mapOf("name" to operator2String(this))
+            )
+
+            BinaryFunctionOperator.RANGE_SUBTRACTION -> renderTemplate(
+                "rangeSubtraction",
+                mapOf("name" to operator2String(this))
+            )
+
             else -> throw EnvironmentException("Rendering of custom method for operator '${name}' (${this::class.simpleName}) is not implemented.")
         }
     }

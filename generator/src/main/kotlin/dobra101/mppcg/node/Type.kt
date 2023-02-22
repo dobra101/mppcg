@@ -1,7 +1,6 @@
 package dobra101.mppcg.node
 
 import dobra101.mppcg.node.b.FunctionType
-import dobra101.mppcg.node.collection.AnonymousCollectionType
 import dobra101.mppcg.node.collection.CollectionType
 import java.util.Objects
 
@@ -40,10 +39,11 @@ class TypeCollection(val type: CollectionType, val name: String = "") : Type {
     }
 }
 
-class TypeAnonymousCollection(val type: AnonymousCollectionType) : Type {
+class TypeAnonymousCollection(val type: CollectionType) : Type {
     override fun equals(other: Any?): Boolean {
-        if (other !is TypeAnonymousCollection) return false
-        return type == other.type
+        if (other is TypeAnonymousCollection) return type == other.type
+        if (other is TypeCollection) return type == other.type
+        return false
     }
 
     override fun hashCode(): Int {

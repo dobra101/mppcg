@@ -27,7 +27,16 @@ private fun getType(left: Expression, right: Expression): Type? {
         if (right.type is TypeAnonymousCollection) {
             return left.type
         }
-        throw InvalidTypeException("Types ${left.type} and ${right.type} to not match.")
+
+        if (left.type is TypeAnonymousCollection) {
+            println((left.type as TypeAnonymousCollection).type)
+        }
+        if (right.type is TypeCollection) {
+            println(((right.type as TypeCollection).type))
+        }
+        println("Left (${left.type}): $left")
+        println("Right (${right.type}): $right")
+        throw InvalidTypeException("Types ${left.type} and ${right.type} do not match.")
     }
     return left.type
 }

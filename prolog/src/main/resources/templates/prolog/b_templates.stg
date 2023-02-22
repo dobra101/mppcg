@@ -210,20 +210,32 @@ range(name) ::= <<
     <name>(Tail, NewTail).
 >>
 
-reverse() ::= <<
+reverse(name) ::= <<
+<name>([], []) :- !.
+<name>([(X/Y) | Tail], [(Y/X) | NewTail]) :-
+    <name>(Tail, NewTail),
+    !.
 >>
 
-domainRestriction() ::= <<
+domainRestriction(name) ::= <<
+<name>(_, [], []) :- !.
+<name>(Domain, [(X/Y) | Tail], [(X/Y) | NewTail]) :-
+     member(X, Domain),
+     <name>(Domain, Tail, NewTail),
+     !.
+<name>(Domain, [_ | Tail], NewTail) :-
+    <name>(Domain, Tail, NewTail),
+    !.
 >>
 
 domainSubtraction(name) ::= <<
 <name>(_, [], []) :- !.
-<name>(Set, [(X/Y) | Tail], [(X/Y) | NewTail]) :-
-    \+ member(X, Set),
-    <name>(Set, Tail, NewTail),
+<name>(Domain, [(X/Y) | Tail], [(X/Y) | NewTail]) :-
+    \+ member(X, Domain),
+    <name>(Domain, Tail, NewTail),
     !.
-<name>(Set, [_ | Tail], NewTail) :-
-    <name>(Set, Tail, NewTail),
+<name>(Domain, [_ | Tail], NewTail) :-
+    <name>(Domain, Tail, NewTail),
     !.
 >>
 
@@ -250,10 +262,26 @@ overwrite(name, domainName, domainSubtractionName) ::= <<
     append(Set, Tail, Result).
 >>
 
-rangeRestriction() ::= <<
+rangeRestriction(name) ::= <<
+<name>([], _, []) :- !.
+<name>([(X/Y) | Tail], Range, [(X/Y) | NewTail]) :-
+    member(Y, Range),
+    <name>(Tail, Range, NewTail),
+    !.
+<name>([_ | Tail], Range, NewTail) :-
+    <name>(Tail, Range, NewTail),
+    !.
 >>
 
-rangeSubtraction() ::= <<
+rangeSubtraction(name) ::= <<
+<name>([], _, []) :- !.
+<name>([(X/Y) | Tail], Range, [(X/Y) | NewTail]) :-
+    \+ member(Y, Range),
+    <name>(Tail, Range, NewTail),
+    !.
+<name>([_ | Tail], Range, NewTail) :-
+    <name>(Tail, Range, NewTail),
+    !.
 >>
 
 powerSet(name, subsetName) ::= <<

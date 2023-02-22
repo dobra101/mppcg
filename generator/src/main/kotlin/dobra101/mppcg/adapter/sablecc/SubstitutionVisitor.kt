@@ -1,9 +1,7 @@
 package dobra101.mppcg.adapter.sablecc
 
 import de.be4.classicalb.core.parser.node.*
-import dobra101.mppcg.node.InvalidTypeException
-import dobra101.mppcg.node.TypeInteger
-import dobra101.mppcg.node.TypeNumber
+import dobra101.mppcg.node.*
 import dobra101.mppcg.node.b.Precondition
 import dobra101.mppcg.node.b.Select
 import dobra101.mppcg.node.substitution.*
@@ -13,7 +11,7 @@ class SubstitutionVisitor : AbstractVisitor() {
     override var result: Substitution? = null
 
     override fun caseAAssignSubstitution(node: AAssignSubstitution) {
-        // TODO: when more than one entry?
+        // TODO: when more than one entry? -> a, b = 1, 2
         val left = node.lhsExpression.convert().toMutableList()
         val right = node.rhsExpressions.convert()
         val rightType = right[0].type
@@ -24,12 +22,19 @@ class SubstitutionVisitor : AbstractVisitor() {
            left[0] = machineVisitor.variables[index]
         }
 
+        // TODO: refactor
         val assign = AssignSubstitution(left, right)
         if (assign.lhs[0].type == null) {
             assign.lhs[0].type = rightType
         } else if (rightType != null && assign.lhs[0].type!!::class != rightType::class) {
-            if (assign.lhs[0].type !is TypeNumber || rightType !is TypeInteger) {
-                throw InvalidTypeException("Types ${assign.lhs[0].type} and $rightType to not match.")
+            when {
+                assign.lhs[0].type is TypeNumber && rightType is TypeInteger -> {
+                }
+                assign.lhs[0].type is TypeAnonymousCollection && rightType is TypeCollection && assign.lhs[0].type == rightType -> {
+                }
+                else -> {
+                    throw InvalidTypeException("Types ${assign.lhs[0].type} and $rightType to not match.")
+                }
             }
         }
 

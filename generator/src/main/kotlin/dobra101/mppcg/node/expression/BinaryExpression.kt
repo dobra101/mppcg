@@ -28,7 +28,7 @@ private fun getType(left: Expression, right: Expression): Type? {
             return left.type
         }
 
-        throw InvalidTypeException("Types ${left.type} and ${right.type} to not match.")
+        throw InvalidTypeException("Types ${left.type} and ${right.type} do not match.")
     }
     return left.type
 }
