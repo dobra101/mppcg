@@ -8,7 +8,7 @@ data class ConcreteIdentifierExpression(
     val name: String,
     val value: Expression,
     override var type: Type?
-): Expression(type, "concreteIdentifier") {
+) : Expression(type, "concreteIdentifier") {
     override fun equals(other: Any?): Boolean {
         if (other !is IdentifierExpression) return false
         return other.name == name

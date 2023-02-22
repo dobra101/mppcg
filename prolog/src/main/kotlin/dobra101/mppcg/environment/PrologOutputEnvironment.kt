@@ -14,19 +14,18 @@ import dobra101.mppcg.node.substitution.ParallelSubstitution
 import dobra101.mppcg.node.substitution.SequenceSubstitution
 import kotlin.math.max
 
-class PrologOutputEnvironment : OutputLanguageEnvironment() {
+object PrologOutputEnvironment : OutputLanguageEnvironment() {
     override val templateDir = "templates/prolog"
     override val fileExtension = "pl"
 
-    private val optimizer = PrologOptimizer(this)
+    internal val optimizer = PrologOptimizer(this)
 
-    companion object {
-        const val EXPRESSION_SEPARATOR = ",\n"
-    }
+    const val EXPRESSION_SEPARATOR = ",\n"
 
     var exprCount = 0
     var stateCount = 0
     var operationParameters: List<IdentifierExpression> = emptyList() // HINT: only for B
+    var comprehensionSetIdentifier: List<IdentifierExpression> = emptyList() // HINT: only for B
     var temporaryVariables: Set<IdentifierExpression> = hashSetOf() // HINT: only for B
     var concreteConstants: List<Expression> = emptyList() // HINT: only for B
     var usedBMethods: HashSet<CustomMethodOperator> = hashSetOf() // HINT: only for B
@@ -110,7 +109,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     override fun IdentifierExpression.renderSelf(): RenderResult {
         if (optimize) optimizer.loadIfEvaluated(this)?.let { return it }
         // TODO: not hardcoded and not always
-        if (operationParameters.contains(this)) {
+        if (operationParameters.contains(this) || comprehensionSetIdentifier.contains(this)) {
             return RenderResult(expr(name))
         }
 
@@ -122,7 +121,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         // TODO: not hardcoded and not always
         val rendered =
             if (concreteConstants.contains(this) || concreteConstants.find { (it as? ConcreteIdentifierExpression)?.name == name } != null) {
-                "$name(${expr(exprCount)}"
+                "$name(${expr(exprCount)})"
             } else {
                 val map = mapOf(
                     "name" to name,
@@ -210,7 +209,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             return true
         }
 
-        val expanded = ExpandedBinary.of(left, right)
+        val expanded = ExpandedBinary.of(left, right, differentBranches = operator == LogicPredicateOperator.OR)
 
         val lineBreaksTotal = expanded.lhs.count { it == '\n' } + expanded.rhs.count { it == '\n' }
         val map: MutableMap<String, Any> = mutableMapOf(
@@ -466,13 +465,26 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         val rendered = renderTemplate(map)
 
         if (optimize) optimizer.evaluated[this] = expr(exprCount)
+        usedBMethods.add(CallFunctionExpression.CallFunctionOperator)
+
         return RenderResult("$before$rendered", mapOf("resultExpr" to IndividualInfo(expr(exprCount++))))
+    }
+
+    override fun ComprehensionSet.renderSelf(): RenderResult {
+        comprehensionSetIdentifier = identifiers.filterIsInstance<IdentifierExpression>()
+        val map = mapOf(
+            "identifiers" to identifiers.render(),
+            "predicates" to predicates.render()
+        )
+        comprehensionSetIdentifier = emptyList()
+        return RenderResult(renderTemplate(map))
     }
 
     override fun ConcreteIdentifierExpression.renderSelf(): RenderResult {
         val map = mapOf(
             "name" to name,
-            "value" to (value as? ValueExpression)?.value // TODO: fix nullable
+            "value" to value.render(),
+            "inline" to (value !is ComprehensionSet)
         )
         return RenderResult(renderTemplate(map))
     }
@@ -719,6 +731,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
                 is BinaryCollectionOperator -> it.render()
                 is BinaryFunctionOperator -> it.render()
                 is BinaryPredicateOperator -> it.render()
+                is CallFunctionExpression.CallFunctionOperator -> it.render()
                 else -> throw EnvironmentException("Rendering of custom method for operator '$it' (${it::class.simpleName}) is not implemented.")
             }
         }
@@ -833,6 +846,15 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             )
         }
     }
+
+    private fun CallFunctionExpression.CallFunctionOperator.render(): String {
+        return renderTemplate(
+            "callFunctionPredicate",
+            mapOf("memberName" to operator2String(BinaryPredicateOperator.MEMBER))
+        )
+    }
+
+
 }
 
 // TODO: rename?
@@ -863,9 +885,19 @@ private data class ExpandedExpressionList(val before: String = "", val expressio
 
 private data class ExpandedBinary(val before: String = "", val lhs: String = "", val rhs: String = "") {
     companion object {
-        fun of(left: MPPCGNode, right: MPPCGNode): ExpandedBinary {
+        fun of(
+            left: MPPCGNode,
+            right: MPPCGNode,
+            differentBranches: Boolean = false
+        ): ExpandedBinary {
+            // true copy of map
+            val evaluatedBefore =
+                PrologOutputEnvironment.optimizer.evaluated.toMutableMap() as HashMap<MPPCGNode, String>
+
             val lhsRendered = left.render()
+            if (differentBranches) PrologOutputEnvironment.optimizer.evaluated = evaluatedBefore
             val rhsRendered = right.render()
+            if (differentBranches) PrologOutputEnvironment.optimizer.evaluated = evaluatedBefore
 
             var before = ""
             val lhs: String

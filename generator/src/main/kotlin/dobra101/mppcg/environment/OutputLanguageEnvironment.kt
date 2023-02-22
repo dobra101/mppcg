@@ -97,6 +97,7 @@ abstract class OutputLanguageEnvironment : EnvironmentUtils(), BEnvironment {
             is BinaryCollectionExpression -> node.renderSelf()
             is BinaryFunctionExpression -> node.renderSelf()
             is CallFunctionExpression -> node.renderSelf()
+            is ComprehensionSet -> node.renderSelf()
             is ConcreteIdentifierExpression -> node.renderSelf()
             is Couple -> node.renderSelf()
             is InfiniteSet -> node.renderSelf()

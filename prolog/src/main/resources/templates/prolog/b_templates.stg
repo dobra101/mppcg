@@ -7,7 +7,7 @@ machine(name, parameters, constraints, sets, constants, concrete_constants, prop
 <endif>
 
 <if(concrete_constants)>
-<concrete_constants; separator=".\n">.
+<concrete_constants; separator="\n\n">.
 <endif>
 
 <initialization>
@@ -57,8 +57,32 @@ callFunction(expression, parameters, exprCount) ::= <<
 callFunction(<expression>, <parameters>, Expr_<exprCount>)
 >>
 
-concreteIdentifier(name, value) ::= <<
-<name>(<value>)
+callFunctionPredicate(memberName) ::= <<
+callFunction(Expression, Parameters, Result) :-
+    is_list(Parameters),
+    findall(Y, (<memberName>(X, Parameters), <memberName>((X/Y), Expression)), Res),
+    flatten(Res, Result).
+callFunction(Expression, X, Result) :-
+    \+ is_list(X),
+    findall(Y, <memberName>((X/Y), Expression), Res),
+    flatten(Res, Result).
+
+flatten(L, Res) :-
+    flatten(L, [], Flat),
+    (L = [set(_) | _] -> (sort(Flat, R), Res = set(R)); Res = Flat).
+flatten([], Acc, Acc) :- !.
+flatten([Head | Tail], Acc, Flat) :-
+    append(Head, Acc, NewAcc),
+    flatten(Tail, NewAcc, Flat).
+flatten([set(Head) | Tail], Acc, Flat) :-
+    append(Head, Acc, NewAcc),
+    flatten(Tail, NewAcc, Flat).
+>>
+
+concreteIdentifier(name, value, inline) ::= <<
+<if(inline)><name>(<value>).<else>
+<name>(Result) :-
+    <value>.<endif>
 >>
 
 couple(from, to) ::= <<
@@ -113,6 +137,16 @@ select(condition, then, elseSubstitution, when) ::= <<
 <if(then)><then><else>true<endif>
 >>
 
+comprehensionSetExpression(identifiers, predicates) ::= <<
+findall(
+    (<identifiers; separator="/">),
+    (
+        <predicates; separator=",\n">
+    ),
+    Res),
+sort(Res, Result)
+>>
+
 
 /* XTL */
 props(invariants, indices) ::= <<
@@ -142,11 +176,11 @@ member(name) ::= <<
 <name>((X/Y), function(From, To)) :-
     <name>(X, From),
     <name>(Y, To).
+<name>(Element, set(Set)) :-
+    <name>(Element, Set).
 <name>(Element, List) :-
     is_list(List),
     member(Element, List).
-<name>(Element, set(Set)) :-
-    <name>(Element, Set).
 
 between(A, B, Element) :-
     var(Element),
@@ -199,12 +233,16 @@ setUnion(name) ::= <<
 >>
 
 domain(name) ::= <<
+<name>(set(Relation), set(Domain)) :-
+    <name>(Relation, Domain).
 <name>([], []) :- !.
 <name>([(X/_) | Tail], [X | NewTail]) :-
     <name>(Tail, NewTail).
 >>
 
 range(name) ::= <<
+<name>(set(Relation), set(Range)) :-
+    <name>(Relation, Range).
 <name>([], []) :- !.
 <name>([(_/Y) | Tail], [Y | NewTail]) :-
     <name>(Tail, NewTail).

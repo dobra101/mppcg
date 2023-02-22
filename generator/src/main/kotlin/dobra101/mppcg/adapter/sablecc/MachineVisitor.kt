@@ -53,16 +53,20 @@ class MachineVisitor : AbstractVisitor() {
 
     // TODO: add other cases
     override fun caseAPropertiesMachineClause(node: APropertiesMachineClause) {
+        fun valueToConcreteConstant(predicate: BinaryPredicate) {
+            if (predicate.left is IdentifierExpression) {
+                val cc = concreteConstants.find { cc -> (cc as? IdentifierExpression)?.name == predicate.left.name }
+                if (cc != null) {
+                    concreteConstants.remove(cc)
+                    concreteConstants.add(ConcreteIdentifierExpression(predicate.left.name, value = predicate.right, type = cc.type))
+                }
+            }
+        }
+
         properties = node.predicates.convert()?.asList() ?: emptyList()
         properties.forEach {
             if ((it as? BinaryPredicate)?.operator == BinaryPredicateOperator.EQUAL) {
-                if (it.left is IdentifierExpression && it.right is ValueExpression) {
-                    val cc = concreteConstants.find { cc -> (cc as? IdentifierExpression)?.name == it.left.name }
-                    if (cc != null) {
-                        concreteConstants.remove(cc)
-                        concreteConstants.add(ConcreteIdentifierExpression(it.left.name, value = it.right, type = cc.type))
-                    }
-                }
+                valueToConcreteConstant(it)
             }
         }
     }

@@ -15,6 +15,7 @@ interface BEnvironment {
     fun BinaryCollectionExpression.renderSelf(): RenderResult
     fun BinaryFunctionExpression.renderSelf(): RenderResult
     fun CallFunctionExpression.renderSelf(): RenderResult
+    fun ComprehensionSet.renderSelf(): RenderResult
     fun ConcreteIdentifierExpression.renderSelf(): RenderResult
     fun Couple.renderSelf(): RenderResult
     fun InfiniteSet.renderSelf(): RenderResult
