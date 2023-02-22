@@ -31,6 +31,8 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     var concreteConstants: List<Expression> = emptyList() // HINT: only for B
     var usedBMethods: HashSet<CustomMethodOperator> = hashSetOf() // HINT: only for B
 
+    private fun expr(name: Any): String = "Expr_$name"
+
     /* ---------- EXPRESSIONS ---------- */
     override fun AnonymousSetCollectionNode.renderSelf(): RenderResult {
         if (optimize) optimizer.loadIfEvaluated(this)?.let { return it }
@@ -73,9 +75,9 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         )
 
         val rendered = renderTemplate(map)
-        val info = mapOf("resultExpr" to IndividualInfo("Expr_$exprCount")) // TODO: map to Int?
+        val info = mapOf("resultExpr" to IndividualInfo(expr(exprCount))) // TODO: map to Int?
 
-        if (optimize) optimizer.evaluated[this] = "Expr_$exprCount"
+        if (optimize) optimizer.evaluated[this] = expr(exprCount)
         return RenderResult("${expanded.before}$rendered", info)
     }
 
@@ -89,7 +91,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
 
         val rendered = renderTemplate(map)
         if (isParameter) {
-            val info = mapOf("resultExpr" to IndividualInfo("Expr_$exprCount")) // TODO: map to Int?
+            val info = mapOf("resultExpr" to IndividualInfo(expr(exprCount))) // TODO: map to Int?
             exprCount++
             return RenderResult(rendered, info)
         }
@@ -109,18 +111,18 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         if (optimize) optimizer.loadIfEvaluated(this)?.let { return it }
         // TODO: not hardcoded and not always
         if (operationParameters.contains(this)) {
-            return RenderResult("Expr_$name")
+            return RenderResult(expr(name))
         }
 
         // TODO: not hardcoded and not always
         if (temporaryVariables.contains(this)) {
-            return RenderResult("Expr_tmp_$name")
+            return RenderResult(expr("tmp_$name"))
         }
 
         // TODO: not hardcoded and not always
         val rendered =
             if (concreteConstants.contains(this) || concreteConstants.find { (it as? ConcreteIdentifierExpression)?.name == name } != null) {
-                "$name(Expr_$exprCount)"
+                "$name(${expr(exprCount)}"
             } else {
                 val map = mapOf(
                     "name" to name,
@@ -129,8 +131,8 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
                 )
                 renderTemplate(map)
             }
-        if (optimize) optimizer.evaluated[this] = "Expr_$exprCount"
-        val info = mapOf("resultExpr" to IndividualInfo("Expr_${exprCount++}")) // TODO: map to Int?
+        if (optimize) optimizer.evaluated[this] = expr(exprCount)
+        val info = mapOf("resultExpr" to IndividualInfo(expr(exprCount++))) // TODO: map to Int?
 
         return RenderResult(rendered, info)
     }
@@ -418,8 +420,8 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             usedBMethods.add(operator)
         }
 
-        if (optimize) optimizer.evaluated[this] = "Expr_$exprCount"
-        return RenderResult("${expanded.before}$rendered", mapOf("resultExpr" to IndividualInfo("Expr_${exprCount++}")))
+        if (optimize) optimizer.evaluated[this] = expr(exprCount)
+        return RenderResult("${expanded.before}$rendered", mapOf("resultExpr" to IndividualInfo(expr(exprCount++))))
     }
 
     // TODO: reuse BinaryExpression?
@@ -444,8 +446,8 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             usedBMethods.add(BinaryPredicateOperator.MEMBER)
         }
 
-        if (optimize) optimizer.evaluated[this] = "Expr_$exprCount"
-        return RenderResult("${expanded.before}$rendered", mapOf("resultExpr" to IndividualInfo("Expr_${exprCount++}")))
+        if (optimize) optimizer.evaluated[this] = expr(exprCount)
+        return RenderResult("${expanded.before}$rendered", mapOf("resultExpr" to IndividualInfo(expr(exprCount++))))
     }
 
     override fun CallFunctionExpression.renderSelf(): RenderResult {
@@ -463,8 +465,8 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         val before = "${before1.before}${before2.before}"
         val rendered = renderTemplate(map)
 
-        if (optimize) optimizer.evaluated[this] = "Expr_$exprCount"
-        return RenderResult("$before$rendered", mapOf("resultExpr" to IndividualInfo("Expr_${exprCount++}")))
+        if (optimize) optimizer.evaluated[this] = expr(exprCount)
+        return RenderResult("$before$rendered", mapOf("resultExpr" to IndividualInfo(expr(exprCount++))))
     }
 
     override fun ConcreteIdentifierExpression.renderSelf(): RenderResult {
@@ -504,7 +506,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             "exprCount" to exprCount
         )
 
-        if (optimize) optimizer.evaluated[this] = "Expr_$exprCount"
+        if (optimize) optimizer.evaluated[this] = expr(exprCount)
 
         if (needsCustomMethod(operator)) {
             usedBMethods.add(operator)
@@ -515,7 +517,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
 
         return RenderResult(
             "${expanded.before}${renderTemplate(map)}",
-            mapOf("resultExpr" to IndividualInfo("Expr_${exprCount++}"))
+            mapOf("resultExpr" to IndividualInfo(expr(exprCount++)))
         )
     }
 
@@ -533,11 +535,11 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
 
         val rendered = renderTemplate(map)
 
-        if (optimize) optimizer.evaluated[this] = "Expr_$exprCount"
+        if (optimize) optimizer.evaluated[this] = expr(exprCount)
 
         return RenderResult(
             "${expanded.before}$rendered",
-            mapOf("resultExpr" to IndividualInfo("Expr_${exprCount++}"))
+            mapOf("resultExpr" to IndividualInfo(expr(exprCount++)))
         )
     }
 
