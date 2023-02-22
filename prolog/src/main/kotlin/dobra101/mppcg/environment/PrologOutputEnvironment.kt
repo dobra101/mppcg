@@ -702,10 +702,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             BinaryPredicateOperator.SUBSET -> true
 
             is BinaryCollectionOperator -> true
-            UnaryCollectionOperator.MAX,
-            UnaryCollectionOperator.MIN,
-            UnaryCollectionOperator.POW,
-            UnaryCollectionOperator.POW1 -> true
+            is UnaryCollectionOperator -> true
 
             else -> false
         }
@@ -727,6 +724,13 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
 
     private fun UnaryCollectionOperator.render(): String {
         return when (this) {
+            UnaryCollectionOperator.CARD -> renderTemplate(
+                "cardinality",
+                mapOf(
+                    "name" to operator2String(this)
+                )
+            )
+
             UnaryCollectionOperator.POW -> renderTemplate(
                 "powerSet",
                 mapOf(

@@ -137,14 +137,16 @@ member(name) ::= <<
 <name>(Element, 'NAT') :-
     integer(Element),
     between(0, infinite, Element).
-<name>(Element, List) :-
-    is_list(List), !,
-    member(Element, List).
 <name>(Element, (A, B)) :-
     between(A, B, Element).
 <name>((X/Y), function(From, To)) :-
     <name>(X, From),
     <name>(Y, To).
+<name>(Element, List) :-
+    is_list(List),
+    member(Element, List).
+<name>(Element, set(Set)) :-
+    <name>(Element, Set).
 
 between(A, B, Element) :-
     var(Element),
@@ -169,6 +171,8 @@ gen_int_between(Start, End, Int) :-
 >>
 
 subset(name) ::= <<
+<name>(set(Left), set(Right)) :-
+    findall(X, (member(X, Left), member(X, Right)), Left).
 <name>([], []).
 <name>([Head | NewTail], [Head | Tail]) :-
     <name>(NewTail, Tail).
@@ -177,48 +181,21 @@ subset(name) ::= <<
 >>
 
 setSubtraction(name) ::= <<
-<name>([], _, []) :- !.
-<name>([Head | Tail], Minus, [Head | NewTail]) :-
-    is_list(Minus),
-    \+ member(Head, Minus),
-    <name>(Tail, Minus, NewTail),
-    !.
-<name>([_ | Tail], Minus, NewTail) :-
-    is_list(Minus),
-    <name>(Tail, Minus, NewTail),
-    !.
-<name>([Head | Tail], Head, NewTail) :-
-    \+ is_list(Head),
-    <name>(Tail, Head, NewTail),
-    !.
-<name>([Head | Tail], Minus, [Head | NewTail]) :-
-    \+ is_list(Minus),
-    Head \= Minus,
-    <name>(Tail, Minus, NewTail),
-    !.
+<name>(set(Left), set(Right), set(Result)) :-
+    findall(X, (member(X, Left), \+ member(X, Right)), Res),
+    sort(Res, Result).
 >>
 
 setIntersection(name) ::= <<
-<name>([], _, []) :- !.
-<name>(_, [], []) :- !.
-<name>([Head | Tail], List, [Head | NewTail]) :-
-    member(Head, List),
-    <name>(Tail, List, NewTail),
-    !.
-<name>([_ | Tail], List, NewTail) :-
-    <name>(Tail, List, NewTail),
-    !.
+<name>(set(Left), set(Right), set(Intersection)) :-
+    findall(X, (member(X, Left), member(X, Right)), Inter),
+    sort(Inter, Intersection).
 >>
 
 setUnion(name) ::= <<
-<name>([], Set, Set) :- !.
-<name>([Head | Tail], Set, [Head | NewTail]) :-
-    \+ member(Head, Set),
-    <name>(Tail, Set, NewTail),
-    !.
-<name>([_ | Tail], Set, NewTail) :-
-    <name>(Tail, Set, NewTail),
-    !.
+<name>(set(Left), set(Right), set(Union)) :-
+    append(Left, Right, Appended),
+    sort(Appended, Union).
 >>
 
 domain(name) ::= <<
@@ -280,8 +257,12 @@ rangeSubtraction() ::= <<
 >>
 
 powerSet(name, subsetName) ::= <<
-<name>(Set, Powerset) :-
-    findall(Subset, <subsetName>(Subset, Set), Powerset),
+<name>(set(Set), Powerset) :-
+    <name>(Set, Powerset),
+    !.
+<name>(Set, set(Sorted)) :-
+    findall(set(Subset), (<subsetName>(Sub, Set), sort(Sub, Subset)), Powerset),
+    sort(Powerset, Sorted),
     !.
 >>
 
@@ -304,7 +285,13 @@ minSet(name) ::= <<
 >>
 
 cardinality(name) ::= <<
-<name>
+<name>(set(List),  Length) :-
+    length(List, Length),
+    !.
+<name>(List, Length) :-
+    is_list(List),
+    length(List, Length),
+    !.
 >>
 
 updateStateCount(newCount, oldCount) ::= <<

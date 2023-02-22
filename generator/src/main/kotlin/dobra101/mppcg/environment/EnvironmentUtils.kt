@@ -74,7 +74,7 @@ abstract class EnvironmentUtils {
         return when (operator) {
             UnaryCollectionOperator.MAX -> "max"
             UnaryCollectionOperator.MIN -> "min"
-            UnaryCollectionOperator.CARD -> "length"
+            UnaryCollectionOperator.CARD -> "card"
             UnaryCollectionOperator.POW -> "pow"
             UnaryCollectionOperator.POW1 -> "pow1"
         }
