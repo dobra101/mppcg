@@ -7,7 +7,7 @@ machine(name, parameters, constraints, sets, constants, concrete_constants, prop
 <endif>
 
 <if(concrete_constants)>
-<concrete_constants; separator="\n\n">.
+<concrete_constants; separator="\n\n">
 <endif>
 
 <initialization>
@@ -103,11 +103,29 @@ invariants(list) ::= <<
 <list; separator="\n\n">
 >>
 
-quantifier(identifier, predicate, type) ::= <<
-Quantifier:
-Identifier: <identifier>
-Predicate: <predicate>
-Type: <type>
+quantifier(identifier, predicate, quantification, universalQuantifier) ::= <<
+<if(universalQuantifier)><if(quantification)>
+% universal quantifier
+findall(
+    _,
+   (
+    <predicate>,
+    \+ (
+        <quantification>
+        )
+    ),
+    []
+)<else>
+findall(
+    _,
+   (
+    <predicate>
+    ),
+    []
+)<endif><else>
+% exist quantifier
+<predicate><if(quantification)>,
+<quantification><endif><endif>
 >>
 
 initialization(body, resultStateCount) ::= <<

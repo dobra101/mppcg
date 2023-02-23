@@ -249,7 +249,8 @@ class ExpressionVisitor : AbstractVisitor() {
 
     override fun caseAIntSetExpression(node: AIntSetExpression) {
         if (AbstractVisitor.result is Expression) {
-            if ((AbstractVisitor.result as Expression).type != null) {
+            if ((AbstractVisitor.result as Expression).type != null
+                && (AbstractVisitor.result as Expression).type !is TypeInteger) {
                 logger.severe("Cannot reassign type Int of ${AbstractVisitor.result}")
                 return
             }

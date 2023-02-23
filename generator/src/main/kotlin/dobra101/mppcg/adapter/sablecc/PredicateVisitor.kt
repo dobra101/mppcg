@@ -65,21 +65,33 @@ class PredicateVisitor : AbstractVisitor() {
     }
 
     override fun caseAForallPredicate(node: AForallPredicate) {
-        // TODO: when more than one identifier?
-        result = QuantifierPredicate(
-            identifier = node.identifiers.convert()[0] as IdentifierExpression,
-            predicate = node.implication.convert()!!,
-            type = QuantifierType.FORALL
-        )
+        val predicate = node.implication.convert()!!
+        val identifier = node.identifiers.convert().map { it as IdentifierExpression }
+        result = if (predicate is BinaryLogicPredicate && predicate.operator == LogicPredicateOperator.IMPLIES) {
+            QuantifierPredicate(
+                identifier = identifier,
+                predicate = predicate.left,
+                quantification = predicate.right,
+                type = QuantifierType.FORALL
+            )
+        } else {
+            QuantifierPredicate(identifier = identifier, predicate = predicate, type = QuantifierType.FORALL)
+        }
     }
 
     override fun caseAExistsPredicate(node: AExistsPredicate) {
-        // TODO: when more than one identifier?
-        result = QuantifierPredicate(
-            identifier = node.identifiers.convert()[0] as IdentifierExpression,
-            predicate = node.predicate.convert()!!,
-            type = QuantifierType.EXISTS
-        )
+        val predicate = node.predicate.convert()!!
+        val identifier = node.identifiers.convert().map { it as IdentifierExpression }
+        result = if (predicate is BinaryLogicPredicate && predicate.operator == LogicPredicateOperator.AND) {
+            QuantifierPredicate(
+                identifier = identifier,
+                predicate = predicate.left,
+                quantification = predicate.right,
+                type = QuantifierType.EXISTS
+            )
+        } else {
+            QuantifierPredicate(identifier = identifier, predicate = predicate, type = QuantifierType.EXISTS)
+        }
     }
 
     override fun caseADescriptionPredicate(node: ADescriptionPredicate) {

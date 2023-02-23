@@ -581,11 +581,11 @@ object PrologOutputEnvironment : OutputLanguageEnvironment() {
 
     override fun QuantifierPredicate.renderSelf(): RenderResult {
         val map = mapOf(
-            "identifier" to identifier.renderSelf(),
+            "identifier" to identifier.render(),
             "predicate" to predicate.render(),
-            "type" to type
+            "quantification" to quantification?.render(),
+            "universalQuantifier" to (type == QuantifierType.FORALL)
         )
-
         return RenderResult(renderTemplate(map))
     }
 
