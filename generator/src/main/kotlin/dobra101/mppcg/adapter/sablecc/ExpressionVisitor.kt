@@ -70,8 +70,8 @@ class ExpressionVisitor : AbstractVisitor() {
 
     override fun caseATotalInjectionExpression(node: ATotalInjectionExpression) {
         result = Function(
-            left = node.left.convert()!!,
-            right = node.right.convert()!!,
+            left = node.left.convert()!!.setParameterIfCollection(),
+            right = node.right.convert()!!.setParameterIfCollection(),
             type = TypeFunction(FunctionType.TOTAL),
             mapType = FunctionMapType.INJECTION
         )
@@ -79,8 +79,8 @@ class ExpressionVisitor : AbstractVisitor() {
 
     override fun caseAPartialInjectionExpression(node: APartialInjectionExpression) {
         result = Function(
-            left = node.left.convert()!!,
-            right = node.right.convert()!!,
+            left = node.left.convert()!!.setParameterIfCollection(),
+            right = node.right.convert()!!.setParameterIfCollection(),
             type = TypeFunction(FunctionType.PARTIAL),
             mapType = FunctionMapType.INJECTION
         )
@@ -88,8 +88,8 @@ class ExpressionVisitor : AbstractVisitor() {
 
     override fun caseATotalBijectionExpression(node: ATotalBijectionExpression) {
         result = Function(
-            left = node.left.convert()!!,
-            right = node.right.convert()!!,
+            left = node.left.convert()!!.setParameterIfCollection(),
+            right = node.right.convert()!!.setParameterIfCollection(),
             type = TypeFunction(FunctionType.TOTAL),
             mapType = FunctionMapType.BIJECTION
         )
@@ -97,8 +97,8 @@ class ExpressionVisitor : AbstractVisitor() {
 
     override fun caseAPartialBijectionExpression(node: APartialBijectionExpression) {
         result = Function(
-            left = node.left.convert()!!,
-            right = node.right.convert()!!,
+            left = node.left.convert()!!.setParameterIfCollection(),
+            right = node.right.convert()!!.setParameterIfCollection(),
             type = TypeFunction(FunctionType.PARTIAL),
             mapType = FunctionMapType.BIJECTION
         )
@@ -106,8 +106,8 @@ class ExpressionVisitor : AbstractVisitor() {
 
     override fun caseATotalSurjectionExpression(node: ATotalSurjectionExpression) {
         result = Function(
-            left = node.left.convert()!!,
-            right = node.right.convert()!!,
+            left = node.left.convert()!!.setParameterIfCollection(),
+            right = node.right.convert()!!.setParameterIfCollection(),
             type = TypeFunction(FunctionType.TOTAL),
             mapType = FunctionMapType.SURJECTION
         )
@@ -115,8 +115,8 @@ class ExpressionVisitor : AbstractVisitor() {
 
     override fun caseAPartialSurjectionExpression(node: APartialSurjectionExpression) {
         result = Function(
-            left = node.left.convert()!!,
-            right = node.right.convert()!!,
+            left = node.left.convert()!!.setParameterIfCollection(),
+            right = node.right.convert()!!.setParameterIfCollection(),
             type = TypeFunction(FunctionType.PARTIAL),
             mapType = FunctionMapType.SURJECTION
         )
@@ -124,8 +124,8 @@ class ExpressionVisitor : AbstractVisitor() {
 
     override fun caseATotalFunctionExpression(node: ATotalFunctionExpression) {
         result = Function(
-            left = node.left.convert()!!,
-            right = node.right.convert()!!,
+            left = node.left.convert()!!.setParameterIfCollection(),
+            right = node.right.convert()!!.setParameterIfCollection(),
             type = TypeFunction(FunctionType.TOTAL),
             mapType = FunctionMapType.FUNCTION
         )
@@ -133,8 +133,8 @@ class ExpressionVisitor : AbstractVisitor() {
 
     override fun caseAPartialFunctionExpression(node: APartialFunctionExpression) {
         result = Function(
-            left = node.left.convert()!!,
-            right = node.right.convert()!!,
+            left = node.left.convert()!!.setParameterIfCollection(),
+            right = node.right.convert()!!.setParameterIfCollection(),
             type = TypeFunction(FunctionType.PARTIAL),
             mapType = FunctionMapType.FUNCTION
         )

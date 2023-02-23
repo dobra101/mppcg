@@ -81,6 +81,7 @@ object PrologOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun EnumCollectionNode.renderSelf(): RenderResult {
+        if (optimize) optimizer.loadIfEvaluated(this)?.let { return it }
         val map = mapOf(
             "name" to name,
             "elements" to elements.render(),
@@ -88,6 +89,7 @@ object PrologOutputEnvironment : OutputLanguageEnvironment() {
             "exprCount" to exprCount
         )
 
+        if (optimize) optimizer.evaluated[this] = expr(exprCount)
         val rendered = renderTemplate(map)
         if (isParameter) {
             val info = mapOf("resultExpr" to IndividualInfo(expr(exprCount))) // TODO: map to Int?
@@ -381,25 +383,14 @@ object PrologOutputEnvironment : OutputLanguageEnvironment() {
 
     /* ---------- B NODES ---------- */
     override fun Function.renderSelf(): RenderResult {
-        val lhs = left.render()
-        val rhs = right.render()
-
+        val expanded = ExpandedBinary.of(left, right)
         val map = mapOf(
-            "lhs" to left.render(),
-            "rhs" to right.render(),
+            "lhs" to expanded.lhs,
+            "rhs" to expanded.rhs,
             "type" to (type as TypeFunction).type,
             "mapType" to mapType
         )
-
-        var before = ""
-        if (lhs.containsKey("before")) {
-            before += lhs["before"].info
-        }
-        if (rhs.containsKey("before")) {
-            before += lhs["before"].info
-        }
-
-        return RenderResult(renderTemplate(map), info = mapOf("before" to IndividualInfo(before)))
+        return RenderResult(renderTemplate(map), info = mapOf("before" to IndividualInfo(expanded.before)))
     }
 
     override fun BinaryCollectionExpression.renderSelf(): RenderResult {
@@ -481,6 +472,11 @@ object PrologOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun ConcreteIdentifierExpression.renderSelf(): RenderResult {
+        if (optimize) optimizer.evaluated = hashMapOf()
+        stateCount = 0
+        exprCount = 0
+        temporaryVariables = hashSetOf()
+
         val map = mapOf(
             "name" to name,
             "value" to value.render(),
@@ -883,6 +879,7 @@ private data class ExpandedExpressionList(val before: String = "", val expressio
     }
 }
 
+// TODO: use expandExpression for each side
 private data class ExpandedBinary(val before: String = "", val lhs: String = "", val rhs: String = "") {
     companion object {
         fun of(
