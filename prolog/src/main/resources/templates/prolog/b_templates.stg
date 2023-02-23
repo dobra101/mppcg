@@ -72,10 +72,10 @@ flatten(L, Res) :-
     (L = [set(_) | _] -> (sort(Flat, R), Res = set(R)); Res = Flat).
 flatten([], Acc, Acc) :- !.
 flatten([Head | Tail], Acc, Flat) :-
-    append(Head, Acc, NewAcc),
+    (is_list(Head) -> append(Head, Acc, NewAcc); append([Head], Acc, NewAcc)),
     flatten(Tail, NewAcc, Flat).
 flatten([set(Head) | Tail], Acc, Flat) :-
-    append(Head, Acc, NewAcc),
+    (is_list(Head) -> append(Head, Acc, NewAcc); append([Head], Acc, NewAcc)),
     flatten(Tail, NewAcc, Flat).
 >>
 
@@ -191,6 +191,8 @@ member(name) ::= <<
     between(0, infinite, Element).
 <name>(Element, (A, B)) :-
     between(A, B, Element).
+<name>(set(Set), function(From, To)) :-
+     findall(_, (<name>(E, Set), \+ <name>(E, function(From, To))), []).
 <name>((X/Y), function(From, To)) :-
     <name>(X, From),
     <name>(Y, To).
@@ -274,6 +276,9 @@ reverse(name) ::= <<
 >>
 
 domainRestriction(name) ::= <<
+<name>(Domain, set(Set), set(Result)) :-
+    <name>(Domain, Set, Result),
+    !.
 <name>(_, [], []) :- !.
 <name>(Domain, [(X/Y) | Tail], [(X/Y) | NewTail]) :-
      member(X, Domain),
@@ -285,6 +290,9 @@ domainRestriction(name) ::= <<
 >>
 
 domainSubtraction(name) ::= <<
+<name>(Domain, set(Set), set(Result)) :-
+    <name>(Domain, Set, Result),
+    !.
 <name>(_, [], []) :- !.
 <name>(Domain, [(X/Y) | Tail], [(X/Y) | NewTail]) :-
     \+ member(X, Domain),
@@ -296,11 +304,15 @@ domainSubtraction(name) ::= <<
 >>
 
 image(name, memberName) ::= <<
-<name>([], _, []) :- !.
+<name>(Relation, set(Set), set(Image)) :-
+    <name>(Relation, Set, Image),
+    !.
+<name>(_, [], []) :- !.
 % image of set
-<name>(Relation, [X | Rest], [Y | NewTail]) :-
-    <memberName>((X/Y), Relation),
-    <name>(Relation, Rest, NewTail),
+<name>(Relation, [X | Rest], Image) :-
+    findall(Y, <memberName>((X/Y), Relation), Ys),
+    <name>(Relation, Rest, OtherTail),
+    append(Ys, OtherTail, Image),
     !.
 <name>(Relation, [_ | Rest], NewTail) :-
     <name>(Relation, Rest, NewTail).
@@ -319,6 +331,9 @@ overwrite(name, domainName, domainSubtractionName) ::= <<
 >>
 
 rangeRestriction(name) ::= <<
+<name>(Relation, set(Set), set(Result)) :-
+    <name>(Relation, Set, Result),
+    !.
 <name>([], _, []) :- !.
 <name>([(X/Y) | Tail], Range, [(X/Y) | NewTail]) :-
     member(Y, Range),
@@ -330,6 +345,9 @@ rangeRestriction(name) ::= <<
 >>
 
 rangeSubtraction(name) ::= <<
+<name>(Relation, set(Set), set(Result)) :-
+    <name>(Relation, Set, Result),
+    !.
 <name>([], _, []) :- !.
 <name>([(X/Y) | Tail], Range, [(X/Y) | NewTail]) :-
     \+ member(Y, Range),
@@ -350,7 +368,31 @@ powerSet(name, subsetName) ::= <<
     !.
 >>
 
+maxSet(name) ::= <<
+<name>(set(Set), Max) :-
+    <name>(Set, Max),
+    !.
+<name>(Set, Max) :-
+    <name>(Set, unset, Max),
+    !.
+<name>([], unset, unset) :- fail, !.
+<name>([Head | Tail], unset, Max) :-
+    <name>(Tail, Head, Max),
+    !.
+<name>([], Acc, Acc) :- !.
+<name>([Head | Tail], Acc, Max) :-
+    Head \> Acc,
+    <name>(Tail, Head, Max),
+    !.
+<name>([_ | Tail], Acc, Max) :-
+    <name>(Tail, Acc, Max),
+    !.
+>>
+
 minSet(name) ::= <<
+<name>(set(Set), Min) :-
+    <name>(Set, Min),
+    !.
 <name>(Set, Min) :-
     <name>(Set, unset, Min),
     !.

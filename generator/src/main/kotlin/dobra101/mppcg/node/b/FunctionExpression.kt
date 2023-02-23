@@ -8,7 +8,7 @@ import dobra101.mppcg.node.expression.Expression
 data class CallFunctionExpression(
     val expression: Expression,
     val parameters: List<Expression>
-) : Expression(expression.type, "callFunction") {
+) : Expression(null, "callFunction") {
     companion object CallFunctionOperator : BMethod
 }
 

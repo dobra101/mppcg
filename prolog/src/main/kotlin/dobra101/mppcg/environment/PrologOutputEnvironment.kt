@@ -28,6 +28,7 @@ object PrologOutputEnvironment : OutputLanguageEnvironment() {
     var comprehensionSetIdentifier: List<IdentifierExpression> = emptyList() // HINT: only for B
     var temporaryVariables: Set<IdentifierExpression> = hashSetOf() // HINT: only for B
     var concreteConstants: List<Expression> = emptyList() // HINT: only for B
+    var constants: List<Expression> = emptyList() // HINT: only for B
     var usedBMethods: HashSet<CustomMethodOperator> = hashSetOf() // HINT: only for B
 
     private fun expr(name: Any): String = "Expr_$name"
@@ -74,9 +75,8 @@ object PrologOutputEnvironment : OutputLanguageEnvironment() {
         )
 
         val rendered = renderTemplate(map)
-        val info = mapOf("resultExpr" to IndividualInfo(expr(exprCount))) // TODO: map to Int?
-
         if (optimize) optimizer.evaluated[this] = expr(exprCount)
+        val info = mapOf("resultExpr" to IndividualInfo(expr(exprCount++))) // TODO: map to Int?
         return RenderResult("${expanded.before}$rendered", info)
     }
 
@@ -109,6 +109,14 @@ object PrologOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun IdentifierExpression.renderSelf(): RenderResult {
+        fun isConstant(): Boolean {
+            if (constants.contains(this)) return true
+            if (concreteConstants.contains(this)) return true
+
+            val cc = ConcreteIdentifierExpression(name, ValueExpression(), type)
+            return concreteConstants.find { (it as? ConcreteIdentifierExpression)?.name == cc.name } != null
+        }
+
         if (optimize) optimizer.loadIfEvaluated(this)?.let { return it }
         // TODO: not hardcoded and not always
         if (operationParameters.contains(this) || comprehensionSetIdentifier.contains(this)) {
@@ -122,8 +130,10 @@ object PrologOutputEnvironment : OutputLanguageEnvironment() {
 
         // TODO: not hardcoded and not always
         val rendered =
-            if (concreteConstants.contains(this) || concreteConstants.find { (it as? ConcreteIdentifierExpression)?.name == name } != null) {
-                "$name(${expr(exprCount)})"
+            if (isConstant()) {
+                // use constant prefix
+                val cc = ConcreteIdentifierExpression(name, ValueExpression(), type)
+                "${cc.name}(${expr(exprCount)})"
             } else {
                 val map = mapOf(
                     "name" to name,
@@ -636,7 +646,14 @@ object PrologOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun Machine.renderSelf(): RenderResult {
+        if (optimize) optimizer.evaluated = hashMapOf()
         this@PrologOutputEnvironment.concreteConstants = concreteConstants
+        this@PrologOutputEnvironment.constants = constants
+        stateCount = 0
+        exprCount = 0
+        operationParameters = parameters.map { it as IdentifierExpression }
+        temporaryVariables = hashSetOf()
+
         val map = mapOf(
             "name" to name,
             "parameters" to parameters.render(),
@@ -747,6 +764,13 @@ object PrologOutputEnvironment : OutputLanguageEnvironment() {
                 mapOf(
                     "name" to operator2String(this),
                     "subsetName" to operator2String(BinaryPredicateOperator.SUBSET)
+                )
+            )
+
+            UnaryCollectionOperator.MAX -> renderTemplate(
+                "maxSet",
+                mapOf(
+                    "name" to operator2String(this)
                 )
             )
 

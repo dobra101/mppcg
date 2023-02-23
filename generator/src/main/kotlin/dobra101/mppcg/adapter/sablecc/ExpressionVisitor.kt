@@ -27,13 +27,19 @@ class ExpressionVisitor : AbstractVisitor() {
             return
         }
 
-        if (machineVisitor.variables.contains(IdentifierExpression(node.text))) {
-            result = machineVisitor.variables.findByName(node.text)
-            return
-        }
+        val identifierExpression = IdentifierExpression(name = node.text)
+
+        result = machineVisitor.variables.findByName(node.text)
+        result?.let { return }
+
+        result = machineVisitor.concreteConstants.findByName(node.text)
+        result?.let { return }
+
+        result = machineVisitor.constants.findByName(node.text)
+        result?.let { return }
 
         result = machineVisitor.sets.findByName(node.text)?.copy() ?: machineVisitor.sets.findEntryByName(node.text)
-                ?: IdentifierExpression(name = node.text)
+                ?: identifierExpression
     }
 
     override fun caseTIntegerLiteral(node: TIntegerLiteral) {
@@ -60,7 +66,7 @@ class ExpressionVisitor : AbstractVisitor() {
         val left = node.left.convert()!!.setParameterIfCollection()
         val right = node.right.convert()!!.setParameterIfCollection()
         result =
-            // TODO: refactor classes
+                // TODO: refactor classes
             if (left is CollectionNode || right is CollectionNode || left is AnonymousCollectionNode || right is AnonymousSetCollectionNode) {
                 BinaryCollectionExpression(left, right, BinaryCollectionOperator.SUBTRACTION)
             } else {
@@ -250,7 +256,8 @@ class ExpressionVisitor : AbstractVisitor() {
     override fun caseAIntSetExpression(node: AIntSetExpression) {
         if (AbstractVisitor.result is Expression) {
             if ((AbstractVisitor.result as Expression).type != null
-                && (AbstractVisitor.result as Expression).type !is TypeInteger) {
+                && (AbstractVisitor.result as Expression).type !is TypeInteger
+            ) {
                 logger.severe("Cannot reassign type Int of ${AbstractVisitor.result}")
                 return
             }
@@ -284,6 +291,13 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseAUnaryMinusExpression(node: AUnaryMinusExpression) {
+        val expr = node.expression.convert()!!
+        if (expr is ValueExpression) {
+            result = ValueExpression("-${expr.value}", expr.type)
+            return
+        }
+        // TODO: can be identifier
+        println(expr)
         TODO("Not implemented ${node::class.simpleName}")
     }
 
