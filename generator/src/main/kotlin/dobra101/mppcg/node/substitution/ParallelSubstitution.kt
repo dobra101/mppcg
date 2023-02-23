@@ -18,28 +18,19 @@ data class ParallelSubstitution(
     init {
         val assignments = substitutions.filterIsInstance<AssignSubstitution>()
 
-        val identifierOnLhs = assignments.mapIndexed { idx, assignment ->
-            idx to assignment.lhs.filterIsInstance<IdentifierExpression>()
-        }.toMap()
-
-        val identifierOnRhs = assignments.mapIndexed { idx, assignment ->
-            val rawIdentifierOnRhs = assignment.rhs.filterIsInstance<IdentifierExpression>()
-            val innerIdentifierOnRhs = assignment.rhs.flatMap { it.getIdentifier() }
-            idx to rawIdentifierOnRhs + innerIdentifierOnRhs
-        }.toMap()
+        val identifierOnRhs = assignments.withIndex().associate { (idx, assign) -> idx to assign.rhs.getIdentifiers() }
 
         val tempVars = mutableSetOf<IdentifierExpression>()
         // store identifiers which occur on both sides and are not only self-assigning
         // only those are relevant, which are assigned first and later used on a right side
-        for ((idx, identifierList) in identifierOnLhs) {
-            for (identifier: IdentifierExpression in identifierList) {
-                if (tempVars.contains(identifier)) continue
+        for ((idx, assignment) in assignments.withIndex()) {
+            if (assignment.lhs !is IdentifierExpression) continue
+            if (tempVars.contains(assignment.lhs)) continue
 
-                val indices = identifierOnRhs.getIndicesOfIdentifier(identifier).toMutableList()
-                indices.removeAll { it <= idx }
-                if (indices.isNotEmpty()) {
-                    tempVars.add(identifier)
-                }
+            val indices = identifierOnRhs.getIndicesOfIdentifier(assignment.lhs).toMutableList()
+            indices.removeAll { it <= idx }
+            if (indices.isNotEmpty()) {
+                tempVars.add(assignment.lhs)
             }
         }
         needTempVar = tempVars
@@ -49,16 +40,16 @@ data class ParallelSubstitution(
         return filter { it.value.contains(identifier) }.map { it.key }
     }
 
-    private fun Expression.getIdentifier(): List<IdentifierExpression> {
+    private fun Expression.getIdentifiers(): List<IdentifierExpression> {
         return when (this) {
             is IdentifierExpression -> listOf(this)
             is ValueExpression -> listOf()
             is EnumEntry -> listOf()
-            is Couple -> from.getIdentifier() + to.getIdentifier()
-            is AnonymousSetCollectionNode -> elements.flatMap { it.getIdentifier() }
-            is BinaryExpression -> left.getIdentifier() + right.getIdentifier()
-            is BinaryFunctionExpression -> left.getIdentifier() + right.getIdentifier()
-            is CallFunctionExpression -> expression.getIdentifier() + parameters.flatMap { it.getIdentifier() }
+            is Couple -> from.getIdentifiers() + to.getIdentifiers()
+            is AnonymousSetCollectionNode -> elements.flatMap { it.getIdentifiers() }
+            is BinaryExpression -> left.getIdentifiers() + right.getIdentifiers()
+            is BinaryFunctionExpression -> left.getIdentifiers() + right.getIdentifiers()
+            is CallFunctionExpression -> expression.getIdentifiers() + parameters.flatMap { it.getIdentifiers() }
             else -> TODO("Implement getIdentifier from Expression ${this::class.simpleName}")
         }
     }

@@ -258,19 +258,19 @@ object PrologOutputEnvironment : OutputLanguageEnvironment() {
 
     /* ---------- SUBSTITUTIONS ---------- */
     override fun AssignSubstitution.renderSelf(): RenderResult {
-        val identifier = (lhs[0] as IdentifierExpression).name // TODO: when more than one identifier?
+        val identifier = (lhs as IdentifierExpression).name
 
-        val expandedRhs = ExpandedExpressionList.of(rhs)
+        val expandedRhs = ExpandedExpression.of(rhs)
         val map = mapOf(
             "identifier" to identifier,
-            "rhs" to expandedRhs.expressions[0], // TODO: more than one entry?
+            "rhs" to expandedRhs.expression,
             "stateCount" to stateCount,
             "resultStateCount" to ++stateCount
         )
         val rendered = renderTemplate(map)
 
-        if (optimize && !temporaryVariables.contains(lhs[0])) {
-            optimizer.evaluated[lhs[0]] = expandedRhs.expressions[0]
+        if (optimize && !temporaryVariables.contains(lhs)) {
+            optimizer.evaluated[lhs] = expandedRhs.expression
         }
         return RenderResult("${expandedRhs.before}$rendered")
     }

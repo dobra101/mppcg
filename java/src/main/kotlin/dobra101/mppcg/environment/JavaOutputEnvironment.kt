@@ -145,7 +145,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         if (optimize) optimizer.renderOptimized(this)?.let { return it }
 
         val map = mapOf(
-            "identifier" to (lhs[0] as IdentifierExpression).render(), // TODO: when more than one entry?
+            "identifier" to (lhs as IdentifierExpression).render(),
             "rhs" to rhs.render()
         )
 

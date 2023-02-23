@@ -11,34 +11,39 @@ class SubstitutionVisitor : AbstractVisitor() {
     override var result: Substitution? = null
 
     override fun caseAAssignSubstitution(node: AAssignSubstitution) {
-        // TODO: when more than one entry? -> a, b = 1, 2
         val left = node.lhsExpression.convert().toMutableList()
         val right = node.rhsExpressions.convert()
-        val rightType = right[0].type
+        val assignments = mutableListOf<AssignSubstitution>()
 
-        val index = machineVisitor.variables.indexOf(left[0])
-        // left is variable
-        if (index != -1) {
-           left[0] = machineVisitor.variables[index]
-        }
+        for (i: Int in left.indices) {
+            val rightType = right[i].type
 
-        // TODO: refactor
-        val assign = AssignSubstitution(left, right)
-        if (assign.lhs[0].type == null) {
-            assign.lhs[0].type = rightType
-        } else if (rightType != null && assign.lhs[0].type!!::class != rightType::class) {
-            when {
-                assign.lhs[0].type is TypeNumber && rightType is TypeInteger -> {
-                }
-                assign.lhs[0].type is TypeAnonymousCollection && rightType is TypeCollection && assign.lhs[0].type == rightType -> {
-                }
-                else -> {
-                    throw InvalidTypeException("Types ${assign.lhs[0].type} and $rightType to not match.")
+            val index = machineVisitor.variables.indexOf(left[i])
+            if (index != -1) {
+                // left is variable
+                left[i] = machineVisitor.variables[index]
+            }
+
+            // left type is null and right has type
+            left[i].type = left[i].type ?: rightType
+            val assign = AssignSubstitution(left[i], right[i])
+            if (rightType == null) {
+                assignments.add(assign)
+                continue
+            }
+
+            // TODO: refactor
+            if (assign.lhs.type!!::class != rightType::class) {
+                when {
+                    assign.lhs.type is TypeNumber && rightType is TypeInteger -> {}
+                    assign.lhs.type is TypeAnonymousCollection && rightType is TypeCollection && assign.lhs.type == rightType -> {}
+                    else -> throw InvalidTypeException("Types ${assign.lhs.type} and $rightType to not match.")
                 }
             }
+            assignments.add(assign)
         }
 
-        result = assign
+        result = if (assignments.size == 1) assignments[0] else ParallelSubstitution(assignments)
     }
 
     override fun caseAPreconditionSubstitution(node: APreconditionSubstitution) {
