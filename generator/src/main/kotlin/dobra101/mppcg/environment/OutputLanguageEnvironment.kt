@@ -101,6 +101,7 @@ abstract class OutputLanguageEnvironment : EnvironmentUtils(), BEnvironment {
             is ConcreteIdentifierExpression -> node.renderSelf()
             is Couple -> node.renderSelf()
             is InfiniteSet -> node.renderSelf()
+            is LambdaExpression -> node.renderSelf()
             is UnaryCollectionExpression -> node.renderSelf()
             is UnaryFunctionExpression -> node.renderSelf()
 

@@ -5,10 +5,7 @@ import dobra101.mppcg.node.*
 import dobra101.mppcg.node.b.*
 import dobra101.mppcg.node.b.Function
 import dobra101.mppcg.node.collection.*
-import dobra101.mppcg.node.expression.BinaryExpression
-import dobra101.mppcg.node.expression.IdentifierExpression
-import dobra101.mppcg.node.expression.IntervalExpression
-import dobra101.mppcg.node.expression.ValueExpression
+import dobra101.mppcg.node.expression.*
 import dobra101.mppcg.node.predicate.*
 import dobra101.mppcg.node.substitution.AssignSubstitution
 import dobra101.mppcg.node.substitution.IfSubstitution
@@ -226,6 +223,10 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         // HINT: n : INTEGER -> n.type = INTEGER
         val typeSet = (type as TypeSet).type
         logger.info("${(type as TypeSet).type}")
+        TODO("Not yet implemented")
+    }
+
+    override fun LambdaExpression.renderSelf(): RenderResult {
         TODO("Not yet implemented")
     }
 

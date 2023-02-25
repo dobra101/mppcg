@@ -128,6 +128,18 @@ findall(
 <quantification><endif><endif>
 >>
 
+lambdaExpression(identifier, predicate, expression, value) ::= <<
+findall(
+    (<identifier>/<value>),
+    (
+        <predicate>,
+        <expression>
+    ),
+    Res
+),
+sort(Res, Result)
+>>
+
 initialization(body, resultStateCount) ::= <<
 start(State_<resultStateCount>) :-
     empty(State_0),

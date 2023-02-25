@@ -26,6 +26,7 @@ object PrologOutputEnvironment : OutputLanguageEnvironment() {
     var stateCount = 0
     var operationParameters: List<IdentifierExpression> = emptyList() // HINT: only for B
     var comprehensionSetIdentifier: List<IdentifierExpression> = emptyList() // HINT: only for B
+    var lambdaExpressionIdentifier: List<IdentifierExpression> = emptyList() // HINT: only for B
     var temporaryVariables: Set<IdentifierExpression> = hashSetOf() // HINT: only for B
     var concreteConstants: List<Expression> = emptyList() // HINT: only for B
     var constants: List<Expression> = emptyList() // HINT: only for B
@@ -109,22 +110,19 @@ object PrologOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun IdentifierExpression.renderSelf(): RenderResult {
-        fun isConstant(): Boolean {
-            if (constants.contains(this)) return true
-            if (concreteConstants.contains(this)) return true
-
-            val cc = ConcreteIdentifierExpression(name, ValueExpression(), type)
-            return concreteConstants.find { (it as? ConcreteIdentifierExpression)?.name == cc.name } != null
-        }
-
         if (optimize) optimizer.loadIfEvaluated(this)?.let { return it }
         // TODO: not hardcoded and not always
-        if (operationParameters.contains(this) || comprehensionSetIdentifier.contains(this)) {
+        if (operationParameters.contains(this)
+            || comprehensionSetIdentifier.contains(this)
+            || lambdaExpressionIdentifier.contains(this)
+        ) {
+            if (optimize) optimizer.evaluated[this] = expr(name)
             return RenderResult(expr(name))
         }
 
         // TODO: not hardcoded and not always
         if (temporaryVariables.contains(this)) {
+            if (optimize) optimizer.evaluated[this] = expr("tmp_$name")
             return RenderResult(expr("tmp_$name"))
         }
 
@@ -490,7 +488,7 @@ object PrologOutputEnvironment : OutputLanguageEnvironment() {
         val map = mapOf(
             "name" to name,
             "value" to value.render(),
-            "inline" to (value !is ComprehensionSet)
+            "inline" to (value !is ComprehensionSet && value !is LambdaExpression)
         )
         return RenderResult(renderTemplate(map))
     }
@@ -512,6 +510,18 @@ object PrologOutputEnvironment : OutputLanguageEnvironment() {
             is TypeInteger -> RenderResult(renderTemplate(mapOf("type" to "'INT'")))
             else -> TODO("Infinite Set not implemented (${type!!::class.simpleName})")
         }
+    }
+
+    override fun LambdaExpression.renderSelf(): RenderResult {
+        lambdaExpressionIdentifier = identifiers.filterIsInstance<IdentifierExpression>()
+        val map = mapOf(
+            "identifier" to identifiers.render(),
+            "predicate" to predicate.render(),
+            "expression" to expression.render(),
+            "value" to expr(exprCount - 1)
+        )
+        lambdaExpressionIdentifier = emptyList()
+        return RenderResult(renderTemplate(map))
     }
 
     override fun UnaryCollectionExpression.renderSelf(): RenderResult {
@@ -733,6 +743,14 @@ object PrologOutputEnvironment : OutputLanguageEnvironment() {
 
             else -> false
         }
+    }
+
+    internal fun IdentifierExpression.isConstant(): Boolean {
+        if (constants.contains(this)) return true
+        if (concreteConstants.contains(this)) return true
+
+        val cc = ConcreteIdentifierExpression(name, ValueExpression(), type)
+        return concreteConstants.find { (it as? ConcreteIdentifierExpression)?.name == cc.name } != null
     }
 
     // HINT: input language specific
