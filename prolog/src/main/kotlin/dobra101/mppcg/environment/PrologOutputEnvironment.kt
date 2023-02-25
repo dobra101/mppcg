@@ -616,13 +616,29 @@ object PrologOutputEnvironment : OutputLanguageEnvironment() {
 
     override fun ParallelSubstitution.renderSelf(): RenderResult {
         temporaryVariables = needTempVar
-        val tempVars = needTempVar.map {
-            val map = mapOf(
-                "name" to it.name,
-                "stateCount" to stateCount,
-                "exprCount" to "tmp_${it.name}"
-            )
-            renderTemplate(it.templateName, map)
+
+        // remove temporary variables from previous evaluated to use temp vars
+        if (optimize) temporaryVariables.forEach { optimizer.evaluated.remove(it) }
+
+        val neededTempVars = substitutions
+            .filterIsInstance<AssignSubstitution>()
+            .filter { it.rhs is IdentifierExpression && temporaryVariables.contains(it.rhs) }
+            .map { it.rhs as IdentifierExpression }
+
+        // TODO: let optimizer do the work
+        // load temporary variables if they are needed
+        // optimized: they are not needed if e.g. 'a = a + 1 || b = a + 1' and a + 1 has been evaluated before
+        val tempVars = needTempVar.mapNotNull {
+            if (optimize && !neededTempVars.contains(it)) {
+                null
+            } else {
+                val map = mapOf(
+                    "name" to it.name,
+                    "stateCount" to stateCount,
+                    "exprCount" to "tmp_${it.name}"
+                )
+                renderTemplate(it.templateName, map)
+            }
         }
 
         val map = mapOf(
