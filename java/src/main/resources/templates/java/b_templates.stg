@@ -5,8 +5,8 @@ public class <name> {
     <constraints>
     <sets>
 
-    <constants>
-    <concrete_constants>
+    <constants; separator="\n">
+    <concrete_constants; separator="\n">
     <variables; separator="\n">
 
     <properties>
@@ -36,8 +36,8 @@ public boolean tr_<name>() {
 }
 >>
 
-// TODO: implement
-function() ::= <<
+function(left, right) ::= <<
+<left>[<right>]
 >>
 
 invariant(body, idx) ::= <<
@@ -68,6 +68,29 @@ select(condition, then, elseSubstitution, when) ::= <<
 
 // TODO: make parallel
 parallelSubstitution(substitutions) ::= <<
-% Parallel Substitution:
+// Parallel Substitution:
 <substitutions; separator="\n">
+>>
+
+concreteIdentifier(name, value, type) ::= <<
+<type> <name> = <value>;
+>>
+
+lambdaExpression(identifier, predicate, expression) ::= <<
+Lambda:
+I: <identifier>
+P: <predicate>
+E: <expression>
+>>
+
+callFunction(expression, parameters) ::= <<
+<expression>[<parameters>]
+>>
+
+binaryFunctionExpression(left, right, operator) ::= <<
+<left>.<operator>(<right>)
+>>
+
+couple(from, to) ::= <<
+new BCouple(<from>, <to>)
 >>

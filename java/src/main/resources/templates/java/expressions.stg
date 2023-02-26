@@ -29,7 +29,8 @@ identifierExpression(name) ::= <<
 >>
 
 // TODO: implement
-intervalExpression() ::= <<
+intervalExpression(left, right) ::= <<
+new BInterval(<left>, <right>)
 >>
 
 // TODO: add type

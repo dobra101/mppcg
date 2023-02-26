@@ -68,7 +68,11 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun IntervalExpression.renderSelf(): RenderResult {
-        TODO("Not yet implemented")
+        val map = mapOf(
+            "left" to left.render(),
+            "right" to right.render()
+        )
+        return RenderResult(renderTemplate(map))
     }
 
     override fun SetCollectionNode.renderSelf(): RenderResult {
@@ -103,7 +107,8 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             return RenderResult(renderTemplate(map))
         }
 
-        if (right is AnonymousSetCollectionNode && operator == BinaryPredicateOperator.MEMBER) {
+        if ((right is AnonymousSetCollectionNode || right is IntervalExpression)
+            && operator == BinaryPredicateOperator.MEMBER) {
             val map = mapOf(
                 "entry" to left.render(),
                 "set" to right.render()
@@ -187,7 +192,11 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
 
     /* ---------- B NODES ---------- */
     override fun Function.renderSelf(): RenderResult {
-        TODO("Not yet implemented")
+        val map = mapOf(
+            "left" to left,
+            "right" to right
+        )
+        return RenderResult(renderTemplate(map))
     }
 
     override fun BinaryCollectionExpression.renderSelf(): RenderResult {
@@ -200,11 +209,20 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun BinaryFunctionExpression.renderSelf(): RenderResult {
-        TODO("Not yet implemented")
+        val map = mapOf(
+            "left" to left.render(),
+            "right" to right.render(),
+            "operator" to operator2String(operator)
+        )
+        return RenderResult(renderTemplate(map))
     }
 
     override fun CallFunctionExpression.renderSelf(): RenderResult {
-        TODO("Not yet implemented")
+        val map = mapOf(
+            "expression" to expression.render(),
+            "parameters" to parameters.render()
+        )
+        return RenderResult(renderTemplate(map))
     }
 
     override fun ComprehensionSet.renderSelf(): RenderResult {
@@ -212,11 +230,20 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun ConcreteIdentifierExpression.renderSelf(): RenderResult {
-        TODO("Not yet implemented")
+        val map = mapOf(
+            "name" to name,
+            "value" to value.render(),
+            "type" to type2String(type)
+        )
+        return RenderResult(renderTemplate(map))
     }
 
     override fun Couple.renderSelf(): RenderResult {
-        TODO("Not yet implemented")
+        val map = mapOf(
+            "from" to from.render(),
+            "to" to to.render()
+        )
+        return RenderResult(renderTemplate(map))
     }
 
     override fun InfiniteSet.renderSelf(): RenderResult {
@@ -227,7 +254,12 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun LambdaExpression.renderSelf(): RenderResult {
-        TODO("Not yet implemented")
+        val map = mapOf(
+            "identifier" to identifiers.render(),
+            "predicate" to predicate.render(),
+            "expression" to expression.render()
+        )
+        return RenderResult(renderTemplate(map))
     }
 
     override fun UnaryCollectionExpression.renderSelf(): RenderResult {
@@ -350,6 +382,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             is TypeReal -> "double"
             is TypeString -> "String"
             is TypeVoid -> "void"
+            is TypeFunction -> "BRelation"
             else -> throw UnknownTypeException(type::class.simpleName!!)
         }
     }
@@ -362,7 +395,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             BinaryPredicateOperator.LESS_EQUAL -> "<="
             BinaryPredicateOperator.EQUAL -> "=="
             BinaryPredicateOperator.NOT_EQUAL -> "!="
-            BinaryPredicateOperator.MEMBER -> "member(java)"
+            BinaryPredicateOperator.MEMBER -> "member"
             BinaryPredicateOperator.NOT_MEMBER -> "notmember(java)"
             BinaryPredicateOperator.SUBSET -> "subset(java)"
         }

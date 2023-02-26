@@ -75,6 +75,10 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseATotalInjectionExpression(node: ATotalInjectionExpression) {
+        if (node.parent() is AMemberPredicate && AbstractVisitor.result is Expression) {
+            // is type info
+            (AbstractVisitor.result as Expression).type = TypeFunction(FunctionType.TOTAL)
+        }
         result = Function(
             left = node.left.convert()!!.setParameterIfCollection(),
             right = node.right.convert()!!.setParameterIfCollection(),
