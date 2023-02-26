@@ -61,11 +61,15 @@ callFunctionPredicate(memberName) ::= <<
 callFunction(Expression, Parameters, Result) :-
     is_list(Parameters),
     findall(Y, (<memberName>(X, Parameters), <memberName>((X/Y), Expression)), Res),
-    flatten(Res, Result).
+    flatten(Res, Flat),
+    (Flat = [Result]; Result = Flat),
+    !.
 callFunction(Expression, X, Result) :-
     \+ is_list(X),
     findall(Y, <memberName>((X/Y), Expression), Res),
-    flatten(Res, Result).
+    flatten(Res, Flat),
+    (Flat = [Result]; Result = Flat),
+    !.
 
 flatten(L, Res) :-
     flatten(L, [], Flat),
@@ -203,8 +207,10 @@ member(name) ::= <<
     between(0, infinite, Element).
 <name>(Element, (A, B)) :-
     between(A, B, Element).
+<name>(Set, function(From, To)) :-
+    findall(_, (<name>(E, Set), \+ <name>(E, function(From, To))), []).
 <name>(set(Set), function(From, To)) :-
-     findall(_, (<name>(E, Set), \+ <name>(E, function(From, To))), []).
+    findall(_, (<name>(E, Set), \+ <name>(E, function(From, To))), []).
 <name>((X/Y), function(From, To)) :-
     <name>(X, From),
     <name>(Y, To).
@@ -339,7 +345,7 @@ overwrite(name, domainName, domainSubtractionName) ::= <<
 <name>(Overridden, Set, Result) :-
     <domainName>(Set, Domain),
     <domainSubtractionName>(Domain, Overridden, Tail),
-    append(Set, Tail, Result).
+    ((Tail = set(T), Set = set(S)) -> append(S, T, Result); append(Set, Tail, Result)).
 >>
 
 rangeRestriction(name) ::= <<

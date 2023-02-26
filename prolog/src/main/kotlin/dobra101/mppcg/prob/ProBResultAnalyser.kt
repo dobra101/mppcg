@@ -10,7 +10,10 @@ object ProBResultAnalyser {
     fun analyze(probOutput: String): ProBResult {
         val builder = ProBResult.Builder()
         val lines = probOutput.split("\n")
+        var deadlock = false
         lines.forEach {
+            if (it == "deadlock") deadlock = true
+
             timeRegex.matchEntire(it)?.let { res ->
                 builder.modelCheckingTime(res.groupValues[1].toLong()).wallTime(res.groupValues[2].toLong())
             } ?: statesRegex.matchEntire(it)?.let { res -> builder.statesAnalysed(res.groupValues[1].toLong()) }
@@ -18,6 +21,18 @@ object ProBResultAnalyser {
             ?: memoryRegex.matchEntire(it)?.let { res ->
                 builder.memoryUsedTotal(res.groupValues[1].toDouble()).memoryUsedProgram(res.groupValues[2].toDouble())
             }
+        }
+
+        if (deadlock) {
+            val idx = lines.indexOf("deadlock") + 1
+
+            val trace: MutableList<String> = mutableListOf()
+            for (i: Int in idx + 1..lines.lastIndex) {
+                if (lines[i].isBlank()) break
+                trace.add(lines[i])
+            }
+
+            builder.counterExample(CounterExample("deadlock", trace))
         }
 
         return builder.build()
@@ -29,7 +44,7 @@ data class ProBResult(
     val wallTime: Long,
     val statesAnalysed: Long,
     val transitionsFired: Long,
-    val counterExampleFound: Boolean,
+    val counterExample: CounterExample?,
     val memoryUsedTotal: Double,
     val memoryUsedProgram: Double
 ) {
@@ -38,7 +53,7 @@ data class ProBResult(
         private var wallTime: Long? = null,
         private var statesAnalysed: Long? = null,
         private var transitionsFired: Long? = null,
-        private var counterExampleFound: Boolean? = null,
+        private var counterExample: CounterExample? = null,
         private var memoryUsedTotal: Double? = null,
         private var memoryUsedProgram: Double? = null
     ) {
@@ -46,7 +61,7 @@ data class ProBResult(
         fun wallTime(wallTime: Long) = apply { this.wallTime = wallTime }
         fun statesAnalysed(statesAnalysed: Long) = apply { this.statesAnalysed = statesAnalysed }
         fun transitionsFired(transitionsFired: Long) = apply { this.transitionsFired = transitionsFired }
-        fun counterExampleFound(counterExampleFound: Boolean) = apply { this.counterExampleFound = counterExampleFound }
+        fun counterExample(counterExample: CounterExample) = apply { this.counterExample = counterExample }
         fun memoryUsedTotal(memoryUsedTotal: Double) = apply { this.memoryUsedTotal = memoryUsedTotal }
         fun memoryUsedProgram(memoryUsedProgram: Double) = apply { this.memoryUsedProgram = memoryUsedProgram }
         fun build() = ProBResult(
@@ -54,9 +69,14 @@ data class ProBResult(
             wallTime ?: -1,
             statesAnalysed ?: -1,
             transitionsFired ?: -1,
-            counterExampleFound ?: false, // TODO: with regex
+            counterExample,
             memoryUsedTotal ?: -1.0,
             memoryUsedProgram ?: -1.0
         )
     }
 }
+
+data class CounterExample(
+    val type: String,
+    val trace: List<String>
+)
