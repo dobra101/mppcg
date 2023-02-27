@@ -25,6 +25,8 @@ object Launcher {
         benchmark: Boolean = false,
         outputPath: String = "generator/build/generated/"
     ): File {
+        if (!File(outputPath).exists()) File(outputPath).mkdir()
+
         val start = when (parser) {
             Parser.SableCC -> BParser(file.name).parseFile(file, false)
             Parser.ANTLR -> throw NotImplementedError("No antlr adapter implemented")

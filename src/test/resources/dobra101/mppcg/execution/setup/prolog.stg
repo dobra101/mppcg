@@ -2,5 +2,5 @@ setup(name, execution, result) ::= <<
 start(S0),
 <execution :{ it | trans('<it>', S<i0>, S<i>)}; separator=",\n">,
 Result = S<length(execution)>,
-<result :{ it | get(Result, '<it>', Result_<it>)}; separator=",\n">.
+<result :{ it | (get(Result, '<it>', Result_<it>); out(Result, '<it>', Result_<it>)), !}; separator=",\n">.
 >>

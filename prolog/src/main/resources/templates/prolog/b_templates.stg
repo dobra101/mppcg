@@ -38,10 +38,14 @@ avl2List(AVL, List) :-
     avl:avl_to_list(AVL, List).
 >>
 
-// TODO: add returnValues ?
-operation(name, parameters, body, resultStateCount) ::= <<
+// TODO: improve return values
+operation(name, parameters, returnValues, body, resultStateCount) ::= <<
+<if(returnValues)>
+out(State_0, '<name>', Value) :-
+    <body>,
+    get(State_<resultStateCount>, '<returnValues>', Value).<else>
 trans('<name>'<if(parameters)>(<parameters :{ p | <p>=Expr_<p>}; separator=", ">)<endif>, State_0, State_<resultStateCount>) :-
-    <body>.
+    <body>.<endif>
 >>
 
 // TODO: use type and mapType
@@ -382,6 +386,16 @@ powerSet(name, subsetName) ::= <<
     !.
 <name>(Set, set(Sorted)) :-
     findall(set(Subset), (<subsetName>(Sub, Set), sort(Sub, Subset)), Powerset),
+    sort(Powerset, Sorted),
+    !.
+>>
+
+powerSet1(name, subsetName) ::= <<
+<name>(set(Set), Powerset) :-
+    <name>(Set, Powerset),
+    !.
+<name>(Set, set(Sorted)) :-
+    findall(set(Subset), (<subsetName>(Sub, Set), sort(Sub, Subset), Subset \= []), Powerset),
     sort(Powerset, Sorted),
     !.
 >>

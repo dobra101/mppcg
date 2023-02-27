@@ -9,6 +9,7 @@ import io.kotest.matchers.shouldBe
 import org.stringtemplate.v4.STGroupFile
 import se.sics.jasper.Query
 import se.sics.jasper.SICStus
+import se.sics.jasper.SPTerm
 import se.sics.jasper.Term
 import java.io.File
 
@@ -18,23 +19,28 @@ class ExecutionTestProlog : ExecutionTest(Language.PROLOG, "prolog.stg", ".pl", 
     companion object {
         private val runSetup = { file: File, setupFile: File ->
             val sb = StringBuilder()
-            try {
-                val wayMap = hashMapOf<String, Term>()
-                val sicstus = SICStus()
-                sicstus.load(file.absolutePath)
-                val query: Query = sicstus.openPrologQuery(setupFile.readText(), wayMap)
+            val wayMap = hashMapOf<String, Term>()
+            val sicstus = SICStus()
+            sicstus.load(file.absolutePath)
 
-                while (query.nextSolution()) {
-                    wayMap.forEach { (k, v) ->
-                        if (k.startsWith("Result_")) {
+            val query: Query = sicstus.openPrologQuery(setupFile.readText(), wayMap)
+
+            while (query.nextSolution()) {
+                wayMap.forEach { (k, v) ->
+                    if (k.startsWith("Result_")) {
+                        // TODO: not here?
+                        if (v is SPTerm && v.functorName == "set") {
+                            val setArg = sicstus.newVariable()
+                            v.getArg(1, setArg)
+                            val value = if (setArg.isEmptyList) listOf<String>() else (setArg as SPTerm).toTermArray().toList()
+                            sb.append("${k.removePrefix("Result_")}=${value.toString().replace("[", "{").replace("]", "}")}")
+                        } else {
                             sb.append("${k.removePrefix("Result_")}=$v")
                         }
                     }
                 }
-                query.close()
-            } catch (e: Exception) {
-                e.printStackTrace()
             }
+            query.close()
             sb.toString()
         }
     }
@@ -100,7 +106,7 @@ open class ExecutionTest(
                 context(mch.name) {
                     val execution = Execution.of(exec)
                     val setupFile =
-                        createSetupFile(setupFileName, setupFileExtension, mch.nameWithoutExtension, execution)
+                        createSetupFile(dir, setupFileName, setupFileExtension, mch.nameWithoutExtension, execution)
 
                     // val btypes = File("java/src/main/kotlin/BTypes.java")
 
@@ -113,14 +119,14 @@ open class ExecutionTest(
                                 parser = Parser.SableCC,
                                 optimize = optimize,
                                 benchmark = false,
-                                outputPath = "${outputDir.path}/"
+                                outputPath = "${outputDir.path}/$dir/"
                             )
 
                             val resultString = runSetup(file, setupFile)
                             val resultMap = string2ResultMap(resultString)
-                            for ((key, value) in resultMap) {
-                                withClue("Expect $key = ${execution.result[key]}") {
-                                    value shouldBe execution.result[key]
+                            for ((key, value) in execution.result) {
+                                withClue("Expect $key = $value") {
+                                    resultMap[key] shouldBe value
                                 }
                             }
                         }
@@ -133,6 +139,7 @@ open class ExecutionTest(
 
 
 private fun createSetupFile(
+    dir: String,
     setupFileName: String,
     setupFileExtension: String,
     mchName: String,
@@ -143,7 +150,7 @@ private fun createSetupFile(
     st.add("name", mchName)
     st.add("execution", execution.operations)
     st.add("result", execution.result.keys)
-    val setupFile = File("${outputDir.path}/${mchName}Setup$setupFileExtension")
+    val setupFile = File("${outputDir.path}/$dir/${mchName}Setup$setupFileExtension")
     setupFile.writeText(st.render())
     return setupFile
 }

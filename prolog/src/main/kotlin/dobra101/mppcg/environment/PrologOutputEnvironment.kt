@@ -711,7 +711,7 @@ object PrologOutputEnvironment : OutputLanguageEnvironment() {
         val map = mapOf(
             "name" to name,
             "parameters" to operationParameters.map { it.name.lowercase() },
-//            "returnValues" to returnValues.render(), // TODO: add returnValues?
+            "returnValues" to returnValues.map { (it as? IdentifierExpression)?.name }, // TODO: add returnValues?
             "body" to body.render(),
             "resultStateCount" to stateCount
         )
@@ -795,6 +795,14 @@ object PrologOutputEnvironment : OutputLanguageEnvironment() {
 
             UnaryCollectionOperator.POW -> renderTemplate(
                 "powerSet",
+                mapOf(
+                    "name" to operator2String(this),
+                    "subsetName" to operator2String(BinaryPredicateOperator.SUBSET)
+                )
+            )
+
+            UnaryCollectionOperator.POW1 -> renderTemplate(
+                "powerSet1",
                 mapOf(
                     "name" to operator2String(this),
                     "subsetName" to operator2String(BinaryPredicateOperator.SUBSET)
