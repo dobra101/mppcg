@@ -84,35 +84,45 @@ open class ExecutionTest(
 ) : ExpectSpec({
     if (!outputDir.exists()) outputDir.mkdir()
 
-    val machines = File("src/test/resources/dobra101/mppcg/execution/").walk()
-        .filter { it.isFile && it.name.endsWith(".mch") }
-        .map { it to File(it.path.replace(".mch", ".execPath")) }
-        .toMap()
+    // TODO: include deeper nested directories
+    val dirs = File("src/test/resources/dobra101/mppcg/execution/").listFiles()
+        ?.filter { it.isDirectory }
+        ?.associate { dir ->
+            val files = dir.walk()
+                .filter { it.isFile && it.name.endsWith(".mch") }
+                .associateWith { File(it.path.replace(".mch", ".execPath")) }
+            dir.name to files
+        } ?: emptyMap()
 
-    machines.forAll { (mch, exec) ->
-        context(mch.name) {
-            val execution = Execution.of(exec)
-            val setupFile = createSetupFile(setupFileName, setupFileExtension, mch.nameWithoutExtension, execution)
+    dirs.forAll { (dir, machines) ->
+        context(dir) {
+            machines.forAll { (mch, exec) ->
+                context(mch.name) {
+                    val execution = Execution.of(exec)
+                    val setupFile =
+                        createSetupFile(setupFileName, setupFileExtension, mch.nameWithoutExtension, execution)
 
-            // val btypes = File("java/src/main/kotlin/BTypes.java")
+                    // val btypes = File("java/src/main/kotlin/BTypes.java")
 
-            listOf(true, false).forAll { optimize ->
-                val expectName = if (optimize) "optimized" else "regular"
-                expect(expectName) {
-                    val file = Launcher.launch(
-                        lang = language,
-                        file = mch,
-                        parser = Parser.SableCC,
-                        optimize = optimize,
-                        benchmark = false,
-                        outputPath = "${outputDir.path}/"
-                    )
+                    listOf(true, false).forAll { optimize ->
+                        val expectName = if (optimize) "optimized" else "regular"
+                        expect(expectName) {
+                            val file = Launcher.launch(
+                                lang = language,
+                                file = mch,
+                                parser = Parser.SableCC,
+                                optimize = optimize,
+                                benchmark = false,
+                                outputPath = "${outputDir.path}/"
+                            )
 
-                    val resultString = runSetup(file, setupFile)
-                    val resultMap = string2ResultMap(resultString)
-                    for ((key, value) in resultMap) {
-                        withClue("Expect $key = ${execution.result[key]}") {
-                            value shouldBe execution.result[key]
+                            val resultString = runSetup(file, setupFile)
+                            val resultMap = string2ResultMap(resultString)
+                            for ((key, value) in resultMap) {
+                                withClue("Expect $key = ${execution.result[key]}") {
+                                    value shouldBe execution.result[key]
+                                }
+                            }
                         }
                     }
                 }
