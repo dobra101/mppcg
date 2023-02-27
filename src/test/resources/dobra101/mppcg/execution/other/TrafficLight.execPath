@@ -1,0 +1,8 @@
+cars_ry
+cars_g
+cars_y
+cars_r
+peds_g
+*** Expected Result:
+getCars=red
+getPeds=green

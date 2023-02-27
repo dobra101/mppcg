@@ -1,0 +1,4 @@
+inc
+inc
+*** Expected Result:
+result=4

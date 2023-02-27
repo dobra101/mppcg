@@ -1,0 +1,3 @@
+*** Expected Result:
+card(domain(getYY))=3
+card(range(getYY))=3

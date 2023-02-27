@@ -1,0 +1,5 @@
+inc
+inc
+inc
+*** Expected Result:
+floor=3

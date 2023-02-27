@@ -1,0 +1,8 @@
+enter1
+leave1
+enter2
+leave2
+try1
+try2
+*** Expected Result:
+getAA=0

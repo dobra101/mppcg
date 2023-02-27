@@ -19,20 +19,14 @@ object Launcher {
     private val logger: Logger = Logger.getLogger(Launcher::class.simpleName)
     fun launch(
         lang: Language,
-        file: String,
+        file: File,
         parser: Parser,
         optimize: Boolean = false,
         benchmark: Boolean = false,
         outputPath: String = "generator/build/generated/"
     ): File {
-        val filename = if (file.endsWith(".mch")) file else "$file.mch"
-
-        val machine = File("build/resources/main/machines/$filename").let {
-            if (it.exists()) it else File("build/resources/test/dobra101/mppcg/execution/$filename")
-        }
-
         val start = when (parser) {
-            Parser.SableCC -> BParser(machine.name).parseFile(machine, false)
+            Parser.SableCC -> BParser(file.name).parseFile(file, false)
             Parser.ANTLR -> throw NotImplementedError("No antlr adapter implemented")
         }
 
@@ -47,6 +41,22 @@ object Launcher {
         }
 
         return generated
+    }
+    fun launch(
+        lang: Language,
+        file: String,
+        parser: Parser,
+        optimize: Boolean = false,
+        benchmark: Boolean = false,
+        outputPath: String = "generator/build/generated/"
+    ): File {
+        val filename = if (file.endsWith(".mch")) file else "$file.mch"
+
+        val machine = File("build/resources/main/machines/$filename").let {
+            if (it.exists()) it else File("build/resources/test/dobra101/mppcg/execution/$filename")
+        }
+
+        return launch(lang, machine, parser, optimize, benchmark, outputPath)
     }
 
     fun benchmarkProlog(file: File): ProBResult {

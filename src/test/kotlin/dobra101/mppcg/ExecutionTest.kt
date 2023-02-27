@@ -101,7 +101,7 @@ open class ExecutionTest(
                 expect(expectName) {
                     val file = Launcher.launch(
                         lang = language,
-                        file = mch.name,
+                        file = mch,
                         parser = Parser.SableCC,
                         optimize = optimize,
                         benchmark = false,

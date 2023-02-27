@@ -1,0 +1,4 @@
+calculate
+*** Expected Result:
+getRes=2
+getPair=(1 |-> 2)

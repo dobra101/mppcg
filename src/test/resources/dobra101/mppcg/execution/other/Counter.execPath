@@ -1,0 +1,7 @@
+Reset
+Inc
+Odd
+Inc
+Even
+*** Expected Result:
+getCount=2
