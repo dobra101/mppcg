@@ -10,7 +10,11 @@ interface TypeNumber : Type
 
 class TypeReal : TypeNumber
 
-class TypeNatural : TypeNumber
+class TypeFloat : TypeNumber
+
+open class TypeNatural : TypeNumber
+
+class TypeNatural1 : TypeNatural()
 
 class TypeInteger : TypeNumber {
     override fun equals(other: Any?): Boolean {
@@ -71,6 +75,6 @@ enum class BooleanValue {
     FALSE
 }
 
-class UnknownTypeException(msg: String): Exception("Unknown type $msg")
+class UnknownTypeException(msg: String) : Exception("Unknown type $msg")
 
-class InvalidTypeException(msg: String): Exception(msg)
+class InvalidTypeException(msg: String) : Exception(msg)

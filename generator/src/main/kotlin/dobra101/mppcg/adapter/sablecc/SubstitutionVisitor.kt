@@ -37,7 +37,7 @@ class SubstitutionVisitor : AbstractVisitor() {
                 when {
                     assign.lhs.type is TypeNumber && rightType is TypeInteger -> {}
                     assign.lhs.type is TypeAnonymousCollection && rightType is TypeCollection && assign.lhs.type == rightType -> {}
-                    else -> throw InvalidTypeException("Types ${assign.lhs.type} and $rightType to not match.")
+                    else -> throw InvalidTypeException("Types ${assign.lhs.type} and $rightType do not match.")
                 }
             }
             assignments.add(assign)

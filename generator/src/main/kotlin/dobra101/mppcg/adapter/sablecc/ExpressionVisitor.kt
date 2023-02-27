@@ -238,23 +238,68 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseARealSetExpression(node: ARealSetExpression) {
-        TODO("Not implemented ${node::class.simpleName}")
+        if (AbstractVisitor.result is Expression) {
+            if ((AbstractVisitor.result as Expression).type != null
+                && (AbstractVisitor.result as Expression).type !is TypeReal
+            ) {
+                logger.severe("Cannot reassign type Int of ${AbstractVisitor.result}")
+                return
+            }
+            (AbstractVisitor.result as Expression).type = TypeReal()
+            result = InfiniteSet(TypeReal())
+        }
     }
 
     override fun caseAFloatSetExpression(node: AFloatSetExpression) {
-        TODO("Not implemented ${node::class.simpleName}")
+        if (AbstractVisitor.result is Expression) {
+            if ((AbstractVisitor.result as Expression).type != null
+                && (AbstractVisitor.result as Expression).type !is TypeFloat
+            ) {
+                logger.severe("Cannot reassign type Int of ${AbstractVisitor.result}")
+                return
+            }
+            (AbstractVisitor.result as Expression).type = TypeFloat()
+            result = InfiniteSet(TypeFloat())
+        }
     }
 
     override fun caseANatural1SetExpression(node: ANatural1SetExpression) {
-        TODO("Not implemented ${node::class.simpleName}")
+        if (AbstractVisitor.result is Expression) {
+            if ((AbstractVisitor.result as Expression).type != null
+                && (AbstractVisitor.result as Expression).type !is TypeNatural1
+            ) {
+                logger.severe("Cannot reassign type Int of ${AbstractVisitor.result}")
+                return
+            }
+            (AbstractVisitor.result as Expression).type = TypeNatural1()
+            result = InfiniteSet(TypeNatural1())
+        }
     }
 
     override fun caseANatSetExpression(node: ANatSetExpression) {
-        TODO("Not implemented ${node::class.simpleName}")
+        if (AbstractVisitor.result is Expression) {
+            if ((AbstractVisitor.result as Expression).type != null
+                && (AbstractVisitor.result as Expression).type !is TypeNatural
+            ) {
+                logger.severe("Cannot reassign type Int of ${AbstractVisitor.result}")
+                return
+            }
+            (AbstractVisitor.result as Expression).type = TypeNatural()
+            result = InfiniteSet(TypeNatural())
+        }
     }
 
     override fun caseANat1SetExpression(node: ANat1SetExpression) {
-        TODO("Not implemented ${node::class.simpleName}")
+        if (AbstractVisitor.result is Expression) {
+            if ((AbstractVisitor.result as Expression).type != null
+                && (AbstractVisitor.result as Expression).type !is TypeNatural1
+            ) {
+                logger.severe("Cannot reassign type Int of ${AbstractVisitor.result}")
+                return
+            }
+            (AbstractVisitor.result as Expression).type = TypeNatural1()
+            result = InfiniteSet(TypeNatural1())
+        }
     }
 
     override fun caseAIntSetExpression(node: AIntSetExpression) {
