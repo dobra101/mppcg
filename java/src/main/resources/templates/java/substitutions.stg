@@ -12,8 +12,8 @@ if(<condition>) {
 
 declarationSubstitution(type, lhs, rhs) ::= <<
 <if(rhs)>
-private <type> <lhs> = <rhs>;<else>
-private <type> <lhs>;<endif>
+public <type> <lhs> = <rhs>;<else>
+public <type> <lhs>;<endif>
 >>
 
 sequenceSubstitution(substitutions) ::= <<

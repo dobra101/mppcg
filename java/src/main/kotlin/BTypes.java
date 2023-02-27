@@ -19,7 +19,6 @@ public class BTypes {
         return min;
     }
 
-
     public static class BInterval {
         private final int from;
         private final int to;

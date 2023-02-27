@@ -1,0 +1,7 @@
+inc
+inc
+inc
+dec
+inc
+*** Expected Result:
+level=3

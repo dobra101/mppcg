@@ -1,0 +1,9 @@
+setup(name, execution, result) ::= <<
+public class <name>Setup {
+    public static void main(String[] args) {
+        <name> testmachine = new <name>();
+        <execution :{ exec | testmachine.<exec>(); }; separator="\n">
+        <result :{System.out.println("<result>=" + testmachine.<result>); }; separator="\n">
+    }
+}
+>>

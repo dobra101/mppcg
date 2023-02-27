@@ -14,9 +14,13 @@ import java.util.logging.Logger
 // TODO: generate multiple at once
 object Launcher {
     private val logger: Logger = Logger.getLogger(Launcher::class.simpleName)
-    fun launch(lang: Language, file: String, parser: Parser, optimize: Boolean, benchmark: Boolean): File {
+    fun launch(lang: Language, file: String, parser: Parser, optimize: Boolean, benchmark: Boolean, outputPath: String = "generator/build/generated/"): File {
         val filename = if (file.endsWith(".mch")) file else "$file.mch"
-        val machine = File("build/resources/main/machines/$filename")
+
+        val machine = File("build/resources/main/machines/$filename").let {
+            if (it.exists()) it else File("build/resources/test/dobra101/mppcg/execution/$filename")
+        }
+
         val start = when (parser) {
             Parser.SableCC -> BParser(machine.name).parseFile(machine, false)
             Parser.ANTLR -> throw NotImplementedError("No antlr adapter implemented")
@@ -24,7 +28,7 @@ object Launcher {
 
         Generator.environment = environmentOf(lang)
         Generator.environment.optimize = optimize
-        val generated = Generator().generate(start)
+        val generated = Generator().generate(start, outputPath)
 
         if (benchmark) {
             if (lang == Language.PROLOG) {
@@ -56,9 +60,11 @@ object Launcher {
         val exitValue = process.waitFor()
 
         val probOutput = process.inputReader().readText()
+        process.inputReader().close()
 
         if (exitValue != 0) {
             val error = process.errorReader().readText()
+            process.errorReader().close()
             val msg = "$probOutput\n$error"
             probFile.deleteOnExit()
             throw RuntimeException(msg)
