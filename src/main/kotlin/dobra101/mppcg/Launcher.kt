@@ -1,7 +1,10 @@
 package dobra101.mppcg
 
 import de.be4.classicalb.core.parser.BParser
-import dobra101.mppcg.environment.*
+import dobra101.mppcg.environment.JavaOutputEnvironment
+import dobra101.mppcg.environment.Language
+import dobra101.mppcg.environment.OutputLanguageEnvironment
+import dobra101.mppcg.environment.PrologOutputEnvironment
 import dobra101.mppcg.prob.ProBResult
 import dobra101.mppcg.prob.ProBResultAnalyser
 import kotlinx.cli.ArgParser
@@ -14,7 +17,14 @@ import java.util.logging.Logger
 // TODO: generate multiple at once
 object Launcher {
     private val logger: Logger = Logger.getLogger(Launcher::class.simpleName)
-    fun launch(lang: Language, file: String, parser: Parser, optimize: Boolean, benchmark: Boolean, outputPath: String = "generator/build/generated/"): File {
+    fun launch(
+        lang: Language,
+        file: String,
+        parser: Parser,
+        optimize: Boolean = false,
+        benchmark: Boolean = false,
+        outputPath: String = "generator/build/generated/"
+    ): File {
         val filename = if (file.endsWith(".mch")) file else "$file.mch"
 
         val machine = File("build/resources/main/machines/$filename").let {

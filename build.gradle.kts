@@ -23,6 +23,8 @@ dependencies {
     testImplementation("org.antlr:stringtemplate:4.0.2")
     testImplementation("io.kotest:kotest-runner-junit5:5.5.5")
     testImplementation("io.kotest:kotest-property:5.5.5")
+    // TODO: location and version can differ
+    testImplementation(files("/usr/local/sicstus4.7.0/lib/sicstus-4.7.0/bin/jasper.jar"))
 }
 
 application {
