@@ -85,9 +85,11 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
 
     // HINT: Same for Java and Prolog
     override fun ValueExpression.renderSelf(): RenderResult {
-        val map = mapOf(
-            "value" to value
-        )
+        val map = if (type is TypeBoolean && (type as TypeBoolean).value != null) {
+            mapOf("value" to ((type as TypeBoolean).value == BooleanValue.TRUE).toString())
+        } else {
+            mapOf("value" to value)
+        }
 
         return RenderResult(renderTemplate(map))
     }

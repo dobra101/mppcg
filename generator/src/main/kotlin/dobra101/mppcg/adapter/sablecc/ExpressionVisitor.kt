@@ -272,7 +272,9 @@ class ExpressionVisitor : AbstractVisitor() {
 
     override fun caseABoolSetExpression(node: ABoolSetExpression) {
         if (AbstractVisitor.result is Expression) {
-            if ((AbstractVisitor.result as Expression).type != null) {
+            if ((AbstractVisitor.result as Expression).type != null
+                && (AbstractVisitor.result as Expression).type !is TypeBoolean
+            ) {
                 logger.severe("Cannot reassign type Bool of ${AbstractVisitor.result}")
                 return
             }

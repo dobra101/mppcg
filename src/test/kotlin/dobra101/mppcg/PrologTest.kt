@@ -11,7 +11,7 @@ import io.kotest.matchers.shouldBe
 import java.io.File
 
 class PrologTest : ExpectSpec({
-    val include = listOf("TrafficLight_MC.mch", "Lift.mch", "scheduler_deterministic_MC.mch")
+    val include = listOf("Cruise_finite1_deterministic_MC.mch")
 
     val machines = File("src/main/resources/machines/").walk()
         .filter { it.isFile && it.name.endsWith(".mch") }
@@ -50,6 +50,7 @@ class PrologTest : ExpectSpec({
                         benchmark = false
                     )
                     val result = Launcher.benchmarkProlog(file)
+                    println(result)
 
                     withClue("States do not match") {
                         result.statesAnalysed shouldBeExactly mchResult.statesAnalysed
@@ -57,7 +58,7 @@ class PrologTest : ExpectSpec({
                     withClue("Transitions do not match") {
                         result.transitionsFired shouldBeExactly mchResult.transitionsFired
                     }
-                    result.counterExampleFound shouldBe mchResult.counterExampleFound
+                    result.counterExample shouldBe mchResult.counterExample
                 }
             }
         }
