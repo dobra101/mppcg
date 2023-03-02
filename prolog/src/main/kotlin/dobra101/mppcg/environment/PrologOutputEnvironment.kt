@@ -549,6 +549,10 @@ object PrologOutputEnvironment : OutputLanguageEnvironment() {
         )
     }
 
+    override fun UnaryExpression.renderSelf(): RenderResult {
+        TODO("Not yet implemented")
+    }
+
     override fun UnaryFunctionExpression.renderSelf(): RenderResult {
         if (optimize) optimizer.loadIfEvaluated(this)?.let { return it }
         usedBMethods.add(operator)
@@ -735,6 +739,14 @@ object PrologOutputEnvironment : OutputLanguageEnvironment() {
             BinaryExpressionOperator.MINUS -> true
             BinaryExpressionOperator.MULT -> true
             BinaryExpressionOperator.DIV -> true
+            BinaryExpressionOperator.MOD -> true
+        }
+    }
+
+    override fun operator2String(operator: BinaryExpressionOperator): String {
+        return when (operator) {
+            BinaryExpressionOperator.MOD -> "mod"
+            else -> super.operator2String(operator)
         }
     }
 

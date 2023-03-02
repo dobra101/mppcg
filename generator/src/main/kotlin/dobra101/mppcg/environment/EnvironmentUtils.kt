@@ -37,6 +37,7 @@ abstract class EnvironmentUtils {
             BinaryExpressionOperator.MINUS -> "-"
             BinaryExpressionOperator.MULT -> "*"
             BinaryExpressionOperator.DIV -> "/"
+            BinaryExpressionOperator.MOD -> "%"
         }
     }
 

@@ -104,6 +104,7 @@ open class ExecutionTest(
         context(dir) {
             machines.forAll { (mch, exec) ->
                 context(mch.name) {
+                    println("Testing machine .(${mch.name}:1)")
                     val execution = Execution.of(exec)
                     val setupFile =
                         createSetupFile(dir, setupFileName, setupFileExtension, mch.nameWithoutExtension, execution)
@@ -150,6 +151,9 @@ private fun createSetupFile(
     st.add("name", mchName)
     st.add("execution", execution.operations)
     st.add("result", execution.result.keys)
+
+    val directory = File("${outputDir.path}/$dir")
+    if (!directory.exists()) directory.mkdir()
     val setupFile = File("${outputDir.path}/$dir/${mchName}Setup$setupFileExtension")
     setupFile.writeText(st.render())
     return setupFile

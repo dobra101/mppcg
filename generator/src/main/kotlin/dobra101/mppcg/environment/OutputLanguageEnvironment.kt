@@ -103,6 +103,7 @@ abstract class OutputLanguageEnvironment : EnvironmentUtils(), BEnvironment {
             is InfiniteSet -> node.renderSelf()
             is LambdaExpression -> node.renderSelf()
             is UnaryCollectionExpression -> node.renderSelf()
+            is UnaryExpression -> node.renderSelf()
             is UnaryFunctionExpression -> node.renderSelf()
 
             else -> throw EnvironmentException("Unknown ${node::class}")

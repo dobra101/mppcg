@@ -338,7 +338,7 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseAConvertBoolExpression(node: AConvertBoolExpression) {
-        TODO("Not implemented ${node::class.simpleName}")
+        result = UnaryExpression(node.predicate.convert()!!, UnaryExpressionOperator.CONVERT_BOOLEAN)
     }
 
     override fun caseAUnaryMinusExpression(node: AUnaryMinusExpression) {
@@ -385,7 +385,7 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseAModuloExpression(node: AModuloExpression) {
-        TODO("Not implemented ${node::class.simpleName}")
+        result = BinaryExpression(node.left.convert()!!, node.right.convert()!!, BinaryExpressionOperator.MOD)
     }
 
     override fun caseAPowerOfExpression(node: APowerOfExpression) {

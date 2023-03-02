@@ -12,7 +12,8 @@ enum class BinaryExpressionOperator {
     ADD,
     MINUS,
     MULT,
-    DIV
+    DIV,
+    MOD
 }
 
 // TODO: replace by type inference

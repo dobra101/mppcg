@@ -272,6 +272,10 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         return RenderResult(renderTemplate(map))
     }
 
+    override fun UnaryExpression.renderSelf(): RenderResult {
+        TODO("Not yet implemented")
+    }
+
     override fun UnaryFunctionExpression.renderSelf(): RenderResult {
         TODO("Not yet implemented")
     }

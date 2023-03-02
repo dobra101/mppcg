@@ -123,7 +123,12 @@ class PredicateVisitor : AbstractVisitor() {
     }
 
     override fun caseANotSubsetPredicate(node: ANotSubsetPredicate) {
-        TODO("Not implemented ${node::class.simpleName}")
+        val pred = BinaryPredicate(
+            node.left.convert()!!.setParameterIfCollection(),
+            node.right.convert()!!.setParameterIfCollection(),
+            BinaryPredicateOperator.SUBSET
+        )
+        result = UnaryLogicPredicate(pred, LogicPredicateOperator.NOT)
     }
 
     override fun caseANotSubsetStrictPredicate(node: ANotSubsetStrictPredicate) {
