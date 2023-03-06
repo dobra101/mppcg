@@ -63,6 +63,8 @@ class TypeInterval(val type: TypeNumber) : Type
 
 class TypeCouple : Type
 
+class TypeSequence(val type: Type?) : Type
+
 enum class SetType {
     INTEGER,
     NATURAL,

@@ -448,6 +448,24 @@ object PrologOutputEnvironment : OutputLanguageEnvironment() {
         return RenderResult("${expanded.before}$rendered", mapOf("resultExpr" to IndividualInfo(expr(exprCount++))))
     }
 
+    override fun BinarySequenceExpression.renderSelf(): RenderResult {
+        if (optimize) optimizer.loadIfEvaluated(this)?.let { return it }
+
+        val expanded = ExpandedBinary.of(left, right)
+
+        val map = mapOf(
+            "lhs" to expanded.lhs,
+            "rhs" to expanded.rhs,
+            "operator" to operator2String(operator),
+            "exprCount" to exprCount
+        )
+        val rendered = renderTemplate(map)
+
+        usedBMethods.add(operator)
+        if (optimize) optimizer.evaluated[this] = expr(exprCount)
+        return RenderResult("${expanded.before}$rendered", mapOf("resultExpr" to IndividualInfo(expr(exprCount++))))
+    }
+
     override fun CallFunctionExpression.renderSelf(): RenderResult {
         if (optimize) optimizer.loadIfEvaluated(this)?.let { return it }
 
@@ -473,10 +491,13 @@ object PrologOutputEnvironment : OutputLanguageEnvironment() {
         comprehensionSetIdentifier = identifiers.filterIsInstance<IdentifierExpression>()
         val map = mapOf(
             "identifiers" to identifiers.render(),
-            "predicates" to predicates.render()
+            "predicates" to predicates.render(),
+            "exprCount" to exprCount
         )
         comprehensionSetIdentifier = emptyList()
-        return RenderResult(renderTemplate(map))
+        if (optimize) optimizer.evaluated[this] = expr(exprCount)
+
+        return RenderResult(renderTemplate(map), mapOf("resultExpr" to IndividualInfo(expr(exprCount++))))
     }
 
     override fun ConcreteIdentifierExpression.renderSelf(): RenderResult {
@@ -518,10 +539,36 @@ object PrologOutputEnvironment : OutputLanguageEnvironment() {
             "identifier" to identifiers.render(),
             "predicate" to predicate.render(),
             "expression" to expression.render(),
-            "value" to expr(exprCount - 1)
+            "value" to expr(exprCount - 1),
+            "exprCount" to exprCount
         )
         lambdaExpressionIdentifier = emptyList()
+
+        if (optimize) optimizer.evaluated[this] = expr(exprCount)
+
+        return RenderResult(renderTemplate(map), mapOf("resultExpr" to IndividualInfo(expr(exprCount++))))
+    }
+
+    override fun Sequence.renderSelf(): RenderResult {
+        val map = mapOf(
+            "elements" to elements.render()
+        )
         return RenderResult(renderTemplate(map))
+    }
+
+    override fun UnarySequenceExpression.renderSelf(): RenderResult {
+        val expanded = ExpandedExpression.of(sequence)
+        val map = mapOf(
+            "sequence" to expanded.expression,
+            "operator" to operator2String(operator),
+            "exprCount" to exprCount
+        )
+
+        if (optimize) optimizer.evaluated[this] = expr(exprCount)
+
+        usedBMethods.add(operator)
+
+        return RenderResult("${expanded.before}${renderTemplate(map)}", mapOf("resultExpr" to IndividualInfo(expr(exprCount++))))
     }
 
     override fun UnaryCollectionExpression.renderSelf(): RenderResult {
@@ -790,7 +837,9 @@ object PrologOutputEnvironment : OutputLanguageEnvironment() {
                 is BinaryCollectionOperator -> it.render()
                 is BinaryFunctionOperator -> it.render()
                 is BinaryPredicateOperator -> it.render()
+                is BinarySequenceExpressionOperator -> it.render()
                 is CallFunctionExpression.CallFunctionOperator -> it.render()
+                is UnarySequenceExpressionOperator -> it.render()
                 else -> throw EnvironmentException("Rendering of custom method for operator '$it' (${it::class.simpleName}) is not implemented.")
             }
         }
@@ -921,6 +970,15 @@ object PrologOutputEnvironment : OutputLanguageEnvironment() {
         }
     }
 
+    private fun BinarySequenceExpressionOperator.render(): String {
+        return when (this) {
+            BinarySequenceExpressionOperator.RESTRICT_FRONT -> renderTemplate(
+                "sequenceRestrictFront",
+                mapOf("name" to operator2String(this))
+            )
+        }
+    }
+
     private fun CallFunctionExpression.CallFunctionOperator.render(): String {
         return renderTemplate(
             "callFunctionPredicate",
@@ -928,6 +986,9 @@ object PrologOutputEnvironment : OutputLanguageEnvironment() {
         )
     }
 
+    private fun UnarySequenceExpressionOperator.render(): String {
+        return renderTemplate("sequenceFront", mapOf("name" to operator2String(this)))
+    }
 
 }
 

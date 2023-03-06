@@ -1,10 +1,7 @@
 package dobra101.mppcg.environment
 
 import dobra101.mppcg.node.Type
-import dobra101.mppcg.node.b.BinaryFunctionOperator
-import dobra101.mppcg.node.b.Operation
-import dobra101.mppcg.node.b.Transition
-import dobra101.mppcg.node.b.UnaryFunctionOperator
+import dobra101.mppcg.node.b.*
 import dobra101.mppcg.node.collection.BinaryCollectionOperator
 import dobra101.mppcg.node.collection.CollectionNode
 import dobra101.mppcg.node.collection.UnaryCollectionOperator
@@ -86,6 +83,22 @@ abstract class EnvironmentUtils {
             UnaryFunctionOperator.DOMAIN -> "domain"
             UnaryFunctionOperator.RANGE -> "range"
             UnaryFunctionOperator.REVERSE -> "reverse"
+        }
+    }
+
+    open fun operator2String(operator: BinarySequenceExpressionOperator): String {
+        return when (operator) {
+            BinarySequenceExpressionOperator.RESTRICT_FRONT -> "restrict_front"
+        }
+    }
+
+    open fun operator2String(operator: UnarySequenceExpressionOperator): String {
+        return when (operator) {
+            UnarySequenceExpressionOperator.FRONT -> "front"
+            UnarySequenceExpressionOperator.TAIL -> "tail"
+            UnarySequenceExpressionOperator.FIRST -> "first"
+            UnarySequenceExpressionOperator.LAST -> "last"
+            UnarySequenceExpressionOperator.REVERSE -> "reverse"
         }
     }
 

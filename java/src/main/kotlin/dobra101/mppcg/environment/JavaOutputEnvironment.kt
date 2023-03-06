@@ -219,6 +219,10 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         return RenderResult(renderTemplate(map))
     }
 
+    override fun BinarySequenceExpression.renderSelf(): RenderResult {
+        TODO("Not yet implemented")
+    }
+
     override fun CallFunctionExpression.renderSelf(): RenderResult {
         val map = mapOf(
             "expression" to expression.render(),
@@ -260,6 +264,21 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             "identifier" to identifiers.render(),
             "predicate" to predicate.render(),
             "expression" to expression.render()
+        )
+        return RenderResult(renderTemplate(map))
+    }
+
+    override fun Sequence.renderSelf(): RenderResult {
+        val map = mapOf(
+            "elements" to elements.render()
+        )
+        return RenderResult(renderTemplate(map))
+    }
+
+    override fun UnarySequenceExpression.renderSelf(): RenderResult {
+        val map = mapOf(
+            "sequence" to sequence.render(),
+            "operator" to operator2String(operator)
         )
         return RenderResult(renderTemplate(map))
     }

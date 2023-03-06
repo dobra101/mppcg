@@ -10,6 +10,7 @@ import java.lang.Exception
  * @constructor Creates a Render result
  */
 data class RenderResult(
+    // TODO: add 'before' as parameter
     val rendered: String = "",
     val info: Map<String, IndividualInfo> = mapOf()
 ) {

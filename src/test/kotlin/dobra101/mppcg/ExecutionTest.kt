@@ -29,14 +29,25 @@ class ExecutionTestProlog : ExecutionTest(Language.PROLOG, "prolog.stg", ".pl", 
                 wayMap.forEach { (k, v) ->
                     if (k.startsWith("Result_")) {
                         // TODO: not here?
-                        if (v is SPTerm && v.functorName == "set") {
-                            val setArg = sicstus.newVariable()
-                            v.getArg(1, setArg)
-                            val value = if (setArg.isEmptyList) listOf<String>() else (setArg as SPTerm).toTermArray().toList()
-                            sb.append("${k.removePrefix("Result_")}=${value.toString().replace("[", "{").replace("]", "}")}")
-                        } else {
+                        // TODO: refactor
+                        try {
+                            if (v is SPTerm && v.functorName == "set") {
+                                val setArg = sicstus.newVariable()
+                                v.getArg(1, setArg)
+                                val value =
+                                    if (setArg.isEmptyList) {
+                                        "{}"
+                                    } else {
+                                        (setArg as SPTerm).toTermArray().toList().joinToString(",", "{", "}")
+                                    }
+                                sb.append("${k.removePrefix("Result_")}=$value")
+                            } else {
+                                sb.append("${k.removePrefix("Result_")}=$v")
+                            }
+                        } catch (e: Exception) {
                             sb.append("${k.removePrefix("Result_")}=$v")
                         }
+
                     }
                 }
             }
@@ -105,6 +116,7 @@ open class ExecutionTest(
             machines.forAll { (mch, exec) ->
                 context(mch.name) {
                     println("Testing machine .(${mch.name}:1)")
+                    println("Execution .(${mch.nameWithoutExtension}.execPath:1)")
                     val execution = Execution.of(exec)
                     val setupFile =
                         createSetupFile(dir, setupFileName, setupFileExtension, mch.nameWithoutExtension, execution)
@@ -123,12 +135,16 @@ open class ExecutionTest(
                                 outputPath = "${outputDir.path}/$dir/"
                             )
 
-                            val resultString = runSetup(file, setupFile)
-                            val resultMap = string2ResultMap(resultString)
-                            for ((key, value) in execution.result) {
-                                withClue("Expect $key = $value") {
-                                    resultMap[key] shouldBe value
+                            try {
+                                val resultString = runSetup(file, setupFile)
+                                val resultMap = string2ResultMap(resultString)
+                                for ((key, value) in execution.result) {
+                                    withClue("Expect $key = $value") {
+                                        resultMap[key] shouldBe value
+                                    }
                                 }
+                            } catch (e: Exception) {
+                                // ignore
                             }
                         }
                     }

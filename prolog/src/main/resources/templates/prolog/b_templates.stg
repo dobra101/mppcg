@@ -136,16 +136,16 @@ findall(
 <quantification><endif><endif>
 >>
 
-lambdaExpression(identifier, predicate, expression, value) ::= <<
+lambdaExpression(identifier, predicate, expression, value, exprCount) ::= <<
 findall(
     (<identifier>/<value>),
     (
         <predicate>,
         <expression>
     ),
-    Res
+    Res_<exprCount>
 ),
-sort(Res, Result)
+sort(Res_<exprCount>, Expr_<exprCount>)
 >>
 
 initialization(body, resultStateCount) ::= <<
@@ -175,14 +175,15 @@ select(condition, then, elseSubstitution, when) ::= <<
 <if(then)><then><else>true<endif>
 >>
 
-comprehensionSetExpression(identifiers, predicates) ::= <<
+comprehensionSetExpression(identifiers, predicates, exprCount) ::= <<
 findall(
     (<identifiers; separator="/">),
     (
         <predicates; separator=",\n">
     ),
-    Res),
-sort(Res, Result)
+    Res_<exprCount>),
+sort(Res_<exprCount>, Expr_<exprCount>_l),
+Expr_<exprCount> = set(Expr_<exprCount>_l)
 >>
 
 
@@ -462,4 +463,51 @@ Expr_<newCount> = Expr_<oldCount>
 
 infiniteSetExpression(type) ::= <<
 <type>
+>>
+
+sequence(elements) ::= <<
+[<elements; separator=", ">]
+>>
+
+unarySequenceExpression(sequence, operator, exprCount) ::= <<
+<operator>(<sequence>, Expr_<exprCount>)
+>>
+
+binarySequenceExpression(lhs, rhs, operator, exprCount) ::= <<
+<operator>(<lhs>, <rhs>, Expr_<exprCount>)
+>>
+
+sequenceFront(name) ::= <<
+<name>(Sequence, Front) :-
+    append(Front, [_], Sequence),
+    !.
+>>
+
+sequenceTail(name) ::= <<
+<name>([_ | Tail], Tail) :- !-
+>>
+
+sequenceFirst(name) ::= <<
+<name>([First | _], First).
+>>
+
+sequenceLast(name) ::= <<
+<name>([Last], Last).
+<name>([_ | Tail|, Last) :-
+    <name>(Tail, Last).
+>>
+
+sequenceRestrictFront(name) ::= <<
+<name>([], _, []) :- !.
+<name>(_, 0, []) :- !.
+<name>([Head | Tail], N, [Head | NewTail]) :-
+    N1 is N - 1,
+    <name>(Tail, N1, NewTail).
+>>
+
+sequenceReverse(name) ::= <<
+<name>([], []).
+<name>([Head | Tail], Reversed) :-
+    <name>(Tail, ReversedTail),
+    append(ReversedTail, [Head], Reversed).
 >>

@@ -4,6 +4,7 @@ import de.be4.classicalb.core.parser.node.*
 import dobra101.mppcg.node.*
 import dobra101.mppcg.node.b.*
 import dobra101.mppcg.node.b.Function
+import dobra101.mppcg.node.b.Sequence
 import dobra101.mppcg.node.collection.*
 import dobra101.mppcg.node.expression.*
 
@@ -242,8 +243,7 @@ class ExpressionVisitor : AbstractVisitor() {
             if ((AbstractVisitor.result as Expression).type != null
                 && (AbstractVisitor.result as Expression).type !is TypeReal
             ) {
-                logger.severe("Cannot reassign type Int of ${AbstractVisitor.result}")
-                return
+                throw InvalidTypeException("Cannot reassign type Real of ${AbstractVisitor.result}")
             }
             (AbstractVisitor.result as Expression).type = TypeReal()
             result = InfiniteSet(TypeReal())
@@ -255,8 +255,7 @@ class ExpressionVisitor : AbstractVisitor() {
             if ((AbstractVisitor.result as Expression).type != null
                 && (AbstractVisitor.result as Expression).type !is TypeFloat
             ) {
-                logger.severe("Cannot reassign type Int of ${AbstractVisitor.result}")
-                return
+                throw InvalidTypeException("Cannot reassign type Float of ${AbstractVisitor.result}")
             }
             (AbstractVisitor.result as Expression).type = TypeFloat()
             result = InfiniteSet(TypeFloat())
@@ -268,12 +267,11 @@ class ExpressionVisitor : AbstractVisitor() {
             if ((AbstractVisitor.result as Expression).type != null
                 && (AbstractVisitor.result as Expression).type !is TypeNatural1
             ) {
-                logger.severe("Cannot reassign type Int of ${AbstractVisitor.result}")
-                return
+                throw InvalidTypeException("Cannot reassign type Natural1 of ${AbstractVisitor.result}")
             }
             (AbstractVisitor.result as Expression).type = TypeNatural1()
-            result = InfiniteSet(TypeNatural1())
         }
+        result = InfiniteSet(TypeNatural1())
     }
 
     override fun caseANatSetExpression(node: ANatSetExpression) {
@@ -281,12 +279,11 @@ class ExpressionVisitor : AbstractVisitor() {
             if ((AbstractVisitor.result as Expression).type != null
                 && (AbstractVisitor.result as Expression).type !is TypeNatural
             ) {
-                logger.severe("Cannot reassign type Int of ${AbstractVisitor.result}")
-                return
+                throw InvalidTypeException("Cannot reassign type Nat of ${AbstractVisitor.result}")
             }
             (AbstractVisitor.result as Expression).type = TypeNatural()
-            result = InfiniteSet(TypeNatural())
         }
+        result = InfiniteSet(TypeNatural())
     }
 
     override fun caseANat1SetExpression(node: ANat1SetExpression) {
@@ -294,12 +291,11 @@ class ExpressionVisitor : AbstractVisitor() {
             if ((AbstractVisitor.result as Expression).type != null
                 && (AbstractVisitor.result as Expression).type !is TypeNatural1
             ) {
-                logger.severe("Cannot reassign type Int of ${AbstractVisitor.result}")
-                return
+                throw InvalidTypeException("Cannot reassign type Nat1 of ${AbstractVisitor.result}")
             }
             (AbstractVisitor.result as Expression).type = TypeNatural1()
-            result = InfiniteSet(TypeNatural1())
         }
+        result = InfiniteSet(TypeNatural1())
     }
 
     override fun caseAIntSetExpression(node: AIntSetExpression) {
@@ -307,12 +303,11 @@ class ExpressionVisitor : AbstractVisitor() {
             if ((AbstractVisitor.result as Expression).type != null
                 && (AbstractVisitor.result as Expression).type !is TypeInteger
             ) {
-                logger.severe("Cannot reassign type Int of ${AbstractVisitor.result}")
-                return
+                throw InvalidTypeException("Cannot reassign type Int of ${AbstractVisitor.result}")
             }
             (AbstractVisitor.result as Expression).type = TypeInteger()
-            result = InfiniteSet(TypeInteger())
         }
+        result = InfiniteSet(TypeInteger())
     }
 
     override fun caseABoolSetExpression(node: ABoolSetExpression) {
@@ -320,17 +315,16 @@ class ExpressionVisitor : AbstractVisitor() {
             if ((AbstractVisitor.result as Expression).type != null
                 && (AbstractVisitor.result as Expression).type !is TypeBoolean
             ) {
-                logger.severe("Cannot reassign type Bool of ${AbstractVisitor.result}")
-                return
+                throw InvalidTypeException("Cannot reassign type Bool of ${AbstractVisitor.result}")
             }
             (AbstractVisitor.result as Expression).type = TypeBoolean()
-            result = AnonymousSetCollectionNode(
-                listOf(
-                    ValueExpression("", TypeBoolean(BooleanValue.TRUE)),
-                    ValueExpression("", TypeBoolean(BooleanValue.FALSE))
-                )
-            )
         }
+        result = AnonymousSetCollectionNode(
+            listOf(
+                ValueExpression("", TypeBoolean(BooleanValue.TRUE)),
+                ValueExpression("", TypeBoolean(BooleanValue.FALSE))
+            )
+        )
     }
 
     override fun caseAStringSetExpression(node: AStringSetExpression) {
@@ -541,7 +535,7 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseAIdentityExpression(node: AIdentityExpression) {
-        TODO("Not implemented ${node::class.simpleName}")
+        result = node.expression.convert()!! // TODO: thats it?
     }
 
     override fun caseAEventBIdentityExpression(node: AEventBIdentityExpression) {
@@ -682,7 +676,7 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseASeqExpression(node: ASeqExpression) {
-        TODO("Not implemented ${node::class.simpleName}")
+        result = Sequence(sequenceType = node.expression.convert()!!.type)
     }
 
     override fun caseASeq1Expression(node: ASeq1Expression) {
@@ -702,11 +696,11 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseAEmptySequenceExpression(node: AEmptySequenceExpression) {
-        TODO("Not implemented ${node::class.simpleName}")
+        result = Sequence()
     }
 
     override fun caseASequenceExtensionExpression(node: ASequenceExtensionExpression) {
-        TODO("Not implemented ${node::class.simpleName}")
+        result = Sequence(node.expression.convert())
     }
 
     override fun caseASizeExpression(node: ASizeExpression) {
@@ -714,23 +708,23 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseAFirstExpression(node: AFirstExpression) {
-        TODO("Not implemented ${node::class.simpleName}")
+        result = UnarySequenceExpression(node.expression.convert()!!, UnarySequenceExpressionOperator.FIRST)
     }
 
     override fun caseALastExpression(node: ALastExpression) {
-        TODO("Not implemented ${node::class.simpleName}")
+        result = UnarySequenceExpression(node.expression.convert()!!, UnarySequenceExpressionOperator.LAST)
     }
 
     override fun caseAFrontExpression(node: AFrontExpression) {
-        TODO("Not implemented ${node::class.simpleName}")
+        result = UnarySequenceExpression(node.expression.convert()!!, UnarySequenceExpressionOperator.FRONT)
     }
 
     override fun caseATailExpression(node: ATailExpression) {
-        TODO("Not implemented ${node::class.simpleName}")
+        result = UnarySequenceExpression(node.expression.convert()!!, UnarySequenceExpressionOperator.TAIL)
     }
 
     override fun caseARevExpression(node: ARevExpression) {
-        TODO("Not implemented ${node::class.simpleName}")
+        result = UnarySequenceExpression(node.expression.convert()!!, UnarySequenceExpressionOperator.REVERSE)
     }
 
     override fun caseAConcatExpression(node: AConcatExpression) {
@@ -746,7 +740,11 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseARestrictFrontExpression(node: ARestrictFrontExpression) {
-        TODO("Not implemented ${node::class.simpleName}")
+        result = BinarySequenceExpression(
+            node.left.convert()!!,
+            node.right.convert()!!,
+            BinarySequenceExpressionOperator.RESTRICT_FRONT
+        )
     }
 
     override fun caseARestrictTailExpression(node: ARestrictTailExpression) {
@@ -754,7 +752,13 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseAGeneralConcatExpression(node: AGeneralConcatExpression) {
-        TODO("Not implemented ${node::class.simpleName}")
+        println(node.expression.convert())
+        TODO()
+//        result = BinarySequenceExpression(
+//            node.expression
+//            node.left.convert()!!,
+//            node.right.convert()!!,
+//            BinarySequenceExpressionOperator.CONCAT
     }
 
     override fun caseADefinitionExpression(node: ADefinitionExpression) {
