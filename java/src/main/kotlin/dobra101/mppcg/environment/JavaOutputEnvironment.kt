@@ -7,10 +7,7 @@ import dobra101.mppcg.node.b.Function
 import dobra101.mppcg.node.collection.*
 import dobra101.mppcg.node.expression.*
 import dobra101.mppcg.node.predicate.*
-import dobra101.mppcg.node.substitution.AssignSubstitution
-import dobra101.mppcg.node.substitution.IfSubstitution
-import dobra101.mppcg.node.substitution.ParallelSubstitution
-import dobra101.mppcg.node.substitution.SequenceSubstitution
+import dobra101.mppcg.node.substitution.*
 import java.util.*
 
 // TODO: add constructor for generated classes
@@ -154,6 +151,10 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         )
 
         return RenderResult(renderTemplate(map))
+    }
+
+    override fun ElseIfSubstitution.renderSelf(): RenderResult {
+        TODO("Not yet implemented")
     }
 
     override fun IfSubstitution.renderSelf(): RenderResult {

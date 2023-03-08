@@ -8,10 +8,7 @@ import dobra101.mppcg.node.b.Function
 import dobra101.mppcg.node.collection.*
 import dobra101.mppcg.node.expression.*
 import dobra101.mppcg.node.predicate.*
-import dobra101.mppcg.node.substitution.AssignSubstitution
-import dobra101.mppcg.node.substitution.IfSubstitution
-import dobra101.mppcg.node.substitution.ParallelSubstitution
-import dobra101.mppcg.node.substitution.SequenceSubstitution
+import dobra101.mppcg.node.substitution.*
 import kotlin.math.max
 
 object PrologOutputEnvironment : OutputLanguageEnvironment() {
@@ -271,6 +268,15 @@ object PrologOutputEnvironment : OutputLanguageEnvironment() {
             optimizer.evaluated[lhs] = expandedRhs.expression
         }
         return RenderResult("${expandedRhs.before}$rendered")
+    }
+
+    override fun ElseIfSubstitution.renderSelf(): RenderResult {
+        // TODO: consider state and expr count?
+        val map = mapOf(
+            "condition" to condition.render(),
+            "then" to then.render()
+        )
+        return RenderResult(renderTemplate(map))
     }
 
     override fun IfSubstitution.renderSelf(): RenderResult {
@@ -568,7 +574,10 @@ object PrologOutputEnvironment : OutputLanguageEnvironment() {
 
         usedBMethods.add(operator)
 
-        return RenderResult("${expanded.before}${renderTemplate(map)}", mapOf("resultExpr" to IndividualInfo(expr(exprCount++))))
+        return RenderResult(
+            "${expanded.before}${renderTemplate(map)}",
+            mapOf("resultExpr" to IndividualInfo(expr(exprCount++)))
+        )
     }
 
     override fun UnaryCollectionExpression.renderSelf(): RenderResult {
@@ -974,6 +983,11 @@ object PrologOutputEnvironment : OutputLanguageEnvironment() {
         return when (this) {
             BinarySequenceExpressionOperator.RESTRICT_FRONT -> renderTemplate(
                 "sequenceRestrictFront",
+                mapOf("name" to operator2String(this))
+            )
+
+            BinarySequenceExpressionOperator.RESTRICT_TAIL -> renderTemplate(
+                "sequenceRestrictTail",
                 mapOf("name" to operator2String(this))
             )
         }

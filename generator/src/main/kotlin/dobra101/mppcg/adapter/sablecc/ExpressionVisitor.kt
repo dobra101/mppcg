@@ -748,7 +748,11 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseARestrictTailExpression(node: ARestrictTailExpression) {
-        TODO("Not implemented ${node::class.simpleName}")
+        result = BinarySequenceExpression(
+            node.left.convert()!!,
+            node.right.convert()!!,
+            BinarySequenceExpressionOperator.RESTRICT_TAIL
+        )
     }
 
     override fun caseAGeneralConcatExpression(node: AGeneralConcatExpression) {

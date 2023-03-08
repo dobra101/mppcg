@@ -26,5 +26,6 @@ enum class UnarySequenceExpressionOperator : CustomMethodOperator {
 }
 
 enum class BinarySequenceExpressionOperator : CustomMethodOperator {
-    RESTRICT_FRONT
+    RESTRICT_FRONT,
+    RESTRICT_TAIL
 }

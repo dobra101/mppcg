@@ -2,7 +2,10 @@ assignSubstitution(identifier, rhs, stateCount, resultStateCount) ::= <<
 update('<identifier>', <rhs>, State_<stateCount>, State_<resultStateCount>)
 >>
 
-// TODO: implement elseif
+elseIfSubstitution(condition, then) ::= <<
+NOT IMPLEMENTED
+>>
+
 ifSubstitution(condition, then, elseIf, elseSubstitution) ::= <<
 <if(elseSubstitution)>
 ((<condition>) ->

@@ -8,3 +8,8 @@ data class IfSubstitution(
     val elseIf: List<Substitution>,
     val elseSubstitution: Substitution?
 ) : Substitution("ifSubstitution")
+
+data class ElseIfSubstitution(
+    val condition: Predicate,
+    val then: Substitution
+) : Substitution("elseIfSubstitution")

@@ -100,7 +100,7 @@ class SubstitutionVisitor : AbstractVisitor() {
     }
 
     override fun caseAIfElsifSubstitution(node: AIfElsifSubstitution) {
-        TODO("Not implemented ${node::class.simpleName}")
+        result = ElseIfSubstitution(node.condition.convert()!!, node.thenSubstitution.convert()!!)
     }
 
     override fun caseACaseSubstitution(node: ACaseSubstitution) {

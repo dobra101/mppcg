@@ -505,6 +505,15 @@ sequenceRestrictFront(name) ::= <<
     <name>(Tail, N1, NewTail).
 >>
 
+sequenceRestrictTail(name) ::= <<
+<name>(Sequence, N, Sequence) :-
+    length(Sequence, L),
+    L =\< N,
+    !.
+<name>([_ | Tail], N, Result) :-
+    <name>(Tail, N, Result).
+>>
+
 sequenceReverse(name) ::= <<
 <name>([], []).
 <name>([Head | Tail], Reversed) :-

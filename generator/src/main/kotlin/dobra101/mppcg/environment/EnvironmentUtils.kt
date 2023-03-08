@@ -89,6 +89,7 @@ abstract class EnvironmentUtils {
     open fun operator2String(operator: BinarySequenceExpressionOperator): String {
         return when (operator) {
             BinarySequenceExpressionOperator.RESTRICT_FRONT -> "restrict_front"
+            BinarySequenceExpressionOperator.RESTRICT_TAIL -> "restrict_tail"
         }
     }
 
