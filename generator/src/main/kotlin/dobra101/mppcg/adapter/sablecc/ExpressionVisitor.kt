@@ -306,11 +306,12 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseAMultOrCartExpression(node: AMultOrCartExpression) {
-        TODO("Not implemented ${node::class.simpleName}")
+        // TODO: implement cart
+        result = BinaryExpression(node.left.convert()!!, node.right.convert()!!, BinaryExpressionOperator.MULT)
     }
 
     override fun caseADivExpression(node: ADivExpression) {
-        TODO("Not implemented ${node::class.simpleName}")
+        result = BinaryExpression(node.left.convert()!!, node.right.convert()!!, BinaryExpressionOperator.DIV)
     }
 
     override fun caseAFlooredDivExpression(node: AFlooredDivExpression) {
@@ -525,7 +526,7 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseACompositionExpression(node: ACompositionExpression) {
-        TODO("Not implemented ${node::class.simpleName}")
+        result = BinaryFunctionExpression(node.left.convert()!!, node.right.convert()!!, BinaryFunctionOperator.FORWARD_COMPOSITION)
     }
 
     override fun caseASymbolicCompositionExpression(node: ASymbolicCompositionExpression) {
@@ -690,11 +691,19 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseAInsertFrontExpression(node: AInsertFrontExpression) {
-        TODO("Not implemented ${node::class.simpleName}")
+        result = BinarySequenceExpression(
+            node.left.convert()!!,
+            node.right.convert()!!,
+            BinarySequenceExpressionOperator.PREPEND
+        )
     }
 
     override fun caseAInsertTailExpression(node: AInsertTailExpression) {
-        TODO("Not implemented ${node::class.simpleName}")
+        result = BinarySequenceExpression(
+            node.left.convert()!!,
+            node.right.convert()!!,
+            BinarySequenceExpressionOperator.APPEND
+        )
     }
 
     override fun caseARestrictFrontExpression(node: ARestrictFrontExpression) {

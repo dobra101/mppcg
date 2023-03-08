@@ -13,7 +13,7 @@ class OperationVisitor : AbstractVisitor() {
             name = node.opName[0].text,
             parameters = node.parameters.convert(),
             returnValues = node.returnValues.convert(),
-            body = node.operationBody.convert()!!
+            body = node.operationBody.convert()
         )
     }
 }

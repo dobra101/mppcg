@@ -386,7 +386,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             "name" to name,
             "parameters" to parameters.render(),
 //            "returnValues" to returnValues.render(), // TODO: use returnValues
-            "body" to bodyUsed.render()
+            "body" to bodyUsed?.render()
         )
 
         return RenderResult(renderTemplate(map))

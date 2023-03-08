@@ -47,8 +47,10 @@ operation(name, parameters, returnValues, body, resultStateCount) ::= <<
 out(State_0, '<name>', Value) :-
     <body>,
     get(State_<resultStateCount>, '<returnValues>', Value).<else>
+<if(body)>
 trans('<name>'<if(parameters)>(<parameters :{ p | <p>=Expr_<p>}; separator=", ">)<endif>, State_0, State_<resultStateCount>) :-
-    <body>.<endif>
+    <body>.<else>
+trans('<name>'<if(parameters)>(<parameters :{ p | <p>=Expr_<p>}; separator=", ">)<endif>, State, State).<endif><endif>
 >>
 
 // TODO: use type and mapType
@@ -522,4 +524,12 @@ sequenceReverse(name) ::= <<
 <name>([Head | Tail], Reversed) :-
     <name>(Tail, ReversedTail),
     append(ReversedTail, [Head], Reversed).
+>>
+
+forwardComposition(name, memberName) ::= <<
+<name>(P, Q, Result) :-
+    findall((X, Y),
+        (<memberName>((X/Z), P), <memberName>((Z/Y), Q)),
+        Result
+    ).
 >>

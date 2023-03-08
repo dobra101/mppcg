@@ -33,7 +33,7 @@ abstract class EnvironmentUtils {
             BinaryExpressionOperator.ADD -> "+"
             BinaryExpressionOperator.MINUS -> "-"
             BinaryExpressionOperator.MULT -> "*"
-            BinaryExpressionOperator.DIV -> "/"
+            BinaryExpressionOperator.DIV -> "//"
             BinaryExpressionOperator.MOD -> "%"
         }
     }
@@ -65,6 +65,7 @@ abstract class EnvironmentUtils {
             BinaryFunctionOperator.OVERWRITE -> "overwrite"
             BinaryFunctionOperator.RANGE_RESTRICTION -> "rangeRestriction"
             BinaryFunctionOperator.RANGE_SUBTRACTION -> "rangeSubtraction"
+            BinaryFunctionOperator.FORWARD_COMPOSITION -> "forwardComposition"
         }
     }
 
@@ -90,6 +91,8 @@ abstract class EnvironmentUtils {
         return when (operator) {
             BinarySequenceExpressionOperator.RESTRICT_FRONT -> "restrict_front"
             BinarySequenceExpressionOperator.RESTRICT_TAIL -> "restrict_tail"
+            BinarySequenceExpressionOperator.APPEND -> "append"
+            BinarySequenceExpressionOperator.PREPEND -> "prepend"
         }
     }
 

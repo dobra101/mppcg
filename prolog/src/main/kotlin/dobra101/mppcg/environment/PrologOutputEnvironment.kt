@@ -498,9 +498,10 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
 
         val expanded = ExpandedBinary.of(left, right)
 
+        // TODO: refactor append/prepend
         val map = mapOf(
             "lhs" to expanded.lhs,
-            "rhs" to expanded.rhs,
+            "rhs" to if (operator == BinarySequenceExpressionOperator.APPEND) "[${expanded.rhs}]" else expanded.rhs,
             "operator" to operator2String(operator),
             "exprCount" to exprCount
         )
@@ -533,13 +534,14 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun ComprehensionSet.renderSelf(): RenderResult {
-        comprehensionSetIdentifier = identifiers.filterIsInstance<IdentifierExpression>()
+        val comprehensionSetIdentifierBefore = comprehensionSetIdentifier
+        comprehensionSetIdentifier = comprehensionSetIdentifier + identifiers.filterIsInstance<IdentifierExpression>()
         val map = mapOf(
             "identifiers" to identifiers.render(),
             "predicates" to predicates.render(),
             "exprCount" to exprCount
         )
-        comprehensionSetIdentifier = emptyList()
+        comprehensionSetIdentifier = comprehensionSetIdentifierBefore
         if (optimize) optimizer.evaluated[this] = expr(exprCount)
 
         return RenderResult(renderTemplate(map), mapOf("resultExpr" to IndividualInfo(expr(exprCount++))))
@@ -814,7 +816,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             "name" to name,
             "parameters" to operationParameters.map { it.name.lowercase() },
             "returnValues" to returnValues.map { (it as? IdentifierExpression)?.name }, // TODO: add returnValues?
-            "body" to body.render(),
+            "body" to body?.render(),
             "resultStateCount" to stateCount
         )
 
@@ -988,6 +990,11 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
                 mapOf("name" to operator2String(this))
             )
 
+            BinaryFunctionOperator.FORWARD_COMPOSITION -> renderTemplate(
+                "forwardComposition",
+                mapOf("name" to operator2String(this), "memberName" to operator2String(BinaryPredicateOperator.MEMBER))
+            )
+
             else -> throw EnvironmentException("Rendering of custom method for operator '${name}' (${this::class.simpleName}) is not implemented.")
         }
     }
@@ -1032,6 +1039,8 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
                 "sequenceRestrictTail",
                 mapOf("name" to operator2String(this))
             )
+
+            else -> ""
         }
     }
 

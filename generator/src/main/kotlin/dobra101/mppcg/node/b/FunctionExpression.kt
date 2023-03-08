@@ -36,6 +36,7 @@ enum class BinaryFunctionOperator: BMethod {
     OVERWRITE,
     RANGE_RESTRICTION,
     RANGE_SUBTRACTION,
+    FORWARD_COMPOSITION
 }
 
 // TODO: duplicate
