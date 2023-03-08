@@ -239,86 +239,37 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseARealSetExpression(node: ARealSetExpression) {
-        if (AbstractVisitor.result is Expression) {
-            if ((AbstractVisitor.result as Expression).type != null
-                && (AbstractVisitor.result as Expression).type !is TypeReal
-            ) {
-                throw InvalidTypeException("Cannot reassign type Real of ${AbstractVisitor.result}")
-            }
-            (AbstractVisitor.result as Expression).type = TypeReal()
-            result = InfiniteSet(TypeReal())
-        }
+        trySetPreviousResultType(TypeReal())
+        result = InfiniteSet(TypeReal())
     }
 
     override fun caseAFloatSetExpression(node: AFloatSetExpression) {
-        if (AbstractVisitor.result is Expression) {
-            if ((AbstractVisitor.result as Expression).type != null
-                && (AbstractVisitor.result as Expression).type !is TypeFloat
-            ) {
-                throw InvalidTypeException("Cannot reassign type Float of ${AbstractVisitor.result}")
-            }
-            (AbstractVisitor.result as Expression).type = TypeFloat()
-            result = InfiniteSet(TypeFloat())
-        }
+        trySetPreviousResultType(TypeFloat())
+        result = InfiniteSet(TypeFloat())
     }
 
     override fun caseANatural1SetExpression(node: ANatural1SetExpression) {
-        if (AbstractVisitor.result is Expression) {
-            if ((AbstractVisitor.result as Expression).type != null
-                && (AbstractVisitor.result as Expression).type !is TypeNatural1
-            ) {
-                throw InvalidTypeException("Cannot reassign type Natural1 of ${AbstractVisitor.result}")
-            }
-            (AbstractVisitor.result as Expression).type = TypeNatural1()
-        }
+        trySetPreviousResultType(TypeNatural1())
         result = InfiniteSet(TypeNatural1())
     }
 
     override fun caseANatSetExpression(node: ANatSetExpression) {
-        if (AbstractVisitor.result is Expression) {
-            if ((AbstractVisitor.result as Expression).type != null
-                && (AbstractVisitor.result as Expression).type !is TypeNatural
-            ) {
-                throw InvalidTypeException("Cannot reassign type Nat of ${AbstractVisitor.result}")
-            }
-            (AbstractVisitor.result as Expression).type = TypeNatural()
-        }
+        trySetPreviousResultType(TypeNatural())
         result = InfiniteSet(TypeNatural())
     }
 
     override fun caseANat1SetExpression(node: ANat1SetExpression) {
-        if (AbstractVisitor.result is Expression) {
-            if ((AbstractVisitor.result as Expression).type != null
-                && (AbstractVisitor.result as Expression).type !is TypeNatural1
-            ) {
-                throw InvalidTypeException("Cannot reassign type Nat1 of ${AbstractVisitor.result}")
-            }
-            (AbstractVisitor.result as Expression).type = TypeNatural1()
-        }
+        trySetPreviousResultType(TypeNatural1())
         result = InfiniteSet(TypeNatural1())
     }
 
     override fun caseAIntSetExpression(node: AIntSetExpression) {
-        if (AbstractVisitor.result is Expression) {
-            if ((AbstractVisitor.result as Expression).type != null
-                && (AbstractVisitor.result as Expression).type !is TypeInteger
-            ) {
-                throw InvalidTypeException("Cannot reassign type Int of ${AbstractVisitor.result}")
-            }
-            (AbstractVisitor.result as Expression).type = TypeInteger()
-        }
+        trySetPreviousResultType(TypeInteger())
         result = InfiniteSet(TypeInteger())
     }
 
     override fun caseABoolSetExpression(node: ABoolSetExpression) {
-        if (AbstractVisitor.result is Expression) {
-            if ((AbstractVisitor.result as Expression).type != null
-                && (AbstractVisitor.result as Expression).type !is TypeBoolean
-            ) {
-                throw InvalidTypeException("Cannot reassign type Bool of ${AbstractVisitor.result}")
-            }
-            (AbstractVisitor.result as Expression).type = TypeBoolean()
-        }
+        trySetPreviousResultType(TypeBoolean())
         result = AnonymousSetCollectionNode(
             listOf(
                 ValueExpression("", TypeBoolean(BooleanValue.TRUE)),
@@ -388,10 +339,17 @@ class ExpressionVisitor : AbstractVisitor() {
 
     override fun caseASuccessorExpression(node: ASuccessorExpression) {
         TODO("Not implemented ${node::class.simpleName}")
+//        result = UnaryExpression(
+//            UnaryExpressionOperator.SUCC
+//        )
     }
 
     override fun caseAPredecessorExpression(node: APredecessorExpression) {
         TODO("Not implemented ${node::class.simpleName}")
+//        result = UnaryExpression(
+//            node.convert()!!,
+//            UnaryExpressionOperator.PRED
+//        )
     }
 
     override fun caseAMaxExpression(node: AMaxExpression) {
@@ -885,5 +843,16 @@ class ExpressionVisitor : AbstractVisitor() {
 
     private fun List<Expression>.findByName(name: String): Expression? {
         return find { (it as? IdentifierExpression)?.name == name }
+    }
+
+    private fun trySetPreviousResultType(type: Type) {
+        if (AbstractVisitor.result !is Expression) return
+
+        val expr = AbstractVisitor.result as Expression
+        if ((expr.type == null || expr.type == type || expr.type is TypeAnonymousCollection)) {
+            (AbstractVisitor.result as Expression).type = type
+            return
+        }
+        throw InvalidTypeException("Cannot reassign type of ${AbstractVisitor.result} to $type")
     }
 }

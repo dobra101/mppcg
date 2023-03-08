@@ -26,7 +26,16 @@ class TypeInteger : TypeNumber {
     }
 }
 
-class TypeBoolean(val value: BooleanValue? = null) : Type
+class TypeBoolean(val value: BooleanValue? = null) : Type {
+    override fun equals(other: Any?): Boolean {
+        if (other !is TypeBoolean) return false
+        return value == other.value
+    }
+
+    override fun hashCode(): Int {
+        return if (value != null) Objects.hash(value) else javaClass.hashCode()
+    }
+}
 
 class TypeString : Type
 
