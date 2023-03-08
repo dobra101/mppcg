@@ -17,22 +17,25 @@ val outputDir = File("build/executionTests/")
 
 class ExecutionTestProlog : ExecutionTest(Language.PROLOG, "prolog.stg", ".pl", runSetup) {
     companion object {
+        private var sicstus: SICStus? = null
         private val runSetup = { file: File, setupFile: File ->
             val sb = StringBuilder()
             val wayMap = hashMapOf<String, Term>()
-            val sicstus = SICStus()
-            sicstus.load(file.absolutePath)
+            // assign here to have the same caller every time
+            if (sicstus == null) sicstus = SICStus()
+            sicstus!!.load(file.absolutePath)
 
-            val query: Query = sicstus.openPrologQuery(setupFile.readText(), wayMap)
+            val query: Query = sicstus!!.openPrologQuery(setupFile.readText(), wayMap)
 
             while (query.nextSolution()) {
                 wayMap.forEach { (k, v) ->
+                    println("Key: $k, value: $v")
                     if (k.startsWith("Result_")) {
                         // TODO: not here?
                         // TODO: refactor
                         try {
                             if (v is SPTerm && v.functorName == "set") {
-                                val setArg = sicstus.newVariable()
+                                val setArg = sicstus!!.newVariable()
                                 v.getArg(1, setArg)
                                 val value =
                                     if (setArg.isEmptyList) {
@@ -47,6 +50,7 @@ class ExecutionTestProlog : ExecutionTest(Language.PROLOG, "prolog.stg", ".pl", 
                         } catch (e: Exception) {
                             sb.append("${k.removePrefix("Result_")}=$v")
                         }
+                        sb.append("\n")
 
                     }
                 }
@@ -135,16 +139,12 @@ open class ExecutionTest(
                                 outputPath = "${outputDir.path}/$dir/"
                             )
 
-                            try {
-                                val resultString = runSetup(file, setupFile)
-                                val resultMap = string2ResultMap(resultString)
-                                for ((key, value) in execution.result) {
-                                    withClue("Expect $key = $value") {
-                                        resultMap[key] shouldBe value
-                                    }
+                            val resultString = runSetup(file, setupFile)
+                            val resultMap = string2ResultMap(resultString)
+                            for ((key, value) in execution.result) {
+                                withClue("Expect $key = $value") {
+                                    resultMap[key] shouldBe value
                                 }
-                            } catch (e: Exception) {
-                                // ignore
                             }
                         }
                     }

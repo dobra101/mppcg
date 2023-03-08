@@ -22,11 +22,12 @@ data class ParallelSubstitution(
 
         val tempVars = mutableSetOf<IdentifierExpression>()
         // store identifiers which occur on both sides and are not only self-assigning
-        // only those are relevant, which are assigned first and later used on a right side
+        // only those are relevant, which are assigned first and later used on a right side // TODO: java?
         for ((idx, assignment) in assignments.withIndex()) {
             if (assignment.lhs !is IdentifierExpression) continue
             if (tempVars.contains(assignment.lhs)) continue
 
+            // get indices of assignments containing identifier on lhs
             val indices = identifierOnRhs.getIndicesOfIdentifier(assignment.lhs).toMutableList()
             indices.removeAll { it <= idx }
             if (indices.isNotEmpty()) {

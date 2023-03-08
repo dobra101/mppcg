@@ -3,15 +3,19 @@ package dobra101.mppcg.node.expression
 import dobra101.mppcg.node.MPPCGNode
 import dobra101.mppcg.node.Type
 import dobra101.mppcg.node.TypeBoolean
+import dobra101.mppcg.node.b.BMethod
 
-class UnaryExpression(
+data class UnaryExpression(
     val value: MPPCGNode,
     val operator: UnaryExpressionOperator
 ) : Expression(getType(operator), "unaryExpression")
 
 // TODO: refactor
-enum class UnaryExpressionOperator {
-    CONVERT_BOOLEAN
+enum class UnaryExpressionOperator: BMethod {
+    CONVERT_BOOLEAN,
+    // TODO: only for B
+    PRED,
+    SUCC
 }
 
 private fun getType(operator: UnaryExpressionOperator): Type {
