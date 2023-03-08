@@ -144,7 +144,8 @@ class SubstitutionVisitor : AbstractVisitor() {
     }
 
     override fun caseAWhileSubstitution(node: AWhileSubstitution) {
-        TODO("Not implemented ${node::class.simpleName}")
+        // TODO: add variant and invariant
+        result = WhileSubstitution(node.condition.convert()!!, node.doSubst.convert()!!)
     }
 
     override fun caseAParallelSubstitution(node: AParallelSubstitution) {

@@ -1,5 +1,5 @@
 // TODO: use remaining variables
-machine(name, parameters, constraints, sets, constants, concrete_constants, properties, definitions, variables, concrete_variables, invariant, assertions, initialization, operations, methods) ::= <<
+machine(name, parameters, constraints, sets, constants, concrete_constants, properties, definitions, variables, concrete_variables, invariant, assertions, initialization, operations, methods, whileDefinitions) ::= <<
 :- use_module(library(avl)).
 
 <if(sets)>
@@ -20,6 +20,9 @@ machine(name, parameters, constraints, sets, constants, concrete_constants, prop
 
 % Custom predicates
 <methods; separator="\n\n">
+
+% While definitions
+<whileDefinitions; separator="\n\n">
 
 is_list([]) :- !.
 is_list([_ | Tail]) :-

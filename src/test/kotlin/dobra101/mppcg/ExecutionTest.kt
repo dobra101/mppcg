@@ -14,7 +14,7 @@ import se.sics.jasper.Term
 import java.io.File
 
 val outputDir = File("build/executionTests/")
-
+// TODO: refactor: load file in setup file and execute setup file?
 class ExecutionTestProlog : ExecutionTest(Language.PROLOG, "prolog.stg", ".pl", runSetup) {
     companion object {
         private var sicstus: SICStus? = null
@@ -29,7 +29,6 @@ class ExecutionTestProlog : ExecutionTest(Language.PROLOG, "prolog.stg", ".pl", 
 
             while (query.nextSolution()) {
                 wayMap.forEach { (k, v) ->
-                    println("Key: $k, value: $v")
                     if (k.startsWith("Result_")) {
                         // TODO: not here?
                         // TODO: refactor

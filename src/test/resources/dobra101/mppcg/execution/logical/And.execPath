@@ -1,3 +1,3 @@
 simulate
 *** Expected Result:
-counter=5000000
+getCounter=5000000

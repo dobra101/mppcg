@@ -118,7 +118,7 @@ fun main(args: Array<String>) {
 private fun environmentOf(language: Language): OutputLanguageEnvironment {
     return when (language) {
         Language.JAVA -> JavaOutputEnvironment()
-        Language.PROLOG -> PrologOutputEnvironment
+        Language.PROLOG -> PrologOutputEnvironment()
     }
 }
 

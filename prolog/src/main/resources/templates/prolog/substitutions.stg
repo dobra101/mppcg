@@ -19,3 +19,17 @@ ifSubstitution(condition, then, elseIf, elseSubstitution) ::= <<
 sequenceSubstitution(substitutions) ::= <<
 <substitutions; separator=",\n">
 >>
+
+whileSubstitution(name, count, stateCount, resultStateCount) ::= <<
+while_<name>_<count>(State_<stateCount>, State_<resultStateCount>)
+>>
+
+whileDefinition(name, count, condition, body, lastState) ::= <<
+while_<name>_<count>(State_0, Result) :-
+    (<condition>),
+    !,
+    (<body>),
+    !,
+    while_<name>_<count>(State_<lastState>, Result).
+while_<name>_<count>(S, S).
+>>

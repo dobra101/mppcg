@@ -1,8 +1,7 @@
 package dobra101.mppcg.environment
 
 import dobra101.mppcg.RenderResult
-import dobra101.mppcg.environment.PrologOutputEnvironment.EXPRESSION_SEPARATOR
-import dobra101.mppcg.environment.PrologOutputEnvironment.isConstant
+import dobra101.mppcg.environment.PrologOutputEnvironment.Companion.EXPRESSION_SEPARATOR
 import dobra101.mppcg.node.MPPCGNode
 import dobra101.mppcg.node.TypeBoolean
 import dobra101.mppcg.node.TypeInteger
@@ -38,7 +37,7 @@ class PrologOptimizer(private val environment: PrologOutputEnvironment) {
             var before = ""
             val rhs = when (node.right) {
                 is IdentifierExpression -> {
-                    if ((node.right as IdentifierExpression).isConstant()) {
+                    if (environment.isConstant((node.right as IdentifierExpression))) {
                         evaluated[node.right] ?: run {
                             before = node.right.render().rendered
                             before += EXPRESSION_SEPARATOR
@@ -66,6 +65,8 @@ class PrologOptimizer(private val environment: PrologOutputEnvironment) {
         }
         return null
     }
+
+    // TODO: optimize while loops
 
     private fun ValueExpression.rendered(): String {
         return when (type) {

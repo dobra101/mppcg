@@ -62,6 +62,7 @@ abstract class OutputLanguageEnvironment : EnvironmentUtils(), BEnvironment {
     abstract fun ElseIfSubstitution.renderSelf(): RenderResult
     abstract fun IfSubstitution.renderSelf(): RenderResult
     abstract fun SequenceSubstitution.renderSelf(): RenderResult
+    abstract fun WhileSubstitution.renderSelf(): RenderResult
 
     abstract fun ClassVariables.renderSelf(): RenderResult
 
@@ -134,6 +135,7 @@ abstract class OutputLanguageEnvironment : EnvironmentUtils(), BEnvironment {
             is ElseIfSubstitution -> node.renderSelf()
             is IfSubstitution -> node.renderSelf()
             is SequenceSubstitution -> node.renderSelf()
+            is WhileSubstitution -> node.renderSelf()
 
             /* B Substitutions */
             is Initialization -> node.renderSelf()

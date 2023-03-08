@@ -11,13 +11,15 @@ import dobra101.mppcg.node.predicate.*
 import dobra101.mppcg.node.substitution.*
 import kotlin.math.max
 
-object PrologOutputEnvironment : OutputLanguageEnvironment() {
+class PrologOutputEnvironment : OutputLanguageEnvironment() {
     override val templateDir = "templates/prolog"
     override val fileExtension = "pl"
 
     internal val optimizer = PrologOptimizer(this)
 
-    const val EXPRESSION_SEPARATOR = ",\n"
+    companion object {
+        const val EXPRESSION_SEPARATOR = ",\n"
+    }
 
     var exprCount = 0
     var stateCount = 0
@@ -28,6 +30,9 @@ object PrologOutputEnvironment : OutputLanguageEnvironment() {
     var concreteConstants: List<Expression> = emptyList() // HINT: only for B
     var constants: List<Expression> = emptyList() // HINT: only for B
     var usedBMethods: HashSet<CustomMethodOperator> = hashSetOf() // HINT: only for B
+    val whileDefinitions: MutableList<String> = mutableListOf() // HINT: only for B
+    var whileCount = 0 // HINT: only for B
+    var currentOperation: String = "" // HINT: only for B
 
     private fun expr(name: Any): String = "Expr_$name"
 
@@ -125,7 +130,7 @@ object PrologOutputEnvironment : OutputLanguageEnvironment() {
 
         // TODO: not hardcoded and not always
         val rendered =
-            if (isConstant()) {
+            if (isConstant(this)) {
                 // use constant prefix
                 val cc = ConcreteIdentifierExpression(name, ValueExpression(), type)
                 "${cc.name}(${expr(exprCount)})"
@@ -216,7 +221,12 @@ object PrologOutputEnvironment : OutputLanguageEnvironment() {
             return true
         }
 
-        val expanded = ExpandedBinary.of(left, right, differentBranches = operator == LogicPredicateOperator.OR)
+        val expanded = ExpandedBinary.of(
+            left,
+            right,
+            differentBranches = operator == LogicPredicateOperator.OR,
+            environment = this@PrologOutputEnvironment
+        )
 
         val lineBreaksTotal = expanded.lhs.count { it == '\n' } + expanded.rhs.count { it == '\n' }
         val map: MutableMap<String, Any> = mutableMapOf(
@@ -276,6 +286,7 @@ object PrologOutputEnvironment : OutputLanguageEnvironment() {
             "condition" to condition.render(),
             "then" to then.render()
         )
+
         return RenderResult(renderTemplate(map))
     }
 
@@ -385,6 +396,34 @@ object PrologOutputEnvironment : OutputLanguageEnvironment() {
         val map = mapOf(
             "substitutions" to substitutions.render()
         )
+
+        return RenderResult(renderTemplate(map))
+    }
+
+    override fun WhileSubstitution.renderSelf(): RenderResult {
+        val stateCountBefore = stateCount
+        val exprCountBefore = exprCount
+        stateCount = 0
+        exprCount = 0
+
+        val whileDefinitionMap = mapOf(
+            "name" to currentOperation,
+            "count" to whileCount,
+            "condition" to condition.render(),
+            "body" to body.render(),
+            "lastState" to stateCount
+        )
+
+        stateCount = stateCountBefore
+        exprCount = exprCountBefore
+        val map = mapOf(
+            "name" to currentOperation,
+            "count" to whileCount,
+            "stateCount" to stateCount++,
+            "resultStateCount" to stateCount
+        )
+        whileDefinitions.add(renderTemplate("whileDefinition", whileDefinitionMap))
+        whileCount++
 
         return RenderResult(renderTemplate(map))
     }
@@ -755,7 +794,8 @@ object PrologOutputEnvironment : OutputLanguageEnvironment() {
             "invariant" to invariant.render(),
             "assertions" to assertions.render(),
             "operations" to operations.render(),
-            "methods" to usedBMethods.render()
+            "methods" to usedBMethods.render(),
+            "whileDefinitions" to whileDefinitions
         )
 
         return RenderResult(renderTemplate(map))
@@ -767,6 +807,8 @@ object PrologOutputEnvironment : OutputLanguageEnvironment() {
         exprCount = 0
         operationParameters = parameters.map { it as IdentifierExpression }
         temporaryVariables = hashSetOf()
+        currentOperation = name
+        whileCount = 0
 
         val map = mapOf(
             "name" to name,
@@ -829,11 +871,11 @@ object PrologOutputEnvironment : OutputLanguageEnvironment() {
         }
     }
 
-    internal fun IdentifierExpression.isConstant(): Boolean {
-        if (constants.contains(this)) return true
-        if (concreteConstants.contains(this)) return true
+    internal fun isConstant(identifierExpression: IdentifierExpression): Boolean {
+        if (constants.contains(identifierExpression)) return true
+        if (concreteConstants.contains(identifierExpression)) return true
 
-        val cc = ConcreteIdentifierExpression(name, ValueExpression(), type)
+        val cc = ConcreteIdentifierExpression(identifierExpression.name, ValueExpression(), identifierExpression.type)
         return concreteConstants.find { (it as? ConcreteIdentifierExpression)?.name == cc.name } != null
     }
 
@@ -1038,16 +1080,16 @@ private data class ExpandedBinary(val before: String = "", val lhs: String = "",
         fun of(
             left: MPPCGNode,
             right: MPPCGNode,
-            differentBranches: Boolean = false
+            differentBranches: Boolean = false,
+            environment: PrologOutputEnvironment? = null
         ): ExpandedBinary {
             // true copy of map
-            val evaluatedBefore =
-                PrologOutputEnvironment.optimizer.evaluated.toMutableMap() as HashMap<MPPCGNode, String>
+            val evaluatedBefore = environment?.optimizer?.evaluated?.toMutableMap() as? HashMap<MPPCGNode, String>
 
             val lhsRendered = left.render()
-            if (differentBranches) PrologOutputEnvironment.optimizer.evaluated = evaluatedBefore
+            if (differentBranches && environment != null) environment.optimizer.evaluated = evaluatedBefore!!
             val rhsRendered = right.render()
-            if (differentBranches) PrologOutputEnvironment.optimizer.evaluated = evaluatedBefore
+            if (differentBranches && environment != null) environment.optimizer.evaluated = evaluatedBefore!!
 
             var before = ""
             val lhs: String

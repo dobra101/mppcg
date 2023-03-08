@@ -175,6 +175,10 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         return RenderResult(renderTemplate(map))
     }
 
+    override fun WhileSubstitution.renderSelf(): RenderResult {
+        TODO("Not yet implemented")
+    }
+
     /* ---------- CLASS BLOCK ---------- */
     override fun ClassVariables.renderSelf(): RenderResult {
         val declarations = variables.filterIsInstance<IdentifierExpression>()
