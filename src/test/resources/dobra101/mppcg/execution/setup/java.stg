@@ -1,4 +1,6 @@
 setup(name, execution, result) ::= <<
+import <name>;
+
 public class <name>Setup {
     public static void main(String[] args) {
         <name> testmachine = new <name>();

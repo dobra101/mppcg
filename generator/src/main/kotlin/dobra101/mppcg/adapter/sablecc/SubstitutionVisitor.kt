@@ -4,6 +4,7 @@ import de.be4.classicalb.core.parser.node.*
 import dobra101.mppcg.node.*
 import dobra101.mppcg.node.b.Precondition
 import dobra101.mppcg.node.b.Select
+import dobra101.mppcg.node.expression.IdentifierExpression
 import dobra101.mppcg.node.substitution.*
 
 class SubstitutionVisitor : AbstractVisitor() {
@@ -13,7 +14,7 @@ class SubstitutionVisitor : AbstractVisitor() {
     override fun caseAAssignSubstitution(node: AAssignSubstitution) {
         val left = node.lhsExpression.convert().toMutableList()
         val right = node.rhsExpressions.convert()
-        val assignments = mutableListOf<AssignSubstitution>()
+        val assignments = mutableListOf<Substitution>()
 
         for (i: Int in left.indices) {
             val rightType = right[i].type
@@ -42,7 +43,16 @@ class SubstitutionVisitor : AbstractVisitor() {
                     else -> throw InvalidTypeException("Types ${assign.lhs.type} and $rightType do not match.")
                 }
             }
-            assignments.add(assign)
+
+            // set return value
+            if (OperationVisitor.returnValues.contains(assign.lhs)) {
+                OperationVisitor.operationType = assign.lhs.type!!
+            }
+            if (!OperationVisitor.declaredOrKnown.contains(left[i])) {
+                assignments.add(DeclarationSubstitution(assign.lhs.type!!, assign))
+            } else {
+                assignments.add(assign)
+            }
         }
 
         result = if (assignments.size == 1) assignments[0] else ParallelSubstitution(assignments)

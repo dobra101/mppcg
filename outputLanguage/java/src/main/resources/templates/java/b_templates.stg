@@ -1,4 +1,5 @@
 machine(name, parameters, constraints, sets, constants, concrete_constants, properties, definitions, variables, concrete_variables, initialization, invariant, assertions, operations, transitions) ::= <<
+import java.util.Set;
 
 public class <name> {
     <parameters>

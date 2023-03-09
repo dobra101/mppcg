@@ -1,9 +1,11 @@
 package dobra101.mppcg.environment
 
 import dobra101.mppcg.RenderResult
+import dobra101.mppcg.node.b.Operation
 import dobra101.mppcg.node.expression.*
 import dobra101.mppcg.node.substitution.AssignSubstitution
 
+// TODO: parts of optimizer are input language specific
 class JavaOptimizer(private val environment: JavaOutputEnvironment) {
 
     /**
@@ -23,6 +25,11 @@ class JavaOptimizer(private val environment: JavaOutputEnvironment) {
             return assignSelf(binaryExpr.left, binaryExpr.right, binaryExpr.operator, node.lhs)
                 ?: assignSelf(binaryExpr.right, binaryExpr.left, binaryExpr.operator, node.lhs)
         }
+        return null
+    }
+
+    fun renderOptimized(node: Operation): RenderResult? {
+        // TODO: optimize e.g. out = x; return out;
         return null
     }
 

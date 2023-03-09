@@ -153,6 +153,17 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         return RenderResult(renderTemplate(map))
     }
 
+    override fun DeclarationSubstitution.renderSelf(): RenderResult {
+        // TODO: optimize?
+        val map = mapOf(
+            "type" to type2String(type),
+            "lhs" to assignment.lhs.render(),
+            "rhs" to assignment.rhs.render()
+        )
+
+        return RenderResult(renderTemplate(map))
+    }
+
     override fun ElseIfSubstitution.renderSelf(): RenderResult {
         TODO("Not yet implemented")
     }
@@ -185,7 +196,8 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             .map {
                 val map = mapOf(
                     "type" to type2String(it.type),
-                    "lhs" to it.name
+                    "lhs" to it.name,
+                    "classVar" to true
                 )
                 renderTemplate("declarationSubstitution", map)
             }
@@ -380,15 +392,16 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun Operation.renderSelf(): RenderResult {
+        if (optimize) optimizer.renderOptimized(this)?.let { return it }
+
         val bodyUsed = (body as? Precondition)?.substitution ?: body
 
-        val type = if (returnValues.isNotEmpty()) returnValues[0].type else null
         val map = mapOf(
             "name" to name,
             "parameters" to parameters.render(),
             "returnValues" to returnValues.render(),
             "body" to bodyUsed?.render(),
-            "type" to type // TODO: more than one value
+            "type" to type2String(type)
         )
 
         return RenderResult(renderTemplate(map))

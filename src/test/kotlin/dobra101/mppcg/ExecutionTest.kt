@@ -96,7 +96,7 @@ class ExecutionTestJava : ExecutionTest(Language.JAVA, "java.stg", ".java", runS
     }
 }
 
-open class ExecutionTest(
+abstract class ExecutionTest(
     language: Language,
     setupFileName: String,
     setupFileExtension: String,

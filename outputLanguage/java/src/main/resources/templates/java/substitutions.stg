@@ -10,10 +10,10 @@ if(<condition>) {
 }<endif>
 >>
 
-declarationSubstitution(type, lhs, rhs) ::= <<
+declarationSubstitution(type, lhs, rhs, classVar) ::= <<
 <if(rhs)>
-public <type> <lhs> = <rhs>;<else>
-public <type> <lhs>;<endif>
+<if(classVar)>public <endif><type> <lhs> = <rhs>;<else>
+<if(classVar)>public <endif><type> <lhs>;<endif>
 >>
 
 sequenceSubstitution(substitutions) ::= <<

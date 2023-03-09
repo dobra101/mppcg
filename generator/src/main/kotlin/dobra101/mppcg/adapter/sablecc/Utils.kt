@@ -9,7 +9,7 @@ import dobra101.mppcg.node.predicate.Predicate
 import dobra101.mppcg.node.substitution.Substitution
 import java.util.*
 
-val machineVisitor = MachineVisitor() // TODO: doof hier in einer utils klasse
+val machineVisitor = MachineVisitor() // TODO: doof hier in einer utils klasse -> benötigte felder static
 
 /**
  * Converts the BParser node to an intermediate code representation.

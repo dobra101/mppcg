@@ -280,6 +280,17 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         return RenderResult("${expandedRhs.before}$rendered")
     }
 
+    override fun DeclarationSubstitution.renderSelf(): RenderResult {
+        // TODO: optimize?
+        val map = mapOf(
+            "type" to type2String(type),
+            "lhs" to assignment.lhs.render(),
+            "rhs" to assignment.rhs.render()
+        )
+
+        return RenderResult(renderTemplate(map))
+    }
+
     override fun ElseIfSubstitution.renderSelf(): RenderResult {
         // TODO: consider state and expr count?
         val map = mapOf(

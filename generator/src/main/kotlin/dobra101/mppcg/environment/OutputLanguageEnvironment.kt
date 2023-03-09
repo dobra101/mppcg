@@ -59,6 +59,7 @@ abstract class OutputLanguageEnvironment : EnvironmentUtils(), BEnvironment {
 
     /* Substitution */
     abstract fun AssignSubstitution.renderSelf(): RenderResult
+    abstract fun DeclarationSubstitution.renderSelf(): RenderResult
     abstract fun ElseIfSubstitution.renderSelf(): RenderResult
     abstract fun IfSubstitution.renderSelf(): RenderResult
     abstract fun SequenceSubstitution.renderSelf(): RenderResult
@@ -132,6 +133,7 @@ abstract class OutputLanguageEnvironment : EnvironmentUtils(), BEnvironment {
     private fun callSubstitution(node: Substitution): RenderResult {
         return when (node) {
             is AssignSubstitution -> node.renderSelf()
+            is DeclarationSubstitution -> node.renderSelf()
             is ElseIfSubstitution -> node.renderSelf()
             is IfSubstitution -> node.renderSelf()
             is SequenceSubstitution -> node.renderSelf()
