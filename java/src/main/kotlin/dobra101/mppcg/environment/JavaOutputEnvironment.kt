@@ -382,11 +382,13 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     override fun Operation.renderSelf(): RenderResult {
         val bodyUsed = (body as? Precondition)?.substitution ?: body
 
+        val type = if (returnValues.isNotEmpty()) returnValues[0].type else null
         val map = mapOf(
             "name" to name,
             "parameters" to parameters.render(),
-//            "returnValues" to returnValues.render(), // TODO: use returnValues
-            "body" to bodyUsed?.render()
+            "returnValues" to returnValues.render(),
+            "body" to bodyUsed?.render(),
+            "type" to type // TODO: more than one value
         )
 
         return RenderResult(renderTemplate(map))

@@ -23,10 +23,12 @@ public class <name> {
 }
 >>
 
-// TODO: add return values
-operation(name, parameters, body) ::= <<
-public void <name>(<parameters>) {
+operation(name, parameters, body, returnValues, type) ::= <<
+public <if(type)><type><else>void<endif> <name>(<parameters>) {
     <body>
+    <if(returnValues)>
+    return <returnValues>;
+    <endif>
 }
 >>
 
