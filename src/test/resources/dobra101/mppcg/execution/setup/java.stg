@@ -1,11 +1,9 @@
 setup(name, execution, result) ::= <<
-import <name>;
-
 public class <name>Setup {
     public static void main(String[] args) {
         <name> testmachine = new <name>();
         <execution :{ it | testmachine.<it>();}; separator="\n">
-        <result :{System.out.println("<result>=" + testmachine.<result>); }; separator="\n">
+        <result :{ it | System.out.println("<it>=" + testmachine.<it>()); }; separator="\n">
     }
 }
 >>

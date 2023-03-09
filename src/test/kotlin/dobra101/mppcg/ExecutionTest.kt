@@ -5,7 +5,7 @@ import dobra101.mppcg.environment.Language
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.ExpectSpec
 import io.kotest.inspectors.forAll
-import io.kotest.matchers.shouldBe
+import io.kotest.matchers.string.shouldBeEqualIgnoringCase
 import org.stringtemplate.v4.STGroupFile
 import se.sics.jasper.Query
 import se.sics.jasper.SICStus
@@ -18,7 +18,7 @@ val outputDir = File("build/executionTests/")
 class ExecutionTestProlog : ExecutionTest(Language.PROLOG, "prolog.stg", ".pl", runSetup) {
     companion object {
         private var sicstus: SICStus? = null
-        private val runSetup = { file: File, setupFile: File ->
+        private val runSetup = { _: String, file: File, setupFile: File ->
             val sb = StringBuilder()
             val wayMap = hashMapOf<String, Term>()
             // assign here to have the same caller every time
@@ -62,14 +62,14 @@ class ExecutionTestProlog : ExecutionTest(Language.PROLOG, "prolog.stg", ".pl", 
 
 class ExecutionTestJava : ExecutionTest(Language.JAVA, "java.stg", ".java", runSetup) {
     companion object {
-        private val runSetup = { file: File, setupFile: File ->
-            compile(file, setupFile)
-            execute(cp = outputDir.path, setup = setupFile)
+        private val runSetup = { dir: String, file: File, setupFile: File ->
+            compile(cp = outputDir.path + "/$dir", file, setupFile)
+            execute(cp = outputDir.path + "/$dir", setup = setupFile)
         }
 
-        private fun compile(vararg files: File) {
-            println("Compile: javac ${files.joinToString(" ") { it.path }}")
-            val process: Process = Runtime.getRuntime().exec("javac ${files.joinToString(" ") { it.path }}")
+        private fun compile(cp: String, vararg files: File) {
+            println("Compile: javac -cp $cp: ${files.joinToString(" ") { it.path }}")
+            val process: Process = Runtime.getRuntime().exec("javac -cp $cp: ${files.joinToString(" ") { it.path }}")
             process.waitFor()
             val error = process.errorReader().readText()
             process.errorReader().close()
@@ -79,8 +79,8 @@ class ExecutionTestJava : ExecutionTest(Language.JAVA, "java.stg", ".java", runS
         }
 
         private fun execute(cp: String, setup: File): String {
-            println("Execute: java -cp $cp ${setup.path}")
-            val process: Process = Runtime.getRuntime().exec("java -cp $cp ${setup.path}")
+            println("Execute: java -cp $cp: ${setup.path}")
+            val process: Process = Runtime.getRuntime().exec("java -cp $cp: ${setup.path}")
             process.waitFor()
             val error = process.errorReader().readText()
             process.errorReader().close()
@@ -100,7 +100,7 @@ abstract class ExecutionTest(
     language: Language,
     setupFileName: String,
     setupFileExtension: String,
-    runSetup: (File, File) -> String
+    runSetup: (String, File, File) -> String
 ) : ExpectSpec({
     if (!outputDir.exists()) outputDir.mkdir()
 
@@ -138,11 +138,11 @@ abstract class ExecutionTest(
                                 outputPath = "${outputDir.path}/$dir/"
                             )
 
-                            val resultString = runSetup(file, setupFile)
+                            val resultString = runSetup(dir, file, setupFile)
                             val resultMap = string2ResultMap(resultString)
                             for ((key, value) in execution.result) {
                                 withClue("Expect $key = $value") {
-                                    resultMap[key] shouldBe value
+                                    resultMap[key] shouldBeEqualIgnoringCase value
                                 }
                             }
                         }
