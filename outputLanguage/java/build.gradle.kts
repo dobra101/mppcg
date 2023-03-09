@@ -11,9 +11,4 @@ repositories {
 
 dependencies {
     implementation(project(":generator"))
-    testImplementation(kotlin("test"))
-}
-
-tasks.getByName<Test>("test") {
-    useJUnitPlatform()
 }

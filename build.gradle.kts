@@ -16,8 +16,8 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-cli:0.3.5")
 
     implementation(project(":generator"))
-    implementation(project(":java"))
-    implementation(project(":prolog"))
+    implementation(project(":outputLanguage:java"))
+    implementation(project(":outputLanguage:prolog"))
 
     implementation("de.hhu.stups:bparser:2.12.1")
     testImplementation("org.antlr:stringtemplate:4.0.2")

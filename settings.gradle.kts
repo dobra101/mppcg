@@ -1,4 +1,4 @@
 rootProject.name = "mppcg"
 include("generator")
-include("java")
-include("prolog")
+include("outputLanguage:java")
+include("outputLanguage:prolog")
