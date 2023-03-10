@@ -293,7 +293,6 @@ class ExpressionVisitor : AbstractVisitor() {
             return
         }
         // TODO: can be identifier
-        println(expr)
         TODO("Not implemented ${node::class.simpleName}")
     }
 
@@ -420,6 +419,10 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseAPowSubsetExpression(node: APowSubsetExpression) {
+        if (node.parent() is AMemberPredicate && AbstractVisitor.result is Expression) {
+            // is type info
+            (AbstractVisitor.result as Expression).type = TypeSet(type = TypeInteger()) // TODO: can be anything
+        }
         result = UnaryCollectionExpression(
             node.expression.convert()!!.setParameterIfCollection(),
             UnaryCollectionOperator.POW
@@ -431,6 +434,7 @@ class ExpressionVisitor : AbstractVisitor() {
             node.expression.convert()!!.setParameterIfCollection(),
             UnaryCollectionOperator.POW1
         )
+        println("POW1: ${result!!.type}")
     }
 
     override fun caseAFinSubsetExpression(node: AFinSubsetExpression) {

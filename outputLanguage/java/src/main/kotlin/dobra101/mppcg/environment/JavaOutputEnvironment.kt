@@ -115,6 +115,16 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             return RenderResult(renderTemplate("binaryPredicateMember", map))
         }
 
+        if ((right is InfiniteSet || operator == BinaryPredicateOperator.MEMBER)) {
+            val lhs = left.render()
+            val map = mapOf(
+                "lhs" to lhs,
+                "rhs" to "(${type2String(right.type)})${lhs.rendered}",
+                "operator" to operator2String(BinaryPredicateOperator.EQUAL)
+            )
+            return RenderResult(renderTemplate(map))
+        }
+
         val map = mapOf(
             "lhs" to left.render(),
             "operator" to operator2String(operator),
@@ -187,7 +197,12 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun WhileSubstitution.renderSelf(): RenderResult {
-        TODO("Not yet implemented")
+        val map = mapOf(
+            "condition" to condition.render(),
+            "body" to body.render()
+        )
+
+        return RenderResult(renderTemplate(map))
     }
 
     /* ---------- CLASS BLOCK ---------- */
@@ -271,9 +286,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
 
     override fun InfiniteSet.renderSelf(): RenderResult {
         // HINT: n : INTEGER -> n.type = INTEGER
-        val typeSet = (type as TypeSet).type
-        logger.info("${(type as TypeSet).type}")
-        TODO("Not yet implemented")
+        return RenderResult(type2String(type)) // TODO: refactor?
     }
 
     override fun LambdaExpression.renderSelf(): RenderResult {
@@ -428,6 +441,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             is TypeString -> "String"
             is TypeVoid -> "void"
             is TypeFunction -> "BRelation"
+            is TypeSet -> "Set<${type2String(type.type)}>"
             else -> throw UnknownTypeException(type::class.simpleName!!)
         }
     }
@@ -440,7 +454,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             BinaryPredicateOperator.LESS_EQUAL -> "<="
             BinaryPredicateOperator.EQUAL -> "=="
             BinaryPredicateOperator.NOT_EQUAL -> "!="
-            BinaryPredicateOperator.MEMBER -> "member"
+            BinaryPredicateOperator.MEMBER -> "instanceof"
             BinaryPredicateOperator.NOT_MEMBER -> "notmember(java)"
             BinaryPredicateOperator.SUBSET -> "subset(java)"
         }

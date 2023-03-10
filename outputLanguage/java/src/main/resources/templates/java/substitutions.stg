@@ -19,3 +19,9 @@ declarationSubstitution(type, lhs, rhs, classVar) ::= <<
 sequenceSubstitution(substitutions) ::= <<
 <substitutions; separator="\n">
 >>
+
+whileSubstitution(condition, body) ::= <<
+while (<condition>) {
+    <body>
+}
+>>

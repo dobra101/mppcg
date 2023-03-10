@@ -49,6 +49,10 @@ val killProB = tasks.register("killProB") {
     }
 }
 
+val testSingleFile = tasks.register("singleExecTest") {
+
+}
+
 tasks {
     named("run") {
         dependsOn(killProB)

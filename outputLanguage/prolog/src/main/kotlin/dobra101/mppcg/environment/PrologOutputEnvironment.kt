@@ -857,6 +857,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     override fun operator2String(operator: BinaryExpressionOperator): String {
         return when (operator) {
             BinaryExpressionOperator.MOD -> "mod"
+            BinaryExpressionOperator.DIV -> "//"
             else -> super.operator2String(operator)
         }
     }

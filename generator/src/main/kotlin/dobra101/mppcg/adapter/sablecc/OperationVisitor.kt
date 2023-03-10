@@ -20,7 +20,7 @@ class OperationVisitor : AbstractVisitor() {
     override fun caseAOperation(node: AOperation) {
         returnValues = node.returnValues.convert()
         operationType = TypeVoid()
-        declaredOrKnown = emptySet()
+        declaredOrKnown = knownIdentifier()
 
         // TODO: when more than one name?
         result = Operation(
@@ -30,5 +30,14 @@ class OperationVisitor : AbstractVisitor() {
             body = node.operationBody.convert(),
             type = operationType
         )
+    }
+
+    private fun knownIdentifier(): Set<IdentifierExpression> {
+        val known: MutableList<Expression> = mutableListOf()
+        known += machineVisitor.variables
+        known += machineVisitor.constants
+        known += machineVisitor.concreteConstants
+        known += machineVisitor.concreteVariables
+        return known.filterIsInstance<IdentifierExpression>().toSet()
     }
 }

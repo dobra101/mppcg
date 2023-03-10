@@ -48,6 +48,8 @@ class SubstitutionVisitor : AbstractVisitor() {
             if (OperationVisitor.returnValues.contains(assign.lhs)) {
                 OperationVisitor.operationType = assign.lhs.type!!
             }
+
+            // TODO: refactor
             if (!OperationVisitor.declaredOrKnown.contains(left[i])) {
                 assignments.add(DeclarationSubstitution(assign.lhs.type!!, assign))
             } else {

@@ -66,20 +66,14 @@ class TypeAnonymousCollection(val type: CollectionType) : Type {
 
 class TypeFunction(val type: FunctionType) : Type
 
-class TypeSet(val type: SetType) : Type
+// TODO: input language does not need to specify type
+class TypeSet(val type: Type) : Type
 
 class TypeInterval(val type: TypeNumber) : Type
 
 class TypeCouple : Type
 
 class TypeSequence(val type: Type?) : Type
-
-enum class SetType {
-    INTEGER,
-    NATURAL,
-    NAT,
-    BOOL
-}
 
 enum class BooleanValue {
     TRUE,
