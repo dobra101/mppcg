@@ -1,11 +1,12 @@
 package dobra101.mppcg.node.expression
 
+import dobra101.mppcg.node.NamedNode
 import dobra101.mppcg.node.Type
 
 data class IdentifierExpression(
-    val name: String,
+    override var name: String,
     override var type: Type? = null
-) : Expression(type, "identifierExpression") {
+) : Expression(type, "identifierExpression"), NamedNode {
     override fun equals(other: Any?): Boolean {
         if (other !is IdentifierExpression) return false
         return other.name == name

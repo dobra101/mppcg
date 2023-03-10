@@ -18,20 +18,20 @@ data class ParallelSubstitution(
     init {
         val assignments = substitutions.filterIsInstance<AssignSubstitution>()
 
-        val identifierOnRhs = assignments.withIndex().associate { (idx, assign) -> idx to assign.rhs.getIdentifiers() }
+        val identifierOnRhs = assignments.withIndex().associate { (idx, assign) -> idx to assign.right.getIdentifiers() }
 
         val tempVars = mutableSetOf<IdentifierExpression>()
         // store identifiers which occur on both sides and are not only self-assigning
         // only those are relevant, which are assigned first and later used on a right side // TODO: java?
         for ((idx, assignment) in assignments.withIndex()) {
-            if (assignment.lhs !is IdentifierExpression) continue
-            if (tempVars.contains(assignment.lhs)) continue
+            if (assignment.left !is IdentifierExpression) continue
+            if (tempVars.contains(assignment.left)) continue
 
             // get indices of assignments containing identifier on lhs
-            val indices = identifierOnRhs.getIndicesOfIdentifier(assignment.lhs).toMutableList()
+            val indices = identifierOnRhs.getIndicesOfIdentifier(assignment.left).toMutableList()
             indices.removeAll { it <= idx }
             if (indices.isNotEmpty()) {
-                tempVars.add(assignment.lhs)
+                tempVars.add(assignment.left)
             }
         }
         needTempVar = tempVars
@@ -41,6 +41,7 @@ data class ParallelSubstitution(
         return filter { it.value.contains(identifier) }.map { it.key }
     }
 
+    // TODO: duplicate
     private fun Expression.getIdentifiers(): List<IdentifierExpression> {
         return when (this) {
             is IdentifierExpression -> listOf(this)

@@ -2,12 +2,13 @@ package dobra101.mppcg.node.b
 
 import dobra101.mppcg.node.ClassVariables
 import dobra101.mppcg.node.MPPCGNode
+import dobra101.mppcg.node.Program
 import dobra101.mppcg.node.collection.CollectionNode
 import dobra101.mppcg.node.expression.Expression
 import dobra101.mppcg.node.predicate.Predicate
 
 data class Machine(
-    val name: String,
+    override val name: String,
     val parameters: List<Expression> = emptyList(),
     val constraints: Predicate? = null,
     val sets: List<CollectionNode> = emptyList(),
@@ -22,7 +23,7 @@ data class Machine(
     val assertions: List<Predicate> = emptyList(),
     val operations: List<Operation> = emptyList(),
     override val templateName: String = "machine"
-) : MPPCGNode {
+) : Program {
 
     // TODO: only needed when model checking ?
     val transitions = operations.mapNotNull {
@@ -33,5 +34,23 @@ data class Machine(
         }
         if (pre != null) Transition(it.name, pre)
         else null
+    }
+
+    override fun getAllIdentifiers(): List<MPPCGNode> {
+        val list = mutableListOf<MPPCGNode?>()
+        list += parameters
+        list += mutableListOf(constraints)
+        list += sets
+        list += constants
+        list += concreteConstants
+        list += properties
+        list += mutableListOf(definitions)
+        list += listOf(variables)
+        list += concreteVariables
+        list += mutableListOf(initialization)
+        list += mutableListOf(invariant)
+        list += assertions
+        list += operations
+        return list.filterIsInstance<MPPCGNode>()
     }
 }

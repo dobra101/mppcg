@@ -4,7 +4,6 @@ import de.be4.classicalb.core.parser.node.*
 import dobra101.mppcg.node.*
 import dobra101.mppcg.node.b.Precondition
 import dobra101.mppcg.node.b.Select
-import dobra101.mppcg.node.expression.IdentifierExpression
 import dobra101.mppcg.node.substitution.*
 
 class SubstitutionVisitor : AbstractVisitor() {
@@ -34,24 +33,24 @@ class SubstitutionVisitor : AbstractVisitor() {
             }
 
             // TODO: refactor
-            if (assign.lhs.type!!::class != rightType::class) {
+            if (assign.left.type!!::class != rightType::class) {
                 when {
-                    assign.lhs.type is TypeNumber && rightType is TypeInteger -> {}
-                    assign.lhs.type is TypeAnonymousCollection && rightType is TypeCollection && assign.lhs.type == rightType -> {}
-                    assign.rhs.type is TypeAnonymousCollection -> {}
+                    assign.left.type is TypeNumber && rightType is TypeInteger -> {}
+                    assign.left.type is TypeAnonymousCollection && rightType is TypeCollection && assign.left.type == rightType -> {}
+                    assign.right.type is TypeAnonymousCollection -> {}
                     rightType is TypeSequence -> {} // TODO: fix
-                    else -> throw InvalidTypeException("Types ${assign.lhs.type} and $rightType do not match.")
+                    else -> throw InvalidTypeException("Types ${assign.left.type} and $rightType do not match.")
                 }
             }
 
             // set return value
-            if (OperationVisitor.returnValues.contains(assign.lhs)) {
-                OperationVisitor.operationType = assign.lhs.type!!
+            if (OperationVisitor.returnValues.contains(assign.left)) {
+                OperationVisitor.operationType = assign.left.type!!
             }
 
             // TODO: refactor
             if (!OperationVisitor.declaredOrKnown.contains(left[i])) {
-                assignments.add(DeclarationSubstitution(assign.lhs.type!!, assign))
+                assignments.add(DeclarationSubstitution(assign.left.type!!, assign))
             } else {
                 assignments.add(assign)
             }

@@ -524,7 +524,11 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseACompositionExpression(node: ACompositionExpression) {
-        result = BinaryFunctionExpression(node.left.convert()!!, node.right.convert()!!, BinaryFunctionOperator.FORWARD_COMPOSITION)
+        result = BinaryFunctionExpression(
+            node.left.convert()!!,
+            node.right.convert()!!,
+            BinaryFunctionOperator.FORWARD_COMPOSITION
+        )
     }
 
     override fun caseASymbolicCompositionExpression(node: ASymbolicCompositionExpression) {
@@ -856,7 +860,11 @@ class ExpressionVisitor : AbstractVisitor() {
         if (AbstractVisitor.result !is Expression) return
 
         val expr = AbstractVisitor.result as Expression
-        if ((expr.type == null || expr.type == type || expr.type is TypeAnonymousCollection)) {
+        if ((expr.type == null
+                    || expr.type == type
+                    || expr.type is TypeAnonymousCollection
+                    || expr.type is TypeSet)
+        ) {
             (AbstractVisitor.result as Expression).type = type
             return
         }

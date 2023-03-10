@@ -266,9 +266,9 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
 
     /* ---------- SUBSTITUTIONS ---------- */
     override fun AssignSubstitution.renderSelf(): RenderResult {
-        val identifier = (lhs as IdentifierExpression).name
+        val identifier = (left as IdentifierExpression).name
 
-        val expandedRhs = ExpandedExpression.of(rhs)
+        val expandedRhs = ExpandedExpression.of(right)
         val map = mapOf(
             "identifier" to identifier,
             "rhs" to expandedRhs.expression,
@@ -277,8 +277,8 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         )
         val rendered = renderTemplate(map)
 
-        if (optimize && !temporaryVariables.contains(lhs)) {
-            optimizer.evaluated[lhs] = expandedRhs.expression
+        if (optimize && !temporaryVariables.contains(left)) {
+            optimizer.evaluated[left] = expandedRhs.expression
         }
         return RenderResult("${expandedRhs.before}$rendered")
     }
@@ -287,8 +287,8 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         // TODO: optimize?
         val map = mapOf(
             "type" to type2String(type),
-            "lhs" to assignment.lhs.render(),
-            "rhs" to assignment.rhs.render()
+            "lhs" to assignment.left.render(),
+            "rhs" to assignment.right.render()
         )
 
         return RenderResult(renderTemplate(map))
@@ -737,8 +737,8 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
 
         val neededTempVars = substitutions
             .filterIsInstance<AssignSubstitution>()
-            .filter { it.rhs is IdentifierExpression && temporaryVariables.contains(it.rhs) }
-            .map { it.rhs as IdentifierExpression }
+            .filter { it.right is IdentifierExpression && temporaryVariables.contains(it.right) }
+            .map { it.right as IdentifierExpression }
 
         // TODO: let optimizer do the work
         // load temporary variables if they are needed

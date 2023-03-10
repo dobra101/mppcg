@@ -18,12 +18,12 @@ class JavaOptimizer(private val environment: JavaOutputEnvironment) {
      * @return The render result or null, if optimization is not applicable
      */
     fun renderOptimized(node: AssignSubstitution): RenderResult? {
-        if (node.rhs is BinaryExpression) {
-            val binaryExpr = node.rhs as BinaryExpression
+        if (node.right is BinaryExpression) {
+            val binaryExpr = node.right as BinaryExpression
 
             // e.g. a = a + 1 or a = 1 + a
-            return assignSelf(binaryExpr.left, binaryExpr.right, binaryExpr.operator, node.lhs)
-                ?: assignSelf(binaryExpr.right, binaryExpr.left, binaryExpr.operator, node.lhs)
+            return assignSelf(binaryExpr.left, binaryExpr.right, binaryExpr.operator, node.left)
+                ?: assignSelf(binaryExpr.right, binaryExpr.left, binaryExpr.operator, node.left)
         }
         return null
     }

@@ -57,6 +57,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun IdentifierExpression.renderSelf(): RenderResult {
+        // TODO: central keyword handler
         val map = mapOf(
             "name" to name
         )
@@ -169,8 +170,8 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         if (optimize) optimizer.renderOptimized(this)?.let { return it }
 
         val map = mapOf(
-            "identifier" to (lhs as IdentifierExpression).render(),
-            "rhs" to rhs.render()
+            "identifier" to (left as IdentifierExpression).render(),
+            "rhs" to right.render()
         )
 
         return RenderResult(renderTemplate(map))
@@ -180,8 +181,8 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         // TODO: optimize?
         val map = mapOf(
             "type" to type2String(type),
-            "lhs" to assignment.lhs.render(),
-            "rhs" to assignment.rhs.render()
+            "lhs" to assignment.left.render(),
+            "rhs" to assignment.right.render()
         )
 
         return RenderResult(renderTemplate(map))

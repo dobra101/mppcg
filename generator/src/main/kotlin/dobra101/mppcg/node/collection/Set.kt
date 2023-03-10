@@ -3,7 +3,7 @@ package dobra101.mppcg.node.collection
 import dobra101.mppcg.node.expression.Expression
 
 data class SetCollectionNode(
-    override val name: String,
+    override var name: String,
     override val elements: List<SetEntry>
 ) : CollectionNode(name, elements, CollectionType.Set, "setCollectionExpression") {
     override fun copy(): CollectionNode {
@@ -12,7 +12,7 @@ data class SetCollectionNode(
 }
 
 data class SetEntry(
-    override val name: String,
+    override var name: String,
     val set: String
 ) : CollectionEntry(name, set, templateName = "setEntryExpression")
 
