@@ -287,13 +287,7 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseAUnaryMinusExpression(node: AUnaryMinusExpression) {
-        val expr = node.expression.convert()!!
-        if (expr is ValueExpression) {
-            result = ValueExpression("-${expr.value}", expr.type)
-            return
-        }
-        // TODO: can be identifier
-        TODO("Not implemented ${node::class.simpleName}")
+        result = UnaryExpression(node.expression.convert()!!, UnaryExpressionOperator.MINUS)
     }
 
     override fun caseAMultiplicationExpression(node: AMultiplicationExpression) {

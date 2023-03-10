@@ -260,6 +260,9 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         return RenderResult(renderTemplate(map))
     }
 
+    override fun ValuePredicate.renderSelf(): RenderResult {
+        TODO("Not yet implemented")
+    }
 
     /* ---------- SUBSTITUTIONS ---------- */
     override fun AssignSubstitution.renderSelf(): RenderResult {

@@ -8,16 +8,19 @@ import dobra101.mppcg.node.b.BMethod
 data class UnaryExpression(
     val value: MPPCGNode,
     val operator: UnaryExpressionOperator
-) : Expression(getType(operator), "unaryExpression")
+) : Expression(getType(value, operator), "unaryExpression")
 
 // TODO: refactor
 enum class UnaryExpressionOperator: BMethod {
     CONVERT_BOOLEAN,
     // TODO: only for B
     PRED,
-    SUCC
+    SUCC,
+    MINUS
 }
 
-private fun getType(operator: UnaryExpressionOperator): Type {
+private fun getType(value: MPPCGNode, operator: UnaryExpressionOperator): Type? {
+    if (value is ValueExpression) return value.type
+    if (operator == UnaryExpressionOperator.MINUS && value is Expression) return value.type
     return TypeBoolean()
 }

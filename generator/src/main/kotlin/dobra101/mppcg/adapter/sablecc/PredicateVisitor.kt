@@ -1,6 +1,8 @@
 package dobra101.mppcg.adapter.sablecc
 
 import de.be4.classicalb.core.parser.node.*
+import dobra101.mppcg.node.BooleanValue
+import dobra101.mppcg.node.TypeBoolean
 import dobra101.mppcg.node.expression.IdentifierExpression
 import dobra101.mppcg.node.predicate.*
 
@@ -136,11 +138,11 @@ class PredicateVisitor : AbstractVisitor() {
     }
 
     override fun caseATruthPredicate(node: ATruthPredicate) {
-        TODO("Not implemented ${node::class.simpleName}")
+        result = ValuePredicate("", type = TypeBoolean(BooleanValue.TRUE))
     }
 
     override fun caseAFalsityPredicate(node: AFalsityPredicate) {
-        TODO("Not implemented ${node::class.simpleName}")
+        result = ValuePredicate("", type = TypeBoolean(BooleanValue.FALSE))
     }
 
     override fun caseAFinitePredicate(node: AFinitePredicate) {

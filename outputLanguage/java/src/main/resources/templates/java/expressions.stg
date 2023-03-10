@@ -6,6 +6,11 @@ binaryExpression(lhs, rhs, operator) ::= <<
 <lhs> <operator> <rhs>
 >>
 
+unaryExpression(value, operator, parenthesis) ::= <<
+<if(parenthesis)><operator>(<value>)<else>
+<operator><value><endif>
+>>
+
 unaryCollectionExpression(collection, operator) ::= <<
 <operator>(<collection>)
 >>

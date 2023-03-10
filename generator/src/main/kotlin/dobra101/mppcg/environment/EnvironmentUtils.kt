@@ -8,6 +8,7 @@ import dobra101.mppcg.node.collection.UnaryCollectionOperator
 import dobra101.mppcg.node.expression.BinaryExpressionOperator
 import dobra101.mppcg.node.expression.Expression
 import dobra101.mppcg.node.expression.IdentifierExpression
+import dobra101.mppcg.node.expression.UnaryExpressionOperator
 import dobra101.mppcg.node.predicate.BinaryPredicateOperator
 import dobra101.mppcg.node.predicate.LogicPredicateOperator
 import dobra101.mppcg.node.predicate.Predicate
@@ -42,8 +43,8 @@ abstract class EnvironmentUtils {
         return when (operator) {
             LogicPredicateOperator.AND -> "&&"
             LogicPredicateOperator.OR -> "||"
-            LogicPredicateOperator.IMPLIES -> "=>"
-            LogicPredicateOperator.EQUIVALENCE -> "<=>"
+            LogicPredicateOperator.IMPLIES -> "|| !"
+            LogicPredicateOperator.EQUIVALENCE -> "=="
             LogicPredicateOperator.NOT -> "!"
         }
     }
@@ -103,6 +104,15 @@ abstract class EnvironmentUtils {
             UnarySequenceExpressionOperator.FIRST -> "first"
             UnarySequenceExpressionOperator.LAST -> "last"
             UnarySequenceExpressionOperator.REVERSE -> "reverse"
+        }
+    }
+
+    open fun operator2String(operator: UnaryExpressionOperator): String {
+        return when (operator) {
+            UnaryExpressionOperator.CONVERT_BOOLEAN -> ""
+            UnaryExpressionOperator.PRED -> "pred"
+            UnaryExpressionOperator.SUCC -> "succ"
+            UnaryExpressionOperator.MINUS -> "-"
         }
     }
 

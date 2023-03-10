@@ -141,14 +141,27 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         val map = mapOf(
             "lhs" to lhs,
             "operator" to operator2String(operator),
-            "rhs" to rhs
+            "rhs" to rhs,
+            "parenthesis" to (operator != LogicPredicateOperator.AND),
+            "implication" to (operator == LogicPredicateOperator.IMPLIES) // TODO: refactor
         )
 
         return RenderResult(renderTemplate(map))
     }
 
     override fun UnaryLogicPredicate.renderSelf(): RenderResult {
-        TODO("Not yet implemented")
+        val map = mapOf(
+            "predicate" to predicate.render(),
+            "operator" to operator2String(operator)
+        )
+        return RenderResult(renderTemplate(map))
+    }
+
+    override fun ValuePredicate.renderSelf(): RenderResult {
+        val map = mapOf(
+            "value" to if (type is TypeBoolean) ((type as TypeBoolean).value == BooleanValue.TRUE).toString() else value
+        )
+        return RenderResult(renderTemplate(map))
     }
 
     /* ---------- SUBSTITUTIONS ---------- */
@@ -322,7 +335,12 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun UnaryExpression.renderSelf(): RenderResult {
-        TODO("Not yet implemented")
+        val map = mapOf(
+            "value" to value.render(),
+            "operator" to operator2String(operator),
+            "parenthesis" to (operator != UnaryExpressionOperator.MINUS)
+        )
+        return RenderResult(renderTemplate(map))
     }
 
     override fun UnaryFunctionExpression.renderSelf(): RenderResult {

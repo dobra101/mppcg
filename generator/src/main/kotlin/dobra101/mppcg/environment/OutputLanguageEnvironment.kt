@@ -56,6 +56,7 @@ abstract class OutputLanguageEnvironment : EnvironmentUtils(), BEnvironment {
     abstract fun BinaryPredicate.renderSelf(): RenderResult
     abstract fun BinaryLogicPredicate.renderSelf(): RenderResult
     abstract fun UnaryLogicPredicate.renderSelf(): RenderResult
+    abstract fun ValuePredicate.renderSelf(): RenderResult
 
     /* Substitution */
     abstract fun AssignSubstitution.renderSelf(): RenderResult
@@ -121,6 +122,7 @@ abstract class OutputLanguageEnvironment : EnvironmentUtils(), BEnvironment {
             is BinaryPredicate -> node.renderSelf()
             is BinaryLogicPredicate -> node.renderSelf()
             is UnaryLogicPredicate -> node.renderSelf()
+            is ValuePredicate -> node.renderSelf()
 
             /* B Predicates */
             is Invariant -> node.renderSelf()
