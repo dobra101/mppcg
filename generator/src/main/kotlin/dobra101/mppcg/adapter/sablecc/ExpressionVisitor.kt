@@ -28,8 +28,6 @@ class ExpressionVisitor : AbstractVisitor() {
             return
         }
 
-        val identifierExpression = IdentifierExpression(name = node.text)
-
         result = machineVisitor.variables.findByName(node.text)
         result?.let { return }
 
@@ -40,7 +38,7 @@ class ExpressionVisitor : AbstractVisitor() {
         result?.let { return }
 
         result = machineVisitor.sets.findByName(node.text)?.copy() ?: machineVisitor.sets.findEntryByName(node.text)
-                ?: identifierExpression
+                ?: IdentifierExpression(name = node.text)
     }
 
     override fun caseTIntegerLiteral(node: TIntegerLiteral) {
@@ -853,7 +851,10 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     private fun List<Expression>.findByName(name: String): Expression? {
-        return find { (it as? IdentifierExpression)?.name == name }
+        return find {
+            (it as? IdentifierExpression)?.name == name
+                    || (it as? ConcreteIdentifierExpression)?.name == "c_$name" // TODO: prefix not hardcoded
+        }
     }
 
     private fun trySetPreviousResultType(type: Type) {

@@ -19,6 +19,8 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
 
     private var codeRepresentation: Any? = null
 
+    private var currentOperation: Operation? = null// HINT: only for B
+
     /* ---------- EXPRESSIONS ---------- */
     override fun AnonymousSetCollectionNode.renderSelf(): RenderResult {
         val map = mapOf(
@@ -108,7 +110,8 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         }
 
         if ((right is AnonymousSetCollectionNode || right is IntervalExpression)
-            && operator == BinaryPredicateOperator.MEMBER) {
+            && operator == BinaryPredicateOperator.MEMBER
+        ) {
             val map = mapOf(
                 "entry" to left.render(),
                 "set" to right.render()
@@ -285,7 +288,8 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         val map = mapOf(
             "name" to name,
             "value" to value.render(),
-            "type" to type2String(type)
+            "type" to type2String(type),
+            "declare" to (currentOperation == null)
         )
         return RenderResult(renderTemplate(map))
     }
@@ -424,6 +428,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun Operation.renderSelf(): RenderResult {
+        currentOperation = this
         if (optimize) optimizer.renderOptimized(this)?.let { return it }
 
         val bodyUsed = (body as? Precondition)?.substitution ?: body
@@ -436,6 +441,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             "type" to type2String(type)
         )
 
+        currentOperation = null
         return RenderResult(renderTemplate(map))
     }
 

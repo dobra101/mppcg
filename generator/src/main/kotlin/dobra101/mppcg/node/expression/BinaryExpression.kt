@@ -24,9 +24,10 @@ private fun getType(left: Expression, right: Expression): Type? {
     // number type
     if (left.type is TypeReal || right.type is TypeReal) return TypeReal()
 
+    // TODO: refactor
     if (left.type != right.type) {
-        if (left.type is TypeNatural && right.canBeNatural()) {
-            return left.type
+        if (left.type is TypeNatural) {
+            return if (right.canBeNatural()) left.type else right.type
         }
 
         throw InvalidTypeException("Types ${left.type} and ${right.type} do not match.")
