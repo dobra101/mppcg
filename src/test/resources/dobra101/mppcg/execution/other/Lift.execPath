@@ -2,4 +2,4 @@ inc
 inc
 inc
 *** Expected Result:
-floor=3
+getLevel=3
