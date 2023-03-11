@@ -29,6 +29,16 @@ class MachineVisitor : AbstractVisitor() {
     private var assertions: List<Predicate> = emptyList()
     private var operations: List<Operation> = emptyList()
 
+    // TODO: not as function?
+    fun knownIdentifier(): Set<IdentifierExpression> {
+        val known: MutableList<Expression> = mutableListOf()
+        known += machineVisitor.variables
+        known += machineVisitor.constants
+        known += machineVisitor.concreteConstants
+        known += machineVisitor.concreteVariables
+        return known.filterIsInstance<IdentifierExpression>().toSet()
+    }
+
     override fun caseAMachineHeader(node: AMachineHeader) {
         name = node.name[0].text // TODO: more than one name?
         parameters = node.parameters.convert()

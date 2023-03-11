@@ -49,7 +49,7 @@ class SubstitutionVisitor : AbstractVisitor() {
             }
 
             // TODO: refactor
-            if (!OperationVisitor.declaredOrKnown.contains(left[i])) {
+            if (!machineVisitor.knownIdentifier().contains(left[i])) {
                 assignments.add(DeclarationSubstitution(assign.left.type!!, assign))
             } else {
                 assignments.add(assign)
