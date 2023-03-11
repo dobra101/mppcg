@@ -1,5 +1,7 @@
-package dobra101.mppcg
+package dobra101.mppcg.b
 
+import dobra101.mppcg.Launcher
+import dobra101.mppcg.Parser
 import dobra101.mppcg.environment.EnvironmentException
 import dobra101.mppcg.environment.Language
 import io.kotest.assertions.withClue
@@ -63,8 +65,9 @@ class ExecutionTestProlog : ExecutionTest(Language.PROLOG, "prolog.stg", ".pl", 
 class ExecutionTestJava : ExecutionTest(Language.JAVA, "java.stg", ".java", runSetup) {
     companion object {
         private val runSetup = { dir: String, file: File, setupFile: File ->
-            compile(cp = outputDir.path + "/$dir", file, setupFile)
-            execute(cp = outputDir.path + "/$dir", setup = setupFile)
+            // TODO: check if btypes.jar exist
+            compile(cp = outputDir.path + "/$dir:inputLanguage/B/java/build/libs/btypes.jar", file, setupFile)
+            execute(cp = outputDir.path + "/$dir:inputLanguage/B/java/build/libs/btypes.jar", setup = setupFile)
         }
 
         private fun compile(cp: String, vararg files: File) {

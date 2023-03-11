@@ -12,7 +12,7 @@ unaryExpression(value, operator, parenthesis) ::= <<
 >>
 
 unaryCollectionExpression(collection, operator) ::= <<
-<operator>(<collection>)
+<collection>.<operator>()
 >>
 
 binaryCollectionExpression(lhs, rhs, operator) ::= <<

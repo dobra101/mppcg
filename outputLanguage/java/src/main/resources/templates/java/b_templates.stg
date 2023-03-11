@@ -99,3 +99,11 @@ binaryFunctionExpression(left, right, operator) ::= <<
 couple(from, to) ::= <<
 new BCouple(<from>, <to>)
 >>
+
+sequence(elements) ::= <<
+BSequence(<elements; separator=", ">)
+>>
+
+binarySequenceExpression(left, right, operator) ::= <<
+<left>.<operator>(<right>)
+>>

@@ -269,7 +269,12 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun BinarySequenceExpression.renderSelf(): RenderResult {
-        TODO("Not yet implemented")
+        val map = mapOf(
+            "left" to left.render(),
+            "right" to right.render(),
+            "operator" to operator2String(operator)
+        )
+        return RenderResult(renderTemplate(map))
     }
 
     override fun CallFunctionExpression.renderSelf(): RenderResult {
@@ -467,6 +472,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             is TypeVoid -> "void"
             is TypeFunction -> "BRelation"
             is TypeSet -> "Set<${type2String(type.type)}>"
+            is TypeSequence -> "BSequence"
             else -> throw UnknownTypeException(type::class.simpleName!!)
         }
     }
