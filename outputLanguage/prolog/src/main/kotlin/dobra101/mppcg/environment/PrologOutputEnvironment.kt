@@ -284,14 +284,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun DeclarationSubstitution.renderSelf(): RenderResult {
-        // TODO: optimize?
-        val map = mapOf(
-            "type" to type2String(type),
-            "lhs" to assignment.left.render(),
-            "rhs" to assignment.right.render()
-        )
-
-        return RenderResult(renderTemplate(map))
+        return assignment.render()
     }
 
     override fun ElseIfSubstitution.renderSelf(): RenderResult {
@@ -840,10 +833,6 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     override fun Transition.renderSelf(): RenderResult {
         // not needed because of XTL
         return RenderResult("")
-    }
-
-    override fun type2String(type: Type?): String {
-        TODO("Not yet implemented")
     }
 
     // TODO: are all operators math-operators?

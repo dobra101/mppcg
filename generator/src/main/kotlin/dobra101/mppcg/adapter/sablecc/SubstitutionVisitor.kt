@@ -39,7 +39,11 @@ class SubstitutionVisitor : AbstractVisitor() {
                     assign.left.type is TypeAnonymousCollection && rightType is TypeCollection && assign.left.type == rightType -> {}
                     assign.right.type is TypeAnonymousCollection -> {}
                     rightType is TypeSequence -> {} // TODO: fix
-                    else -> throw InvalidTypeException("Types ${assign.left.type} and $rightType do not match.")
+                    else -> {
+
+                        println(assign)
+                        throw InvalidTypeException("Types ${assign.left.type} and $rightType do not match.")
+                    }
                 }
             }
 
@@ -54,6 +58,8 @@ class SubstitutionVisitor : AbstractVisitor() {
             } else {
                 assignments.add(assign)
             }
+
+            machineVisitor.knownInScope.add(assign.left)
         }
 
         result = if (assignments.size == 1) assignments[0] else ParallelSubstitution(assignments)
@@ -73,6 +79,7 @@ class SubstitutionVisitor : AbstractVisitor() {
     }
 
     override fun caseASelectWhenSubstitution(node: ASelectWhenSubstitution) {
+        // TODO: add also to caseAMemberPredicate
         TODO("Not implemented caseASelectWhenSubstitution")
     }
 

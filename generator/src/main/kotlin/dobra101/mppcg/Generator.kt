@@ -77,6 +77,7 @@ class Generator {
 
             is Transition -> {
                 identifierReferenceMap.putOrAdd(name, this)
+                parameters.forEach { it.getAllIdentifiers() }
                 body.getAllIdentifiers()
             }
 

@@ -32,7 +32,7 @@ data class Machine(
             is Select -> it.body.condition
             else -> null
         }
-        if (pre != null) Transition(it.name, pre)
+        if (pre != null) Transition(it.name, it.parameters, pre)
         else null
     }
 

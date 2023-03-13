@@ -33,8 +33,8 @@ public <if(type)><type><else>void<endif> <name>(<parameters>) {
 }
 >>
 
-transition(name, body) ::= <<
-public boolean tr_<name>() {
+transition(name, body, parameters) ::= <<
+public boolean tr_<name>(<parameters>) {
     return <body>;
 }
 >>
@@ -101,7 +101,7 @@ new BCouple(<from>, <to>)
 >>
 
 sequence(elements) ::= <<
-BSequence(<elements; separator=", ">)
+new BSequence(<elements; separator=", ">)
 >>
 
 binarySequenceExpression(left, right, operator) ::= <<

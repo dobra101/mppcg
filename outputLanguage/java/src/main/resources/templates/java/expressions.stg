@@ -42,3 +42,7 @@ new BInterval(<left>, <right>)
 valueExpression(value) ::= <<
 <value>
 >>
+
+parameterExpression(name, type) ::= <<
+<type> <name>
+>>

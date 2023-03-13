@@ -116,7 +116,7 @@ abstract class EnvironmentUtils {
         }
     }
 
-    abstract fun type2String(type: Type?): String
+    open fun type2String(type: Type?): String = ""
 
     @JvmName("renderExpressionList")
     fun List<Expression>.render(): List<String> {

@@ -5,7 +5,6 @@ import dobra101.mppcg.node.Type
 import dobra101.mppcg.node.TypeVoid
 import dobra101.mppcg.node.b.Operation
 import dobra101.mppcg.node.expression.Expression
-import dobra101.mppcg.node.expression.IdentifierExpression
 
 class OperationVisitor : AbstractVisitor() {
 
@@ -13,20 +12,24 @@ class OperationVisitor : AbstractVisitor() {
 
     companion object {
         var returnValues: List<Expression> = emptyList()
+        var parameters: List<Expression> = emptyList()
         var operationType: Type = TypeVoid()
     }
 
     override fun caseAOperation(node: AOperation) {
+        machineVisitor.knownInScope = mutableListOf()
         returnValues = node.returnValues.convert()
+        parameters = node.parameters.convert()
         operationType = TypeVoid()
 
         // TODO: when more than one name?
         result = Operation(
             name = node.opName[0].text,
-            parameters = node.parameters.convert(),
+            parameters = parameters,
             returnValues = returnValues,
             body = node.operationBody.convert(),
             type = operationType
         )
+        machineVisitor.knownInScope = mutableListOf()
     }
 }

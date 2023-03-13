@@ -2,8 +2,8 @@ setup(name, execution, result) ::= <<
 public class <name>Setup {
     public static void main(String[] args) {
         <name> testmachine = new <name>();
-        <execution :{ it | testmachine.<it>();}; separator="\n">
-        <result :{ it | System.out.println("<it>=" + testmachine.<it>()); }; separator="\n">
+        <execution :{ it | testmachine.<it.method><if(!it.parameterized)>()<endif>;}; separator="\n">
+        <result :{ it | System.out.println("<it.method>=" + testmachine.<it.method><if(!it.propertyAccess)>()<endif>); }; separator="\n">
     }
 }
 >>

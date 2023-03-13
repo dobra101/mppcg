@@ -29,13 +29,16 @@ class MachineVisitor : AbstractVisitor() {
     private var assertions: List<Predicate> = emptyList()
     private var operations: List<Operation> = emptyList()
 
+    var knownInScope: MutableList<Expression> = mutableListOf()
+
     // TODO: not as function?
     fun knownIdentifier(): Set<IdentifierExpression> {
         val known: MutableList<Expression> = mutableListOf()
-        known += machineVisitor.variables
-        known += machineVisitor.constants
-        known += machineVisitor.concreteConstants
-        known += machineVisitor.concreteVariables
+        known += variables
+        known += constants
+        known += concreteConstants
+        known += concreteVariables
+        known += knownInScope
         return known.filterIsInstance<IdentifierExpression>().toSet()
     }
 

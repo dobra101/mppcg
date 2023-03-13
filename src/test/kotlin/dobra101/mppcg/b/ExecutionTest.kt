@@ -16,6 +16,7 @@ import se.sics.jasper.Term
 import java.io.File
 
 val outputDir = File("build/executionTests/")
+
 // TODO: refactor: load file in setup file and execute setup file?
 class ExecutionTestProlog : ExecutionTest(Language.PROLOG, "prolog.stg", ".pl", runSetup) {
     companion object {
@@ -127,8 +128,6 @@ abstract class ExecutionTest(
                     val setupFile =
                         createSetupFile(dir, setupFileName, setupFileExtension, mch.nameWithoutExtension, execution)
 
-                    // val btypes = File("java/src/main/kotlin/BTypes.java")
-
                     listOf(true, false).forAll { optimize ->
                         val expectName = if (optimize) "optimized" else "regular"
                         expect(expectName) {
@@ -144,8 +143,8 @@ abstract class ExecutionTest(
                             val resultString = runSetup(dir, file, setupFile)
                             val resultMap = string2ResultMap(resultString)
                             for ((key, value) in execution.result) {
-                                withClue("Expect $key = $value") {
-                                    resultMap[key] shouldBeEqualIgnoringCase value
+                                withClue("Expect ${key.method} = $value") {
+                                    resultMap[key.method] shouldBeEqualIgnoringCase value
                                 }
                             }
                         }
@@ -186,13 +185,13 @@ private fun string2ResultMap(string: String): Map<String, String> {
         }
 }
 
-data class Execution(val operations: List<String>, val result: Map<String, String>) {
+data class Execution(val operations: List<ExecOperation>, val result: Map<ExecOperation, String>) {
     companion object {
         fun of(file: File): Execution {
             val content = file.readText()
             var operationsProcessed = false
-            val operations = mutableListOf<String>()
-            val result = mutableMapOf<String, String>()
+            val operations = mutableListOf<ExecOperation>()
+            val result = mutableMapOf<ExecOperation, String>()
 
             for (line in content.lines()) {
                 // TODO: not hardcoded
@@ -203,9 +202,16 @@ data class Execution(val operations: List<String>, val result: Map<String, Strin
 
                 if (operationsProcessed) {
                     val expect = line.split("=")
-                    result[expect[0].trim()] = expect[1].trim()
+                    val value = expect[1].trim()
+                    var accessOrMethod = expect[0].trim()
+                    if (accessOrMethod.startsWith(".")) {
+                        val execOperation = ExecOperation(accessOrMethod.removePrefix("."), propertyAccess = true)
+                        result[execOperation] = value
+                    } else {
+                        result[ExecOperation(accessOrMethod)] = value
+                    }
                 } else {
-                    operations.add(line)
+                    operations.add(ExecOperation(line, parameterized = line.endsWith(")")))
                 }
             }
 
@@ -213,3 +219,5 @@ data class Execution(val operations: List<String>, val result: Map<String, Strin
         }
     }
 }
+
+data class ExecOperation(val method: String, val parameterized: Boolean = false, val propertyAccess: Boolean = false)

@@ -635,7 +635,13 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseASeqExpression(node: ASeqExpression) {
-        result = Sequence(sequenceType = node.expression.convert()!!.type)
+        val previousResult = AbstractVisitor.result
+        val type = node.expression.convert()!!.type
+        result = Sequence(sequenceType = type)
+        if (node.parent() is AMemberPredicate && previousResult is Expression) {
+            // is type info
+            previousResult.type = TypeSequence(type)
+        }
     }
 
     override fun caseASeq1Expression(node: ASeq1Expression) {

@@ -98,8 +98,18 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     /* ---------- PREDICATES ---------- */
     // TODO: refactor
     override fun BinaryPredicate.renderSelf(): RenderResult {
+        if (operator != BinaryPredicateOperator.MEMBER) {
+            val map = mapOf(
+                "lhs" to left.render(),
+                "operator" to operator2String(operator),
+                "rhs" to right.render()
+            )
+
+            return RenderResult(renderTemplate(map))
+        }
+
         // Predicate is a type check
-        if (right is EnumCollectionNode && operator == BinaryPredicateOperator.MEMBER) {
+        if (right is EnumCollectionNode) {
             // TODO: neglect if types already match
             val map = mapOf(
                 "lhs" to left.render(),
@@ -109,9 +119,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             return RenderResult(renderTemplate(map))
         }
 
-        if ((right is AnonymousSetCollectionNode || right is IntervalExpression)
-            && operator == BinaryPredicateOperator.MEMBER
-        ) {
+        if (right is AnonymousSetCollectionNode || right is IntervalExpression) {
             val map = mapOf(
                 "entry" to left.render(),
                 "set" to right.render()
@@ -119,7 +127,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             return RenderResult(renderTemplate("binaryPredicateMember", map))
         }
 
-        if ((right is InfiniteSet || operator == BinaryPredicateOperator.MEMBER)) {
+        if (right is InfiniteSet) {
             val lhs = left.render()
             val map = mapOf(
                 "lhs" to lhs,
@@ -129,12 +137,20 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             return RenderResult(renderTemplate(map))
         }
 
+        // TODO: refactor
+        val lhs = left.render()
+        val cast =
+            if ((right is UnaryCollectionExpression)
+                && (right as UnaryCollectionExpression).operator == UnaryCollectionOperator.POW) {
+                "(Set<${nullableType2String(right.type!!)}>)"
+            } else {
+                "(${type2String(right.type)})"
+            }
         val map = mapOf(
-            "lhs" to left.render(),
-            "operator" to operator2String(operator),
-            "rhs" to right.render()
+            "lhs" to lhs,
+            "rhs" to "$cast${lhs.rendered}",
+            "operator" to operator2String(BinaryPredicateOperator.EQUAL)
         )
-
         return RenderResult(renderTemplate(map))
     }
 
@@ -438,9 +454,20 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
 
         val bodyUsed = (body as? Precondition)?.substitution ?: body
 
+        val typedParameters = parameters.filterIsInstance<IdentifierExpression>()
+            .map {
+                renderTemplate(
+                    "parameterExpression",
+                    mapOf(
+                        "name" to it.name,
+                        "type" to type2String(it.type)
+                    )
+                )
+            }
+
         val map = mapOf(
             "name" to name,
-            "parameters" to parameters.render(),
+            "parameters" to typedParameters,
             "returnValues" to returnValues.render(),
             "body" to bodyUsed?.render(),
             "type" to type2String(type)
@@ -451,8 +478,20 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun Transition.renderSelf(): RenderResult {
+        val typedParameters = parameters.filterIsInstance<IdentifierExpression>()
+            .map {
+                renderTemplate(
+                    "parameterExpression",
+                    mapOf(
+                        "name" to it.name,
+                        "type" to type2String(it.type)
+                    )
+                )
+            }
+
         val map = mapOf(
             "name" to name,
+            "parameters" to typedParameters,
             "body" to body.render()
         )
 
@@ -471,7 +510,21 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             is TypeString -> "String"
             is TypeVoid -> "void"
             is TypeFunction -> "BRelation"
-            is TypeSet -> "Set<${type2String(type.type)}>"
+            is TypeSet -> "Set<${nullableType2String(type.type)}>"
+            is TypeSequence -> "BSequence"
+            else -> throw UnknownTypeException(type::class.simpleName!!)
+        }
+    }
+
+    private fun nullableType2String(type: Type): String {
+        return when (type) {
+            is TypeBoolean -> "Boolean"
+            is TypeInteger -> "Integer"
+            is TypeNatural -> "Integer"
+            is TypeReal -> "Double"
+            is TypeString -> "String"
+            is TypeFunction -> "BRelation"
+            is TypeSet -> "Set<${nullableType2String(type.type)}>"
             is TypeSequence -> "BSequence"
             else -> throw UnknownTypeException(type::class.simpleName!!)
         }
@@ -488,6 +541,14 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             BinaryPredicateOperator.MEMBER -> "instanceof"
             BinaryPredicateOperator.NOT_MEMBER -> "notmember(java)"
             BinaryPredicateOperator.SUBSET -> "subset(java)"
+        }
+    }
+
+    override fun operator2String(operator: BinaryCollectionOperator): String {
+        return when (operator) {
+            BinaryCollectionOperator.INTERSECTION -> "BTypes.intersection"
+            BinaryCollectionOperator.SUBTRACTION -> "BTypes.subtraction"
+            BinaryCollectionOperator.UNION -> "BTypes.union"
         }
     }
 
