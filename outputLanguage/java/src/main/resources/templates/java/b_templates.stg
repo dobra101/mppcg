@@ -1,6 +1,4 @@
 machine(name, parameters, constraints, sets, constants, concrete_constants, properties, definitions, variables, concrete_variables, initialization, invariant, assertions, operations, transitions) ::= <<
-import java.util.Set;
-
 public class <name> {
     <parameters>
     <constraints>
@@ -89,7 +87,7 @@ E: <expression>
 >>
 
 callFunction(expression, parameters) ::= <<
-<expression>[<parameters>]
+<expression>.get(<parameters>)
 >>
 
 binaryFunctionExpression(left, right, operator) ::= <<

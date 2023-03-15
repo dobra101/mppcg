@@ -23,7 +23,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
 
     /* ---------- EXPRESSIONS ---------- */
     override fun AnonymousSetCollectionNode.renderSelf(): RenderResult {
-        val map = mapOf(
+        val map = mutableMapOf(
             "elements" to elements.render()
         )
 
@@ -180,11 +180,24 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
 
     /* ---------- SUBSTITUTIONS ---------- */
     override fun AssignSubstitution.renderSelf(): RenderResult {
+        fun renderAnonymousSetAsRelation(set: AnonymousSetCollectionNode): RenderResult {
+            val map = mutableMapOf(
+                "elements" to set.elements.render()
+            )
+
+            return RenderResult(renderTemplate("anonymousSetAsRelation", map))
+        }
+
         if (optimize) optimizer.renderOptimized(this)?.let { return it }
 
+        val rhs = if (right is AnonymousSetCollectionNode && left.type is TypeFunction) {
+            renderAnonymousSetAsRelation(right as AnonymousSetCollectionNode)
+        } else {
+            right.render()
+        }
         val map = mapOf(
             "identifier" to (left as IdentifierExpression).render(),
-            "rhs" to right.render()
+            "rhs" to rhs
         )
 
         return RenderResult(renderTemplate(map))
@@ -496,15 +509,15 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         if (type == null) throw InvalidTypeException("Null as type found")
         return when (type) {
             is TypeAnonymousCollection -> "anonymous type"
-            is TypeBoolean -> "boolean"
+            is TypeBoolean -> "Boolean"
             is TypeCollection -> if (type.type == CollectionType.Enum) type.name.capitalize() else type.name
-            is TypeInteger -> "int"
-            is TypeNatural -> "int"
-            is TypeReal -> "double"
+            is TypeInteger -> "Integer"
+            is TypeNatural -> "Integer"
+            is TypeReal -> "Double"
             is TypeString -> "String"
             is TypeVoid -> "void"
             is TypeFunction -> "BRelation"
-            is TypeSet -> "Set<${nullableType2String(type.type)}>"
+            is TypeSet -> "BSet<${nullableType2String(type.type)}>"
             is TypeSequence -> "BSequence"
             is TypeCouple -> "BCouple"
             else -> throw UnknownTypeException(type::class.simpleName!!)
@@ -519,7 +532,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             is TypeReal -> "Double"
             is TypeString -> "String"
             is TypeFunction -> "BRelation"
-            is TypeSet -> "Set<${nullableType2String(type.type)}>"
+            is TypeSet -> "BSet<${nullableType2String(type.type)}>"
             is TypeSequence -> "BSequence"
             is TypeCouple -> "BCouple"
             else -> throw UnknownTypeException(type::class.simpleName!!)

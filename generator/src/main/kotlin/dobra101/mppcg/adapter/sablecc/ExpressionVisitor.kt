@@ -132,6 +132,10 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseATotalFunctionExpression(node: ATotalFunctionExpression) {
+        if (node.parent() is AMemberPredicate && AbstractVisitor.result is Expression) {
+            // is type info
+            (AbstractVisitor.result as Expression).type = TypeFunction(FunctionType.TOTAL)
+        }
         result = Function(
             left = node.left.convert()!!.setParameterIfCollection(),
             right = node.right.convert()!!.setParameterIfCollection(),
@@ -141,6 +145,10 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseAPartialFunctionExpression(node: APartialFunctionExpression) {
+        if (node.parent() is AMemberPredicate && AbstractVisitor.result is Expression) {
+            // is type info
+            (AbstractVisitor.result as Expression).type = TypeFunction(FunctionType.PARTIAL)
+        }
         result = Function(
             left = node.left.convert()!!.setParameterIfCollection(),
             right = node.right.convert()!!.setParameterIfCollection(),
@@ -268,12 +276,7 @@ class ExpressionVisitor : AbstractVisitor() {
 
     override fun caseABoolSetExpression(node: ABoolSetExpression) {
         trySetPreviousResultType(TypeBoolean())
-        result = AnonymousSetCollectionNode(
-            listOf(
-                ValueExpression("", TypeBoolean(BooleanValue.TRUE)),
-                ValueExpression("", TypeBoolean(BooleanValue.FALSE))
-            )
-        )
+        result = InfiniteSet(TypeBoolean())
     }
 
     override fun caseAStringSetExpression(node: AStringSetExpression) {
@@ -418,9 +421,11 @@ class ExpressionVisitor : AbstractVisitor() {
             UnaryCollectionOperator.POW
         )
 
+        val collection = (result as UnaryCollectionExpression).collection
+        val isOneDimensional = collection is InfiniteSet
         if (node.parent() is AMemberPredicate && resultBefore is Expression) {
             // is type info
-            resultBefore.type = TypeSet(result!!.type!!) // TODO: can be anything
+            resultBefore.type = if (isOneDimensional) TypeSet((collection as InfiniteSet).setType) else TypeFunction(FunctionType.PARTIAL)
         }
     }
 

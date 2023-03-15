@@ -36,6 +36,8 @@ class SubstitutionVisitor : AbstractVisitor() {
             if (assign.left.type!!::class != rightType::class) {
                 when {
                     assign.left.type is TypeNumber && rightType is TypeInteger -> {}
+                    assign.left.type is TypeNumber && rightType is TypeNatural -> {}
+                    assign.left.type is TypeNumber && rightType is TypeNatural1 -> {}
                     assign.left.type is TypeAnonymousCollection && rightType is TypeCollection && assign.left.type == rightType -> {}
                     assign.right.type is TypeAnonymousCollection -> {}
                     rightType is TypeSequence -> {} // TODO: fix

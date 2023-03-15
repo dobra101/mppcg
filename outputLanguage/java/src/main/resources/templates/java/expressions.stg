@@ -1,5 +1,9 @@
 anonymousSetCollectionExpression(elements) ::= <<
-Set.of(<elements; separator=", ">)
+new BSet(<elements; separator=", ">)
+>>
+
+anonymousSetAsRelation(elements) ::= <<
+new BRelation(<elements; separator=", ">)
 >>
 
 binaryExpression(lhs, rhs, operator) ::= <<
