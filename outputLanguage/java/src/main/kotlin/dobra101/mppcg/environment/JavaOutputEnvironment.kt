@@ -131,7 +131,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             val lhs = left.render()
             val map = mapOf(
                 "lhs" to lhs,
-                "rhs" to "(${type2String(right.type)})${lhs.rendered}",
+                "rhs" to "(${type2String((right as InfiniteSet).setType)})${lhs.rendered}",
                 "operator" to operator2String(BinaryPredicateOperator.EQUAL)
             )
             return RenderResult(renderTemplate(map))
@@ -139,13 +139,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
 
         // TODO: refactor
         val lhs = left.render()
-        val cast =
-            if ((right is UnaryCollectionExpression)
-                && (right as UnaryCollectionExpression).operator == UnaryCollectionOperator.POW) {
-                "(Set<${nullableType2String(right.type!!)}>)"
-            } else {
-                "(${type2String(right.type)})"
-            }
+        val cast = "(${type2String(right.type)})"
         val map = mapOf(
             "lhs" to lhs,
             "rhs" to "$cast${lhs.rendered}",
@@ -512,6 +506,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             is TypeFunction -> "BRelation"
             is TypeSet -> "Set<${nullableType2String(type.type)}>"
             is TypeSequence -> "BSequence"
+            is TypeCouple -> "BCouple"
             else -> throw UnknownTypeException(type::class.simpleName!!)
         }
     }
@@ -526,6 +521,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             is TypeFunction -> "BRelation"
             is TypeSet -> "Set<${nullableType2String(type.type)}>"
             is TypeSequence -> "BSequence"
+            is TypeCouple -> "BCouple"
             else -> throw UnknownTypeException(type::class.simpleName!!)
         }
     }

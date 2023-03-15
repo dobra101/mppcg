@@ -1,12 +1,13 @@
 package dobra101.mppcg.node.expression
 
+import dobra101.mppcg.adapter.sablecc.machineVisitor
 import dobra101.mppcg.node.*
 
 data class BinaryExpression(
     val left: Expression,
     val right: Expression,
     val operator: BinaryExpressionOperator
-) : Expression(getType(left, right), "binaryExpression")
+) : Expression(getType(left, right, operator), "binaryExpression")
 
 enum class BinaryExpressionOperator {
     ADD,
@@ -17,9 +18,19 @@ enum class BinaryExpressionOperator {
 }
 
 // TODO: replace by type inference
-private fun getType(left: Expression, right: Expression): Type? {
-    if (left.type == null) return right.type
-    if (right.type == null) return left.type
+private fun getType(left: Expression, right: Expression, operator: BinaryExpressionOperator): Type? {
+    if (operator == BinaryExpressionOperator.MULT && (left.type is TypeSet || right.type is TypeSet)) {
+        return TypeCouple()
+    }
+
+    if (left.type == null) {
+        machineVisitor.setTypeIfKnown(left, right.type)
+        return right.type
+    }
+    if (right.type == null) {
+        machineVisitor.setTypeIfKnown(right, left.type)
+        return left.type
+    }
 
     // number type
     if (left.type is TypeReal || right.type is TypeReal) return TypeReal()

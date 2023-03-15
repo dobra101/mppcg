@@ -20,6 +20,7 @@ class OperationVisitor : AbstractVisitor() {
         machineVisitor.knownInScope = mutableListOf()
         returnValues = node.returnValues.convert()
         parameters = node.parameters.convert()
+        machineVisitor.knownInScope.addAll(parameters)
         operationType = TypeVoid()
 
         // TODO: when more than one name?

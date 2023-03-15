@@ -40,7 +40,6 @@ class SubstitutionVisitor : AbstractVisitor() {
                     assign.right.type is TypeAnonymousCollection -> {}
                     rightType is TypeSequence -> {} // TODO: fix
                     else -> {
-
                         println(assign)
                         throw InvalidTypeException("Types ${assign.left.type} and $rightType do not match.")
                     }

@@ -2,11 +2,11 @@ package dobra101.mppcg.adapter.sablecc
 
 import de.be4.classicalb.core.parser.node.*
 import dobra101.mppcg.node.ClassVariables
+import dobra101.mppcg.node.Type
 import dobra101.mppcg.node.b.*
 import dobra101.mppcg.node.collection.CollectionNode
 import dobra101.mppcg.node.expression.Expression
 import dobra101.mppcg.node.expression.IdentifierExpression
-import dobra101.mppcg.node.expression.ValueExpression
 import dobra101.mppcg.node.predicate.BinaryPredicate
 import dobra101.mppcg.node.predicate.BinaryPredicateOperator
 import dobra101.mppcg.node.predicate.Predicate
@@ -30,6 +30,13 @@ class MachineVisitor : AbstractVisitor() {
     private var operations: List<Operation> = emptyList()
 
     var knownInScope: MutableList<Expression> = mutableListOf()
+
+    fun setTypeIfKnown(expr: Expression, type: Type?) {
+        val idx = knownInScope.indexOf(expr)
+        if (idx < 0) return
+        expr.type = type
+        knownInScope[idx].type = type
+    }
 
     // TODO: not as function?
     fun knownIdentifier(): Set<IdentifierExpression> {
@@ -71,7 +78,13 @@ class MachineVisitor : AbstractVisitor() {
                 val cc = concreteConstants.find { cc -> (cc as? IdentifierExpression)?.name == predicate.left.name }
                 if (cc != null) {
                     concreteConstants.remove(cc)
-                    concreteConstants.add(ConcreteIdentifierExpression(predicate.left.name, value = predicate.right, type = cc.type))
+                    concreteConstants.add(
+                        ConcreteIdentifierExpression(
+                            predicate.left.name,
+                            value = predicate.right,
+                            type = cc.type
+                        )
+                    )
                 }
             }
         }

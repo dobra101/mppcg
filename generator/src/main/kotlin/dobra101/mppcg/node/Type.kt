@@ -67,7 +67,16 @@ class TypeAnonymousCollection(val type: CollectionType) : Type {
 class TypeFunction(val type: FunctionType) : Type
 
 // TODO: input language does not need to specify type
-class TypeSet(val type: Type) : Type
+class TypeSet(val type: Type) : Type {
+    override fun equals(other: Any?): Boolean {
+        if (other is TypeSet) return type == other.type
+        return false
+    }
+
+    override fun hashCode(): Int {
+        return Objects.hash(type)
+    }
+}
 
 class TypeInterval(val type: TypeNumber) : Type
 

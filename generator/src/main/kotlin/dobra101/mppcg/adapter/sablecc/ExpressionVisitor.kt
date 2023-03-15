@@ -156,7 +156,7 @@ class ExpressionVisitor : AbstractVisitor() {
     override fun caseAIntegerSetExpression(node: AIntegerSetExpression) {
         if (node.parent() is AMemberPredicate && AbstractVisitor.result is Expression) {
             // is type info
-            (AbstractVisitor.result as Expression).type = TypeInteger()
+            (AbstractVisitor.result as Expression).type = TypeSet(TypeInteger())
         }
         result = InfiniteSet(TypeInteger())
     }
@@ -164,7 +164,7 @@ class ExpressionVisitor : AbstractVisitor() {
     override fun caseANaturalSetExpression(node: ANaturalSetExpression) {
         if (node.parent() is AMemberPredicate && AbstractVisitor.result is Expression) {
             // is type info
-            (AbstractVisitor.result as Expression).type = TypeNatural()
+            (AbstractVisitor.result as Expression).type = TypeSet(TypeNatural())
         }
         result = InfiniteSet(TypeNatural())
     }
@@ -411,14 +411,17 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseAPowSubsetExpression(node: APowSubsetExpression) {
-        if (node.parent() is AMemberPredicate && AbstractVisitor.result is Expression) {
-            // is type info
-            (AbstractVisitor.result as Expression).type = TypeSet(type = TypeInteger()) // TODO: can be anything
-        }
+        val resultBefore = AbstractVisitor.result
+
         result = UnaryCollectionExpression(
             node.expression.convert()!!.setParameterIfCollection(),
             UnaryCollectionOperator.POW
         )
+
+        if (node.parent() is AMemberPredicate && resultBefore is Expression) {
+            // is type info
+            resultBefore.type = TypeSet(result!!.type!!) // TODO: can be anything
+        }
     }
 
     override fun caseAPow1SubsetExpression(node: APow1SubsetExpression) {
@@ -867,14 +870,8 @@ class ExpressionVisitor : AbstractVisitor() {
         if (AbstractVisitor.result !is Expression) return
 
         val expr = AbstractVisitor.result as Expression
-        if ((expr.type == null
-                    || expr.type == type
-                    || expr.type is TypeAnonymousCollection
-                    || expr.type is TypeSet)
-        ) {
+        if ((expr.type == null || expr.type == type || expr.type is TypeAnonymousCollection)) {
             (AbstractVisitor.result as Expression).type = type
-            return
         }
-        throw InvalidTypeException("Cannot reassign type of ${AbstractVisitor.result} to $type")
     }
 }
