@@ -1,13 +1,14 @@
 anonymousSetCollectionExpression(elements) ::= <<
-new BSet(<elements; separator=", ">)
+new BSet\<\>(<elements; separator=", ">)
 >>
 
 anonymousSetAsRelation(elements) ::= <<
-new BRelation(<elements; separator=", ">)
+new BRelation\<\>(<elements; separator=", ">)
 >>
 
-binaryExpression(lhs, rhs, operator) ::= <<
-<lhs> <operator> <rhs>
+binaryExpression(lhs, rhs, operator, customOperator) ::= <<
+<if(customOperator)><lhs>.<operator>(<rhs>)<else>
+<lhs> <operator> <rhs><endif>
 >>
 
 unaryExpression(value, operator, parenthesis) ::= <<
@@ -20,7 +21,7 @@ unaryCollectionExpression(collection, operator) ::= <<
 >>
 
 binaryCollectionExpression(lhs, rhs, operator) ::= <<
-<operator>(<lhs>, <rhs>)
+<lhs>.<operator>(<rhs>)
 >>
 
 enumCollectionExpression(name, elements) ::= <<

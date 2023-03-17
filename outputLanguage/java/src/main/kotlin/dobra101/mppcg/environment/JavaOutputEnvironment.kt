@@ -34,7 +34,8 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         val map = mapOf(
             "lhs" to left.render(),
             "rhs" to right.render(),
-            "operator" to operator2String(operator)
+            "operator" to if (left.type is TypeNumber) operator2String(operator) else customOperator2String(operator),
+            "customOperator" to (left.type !is TypeNumber)
         )
 
         return RenderResult(renderTemplate(map))
@@ -102,13 +103,13 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             val map = mapOf(
                 "lhs" to left.render(),
                 "operator" to operator2String(operator),
-                "rhs" to right.render()
+                "rhs" to right.render(),
+                "isMethodCall" to (operator == BinaryPredicateOperator.SUBSET)
             )
 
             return RenderResult(renderTemplate(map))
         }
 
-        // Predicate is a type check
         if (right is EnumCollectionNode) {
             // TODO: neglect if types already match
             val map = mapOf(
@@ -127,25 +128,8 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             return RenderResult(renderTemplate("binaryPredicateMember", map))
         }
 
-        if (right is InfiniteSet) {
-            val lhs = left.render()
-            val map = mapOf(
-                "lhs" to lhs,
-                "rhs" to "(${type2String((right as InfiniteSet).setType)})${lhs.rendered}",
-                "operator" to operator2String(BinaryPredicateOperator.EQUAL)
-            )
-            return RenderResult(renderTemplate(map))
-        }
-
-        // TODO: refactor
-        val lhs = left.render()
-        val cast = "(${type2String(right.type)})"
-        val map = mapOf(
-            "lhs" to lhs,
-            "rhs" to "$cast${lhs.rendered}",
-            "operator" to operator2String(BinaryPredicateOperator.EQUAL)
-        )
-        return RenderResult(renderTemplate(map))
+        // type checks can be ignored in java
+        return RenderResult("")
     }
 
     override fun BinaryLogicPredicate.renderSelf(): RenderResult {
@@ -383,9 +367,12 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     // HINT: SAME FOR JAVA AND PROLOG
     override fun Invariant.renderSelf(): RenderResult {
         val renderedPredicates = List(predicates.size) { idx ->
+            val body = predicates[idx].render()
+            val ignoreTypeCheck = body.info.isEmpty()
             val map = mapOf(
-                "body" to predicates[idx].render(),
-                "idx" to idx
+                "body" to body,
+                "idx" to idx,
+                "ignoreTypeCheck" to ignoreTypeCheck
             )
             renderTemplate(map)
         }
@@ -516,14 +503,27 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             is TypeReal -> "Double"
             is TypeString -> "String"
             is TypeVoid -> "void"
-            is TypeFunction -> "BRelation"
+            is TypeFunction -> {
+                if (type.from == null || type.to == null) {
+                    "BRelation<>"
+                } else {
+                    "BRelation<${nullableType2String(type.from!!)}, ${nullableType2String(type.to!!)}>"
+                }
+            }
             is TypeSet -> "BSet<${nullableType2String(type.type)}>"
             is TypeSequence -> "BSequence"
-            is TypeCouple -> "BCouple"
+            is TypeCouple -> {
+                if (type.from == null || type.to == null) {
+                    "BCouple<>"
+                } else {
+                    "BCouple<${nullableType2String(type.from!!)}, ${nullableType2String(type.to!!)}>"
+                }
+            }
             else -> throw UnknownTypeException(type::class.simpleName!!)
         }
     }
 
+    // TODO: still needed?
     private fun nullableType2String(type: Type): String {
         return when (type) {
             is TypeBoolean -> "Boolean"
@@ -531,10 +531,22 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             is TypeNatural -> "Integer"
             is TypeReal -> "Double"
             is TypeString -> "String"
-            is TypeFunction -> "BRelation"
+            is TypeFunction -> {
+                if (type.from == null || type.to == null) {
+                    "BRelation<>"
+                } else {
+                    "BRelation<${nullableType2String(type.from!!)}, ${nullableType2String(type.to!!)}>"
+                }
+            }
             is TypeSet -> "BSet<${nullableType2String(type.type)}>"
             is TypeSequence -> "BSequence"
-            is TypeCouple -> "BCouple"
+            is TypeCouple -> {
+                if (type.from == null || type.to == null) {
+                    "BCouple<>"
+                } else {
+                    "BCouple<${nullableType2String(type.from!!)}, ${nullableType2String(type.to!!)}>"
+                }
+            }
             else -> throw UnknownTypeException(type::class.simpleName!!)
         }
     }
@@ -549,15 +561,26 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             BinaryPredicateOperator.NOT_EQUAL -> "!="
             BinaryPredicateOperator.MEMBER -> "instanceof"
             BinaryPredicateOperator.NOT_MEMBER -> "notmember(java)"
-            BinaryPredicateOperator.SUBSET -> "subset(java)"
+            BinaryPredicateOperator.SUBSET -> "containsAll"
         }
     }
 
     override fun operator2String(operator: BinaryCollectionOperator): String {
         return when (operator) {
-            BinaryCollectionOperator.INTERSECTION -> "BTypes.intersection"
-            BinaryCollectionOperator.SUBTRACTION -> "BTypes.subtraction"
-            BinaryCollectionOperator.UNION -> "BTypes.union"
+            BinaryCollectionOperator.INTERSECTION -> "intersection"
+            BinaryCollectionOperator.SUBTRACTION -> "subtraction"
+            BinaryCollectionOperator.UNION -> "union"
+        }
+    }
+
+
+    private fun customOperator2String(operator: BinaryExpressionOperator): String {
+        return when (operator) {
+            BinaryExpressionOperator.ADD -> "add"
+            BinaryExpressionOperator.MINUS -> "minus"
+            BinaryExpressionOperator.MULT -> "mult"
+            BinaryExpressionOperator.DIV -> "div"
+            BinaryExpressionOperator.MOD -> "mod"
         }
     }
 

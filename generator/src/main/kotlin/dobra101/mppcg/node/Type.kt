@@ -64,7 +64,7 @@ class TypeAnonymousCollection(val type: CollectionType) : Type {
     }
 }
 
-class TypeFunction(val type: FunctionType) : Type
+data class TypeFunction(val type: FunctionType, val from: Type?, val to: Type?) : Type
 
 // TODO: input language does not need to specify type
 class TypeSet(val type: Type) : Type {
@@ -80,7 +80,7 @@ class TypeSet(val type: Type) : Type {
 
 class TypeInterval(val type: TypeNumber) : Type
 
-class TypeCouple : Type
+class TypeCouple(val from: Type?, val to: Type?) : Type
 
 class TypeSequence(val type: Type?) : Type
 

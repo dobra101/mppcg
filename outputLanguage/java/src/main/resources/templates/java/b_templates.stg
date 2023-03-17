@@ -41,9 +41,11 @@ function(left, right) ::= <<
 <left>[<right>]
 >>
 
-invariant(body, idx) ::= <<
+invariant(body, idx, ignoreTypeCheck) ::= <<
 public boolean check_inv_<idx>() {
-    return <body>;
+    <if(ignoreTypeCheck)>// ignore type check
+return true;
+    <else>return <body>;<endif>
 }
 >>
 
@@ -95,7 +97,7 @@ binaryFunctionExpression(left, right, operator) ::= <<
 >>
 
 couple(from, to) ::= <<
-new BCouple(<from>, <to>)
+new BCouple\<\>(<from>, <to>)
 >>
 
 sequence(elements) ::= <<

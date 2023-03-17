@@ -74,87 +74,100 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseATotalInjectionExpression(node: ATotalInjectionExpression) {
-        if (node.parent() is AMemberPredicate && AbstractVisitor.result is Expression) {
-            // is type info
-            (AbstractVisitor.result as Expression).type = TypeFunction(FunctionType.TOTAL)
+        setTypeOfPrevious(node) {
+            result = Function(
+                left = node.left.convert()!!.setParameterIfCollection(),
+                right = node.right.convert()!!.setParameterIfCollection(),
+                functionType = FunctionType.TOTAL,
+                mapType = FunctionMapType.INJECTION
+            )
         }
-        result = Function(
-            left = node.left.convert()!!.setParameterIfCollection(),
-            right = node.right.convert()!!.setParameterIfCollection(),
-            type = TypeFunction(FunctionType.TOTAL),
-            mapType = FunctionMapType.INJECTION
-        )
     }
 
     override fun caseAPartialInjectionExpression(node: APartialInjectionExpression) {
-        result = Function(
-            left = node.left.convert()!!.setParameterIfCollection(),
-            right = node.right.convert()!!.setParameterIfCollection(),
-            type = TypeFunction(FunctionType.PARTIAL),
-            mapType = FunctionMapType.INJECTION
-        )
+        setTypeOfPrevious(node) {
+            result = Function(
+                left = node.left.convert()!!.setParameterIfCollection(),
+                right = node.right.convert()!!.setParameterIfCollection(),
+                functionType = FunctionType.PARTIAL,
+                mapType = FunctionMapType.INJECTION
+            )
+        }
     }
 
     override fun caseATotalBijectionExpression(node: ATotalBijectionExpression) {
-        result = Function(
-            left = node.left.convert()!!.setParameterIfCollection(),
-            right = node.right.convert()!!.setParameterIfCollection(),
-            type = TypeFunction(FunctionType.TOTAL),
-            mapType = FunctionMapType.BIJECTION
-        )
+        setTypeOfPrevious(node) {
+            result = Function(
+                left = node.left.convert()!!.setParameterIfCollection(),
+                right = node.right.convert()!!.setParameterIfCollection(),
+                functionType = FunctionType.TOTAL,
+                mapType = FunctionMapType.BIJECTION
+            )
+        }
     }
 
     override fun caseAPartialBijectionExpression(node: APartialBijectionExpression) {
-        result = Function(
-            left = node.left.convert()!!.setParameterIfCollection(),
-            right = node.right.convert()!!.setParameterIfCollection(),
-            type = TypeFunction(FunctionType.PARTIAL),
-            mapType = FunctionMapType.BIJECTION
-        )
+        setTypeOfPrevious(node) {
+            result = Function(
+                left = node.left.convert()!!.setParameterIfCollection(),
+                right = node.right.convert()!!.setParameterIfCollection(),
+                functionType = FunctionType.PARTIAL,
+                mapType = FunctionMapType.BIJECTION
+            )
+        }
     }
 
     override fun caseATotalSurjectionExpression(node: ATotalSurjectionExpression) {
-        result = Function(
-            left = node.left.convert()!!.setParameterIfCollection(),
-            right = node.right.convert()!!.setParameterIfCollection(),
-            type = TypeFunction(FunctionType.TOTAL),
-            mapType = FunctionMapType.SURJECTION
-        )
+        setTypeOfPrevious(node) {
+            result = Function(
+                left = node.left.convert()!!.setParameterIfCollection(),
+                right = node.right.convert()!!.setParameterIfCollection(),
+                functionType = FunctionType.TOTAL,
+                mapType = FunctionMapType.SURJECTION
+            )
+        }
     }
 
     override fun caseAPartialSurjectionExpression(node: APartialSurjectionExpression) {
-        result = Function(
-            left = node.left.convert()!!.setParameterIfCollection(),
-            right = node.right.convert()!!.setParameterIfCollection(),
-            type = TypeFunction(FunctionType.PARTIAL),
-            mapType = FunctionMapType.SURJECTION
-        )
+        setTypeOfPrevious(node) {
+            result = Function(
+                left = node.left.convert()!!.setParameterIfCollection(),
+                right = node.right.convert()!!.setParameterIfCollection(),
+                functionType = FunctionType.PARTIAL,
+                mapType = FunctionMapType.SURJECTION
+            )
+        }
     }
 
     override fun caseATotalFunctionExpression(node: ATotalFunctionExpression) {
-        if (node.parent() is AMemberPredicate && AbstractVisitor.result is Expression) {
-            // is type info
-            (AbstractVisitor.result as Expression).type = TypeFunction(FunctionType.TOTAL)
+        setTypeOfPrevious(node) {
+            result = Function(
+                left = node.left.convert()!!.setParameterIfCollection(),
+                right = node.right.convert()!!.setParameterIfCollection(),
+                functionType = FunctionType.TOTAL,
+                mapType = FunctionMapType.FUNCTION
+            )
         }
-        result = Function(
-            left = node.left.convert()!!.setParameterIfCollection(),
-            right = node.right.convert()!!.setParameterIfCollection(),
-            type = TypeFunction(FunctionType.TOTAL),
-            mapType = FunctionMapType.FUNCTION
-        )
     }
 
     override fun caseAPartialFunctionExpression(node: APartialFunctionExpression) {
-        if (node.parent() is AMemberPredicate && AbstractVisitor.result is Expression) {
-            // is type info
-            (AbstractVisitor.result as Expression).type = TypeFunction(FunctionType.PARTIAL)
+        setTypeOfPrevious(node) {
+            result = Function(
+                left = node.left.convert()!!.setParameterIfCollection(),
+                right = node.right.convert()!!.setParameterIfCollection(),
+                functionType = FunctionType.PARTIAL,
+                mapType = FunctionMapType.FUNCTION
+            )
         }
-        result = Function(
-            left = node.left.convert()!!.setParameterIfCollection(),
-            right = node.right.convert()!!.setParameterIfCollection(),
-            type = TypeFunction(FunctionType.PARTIAL),
-            mapType = FunctionMapType.FUNCTION
-        )
+    }
+
+    private fun setTypeOfPrevious(node: Node, block: () -> Unit) {
+        val resultBefore = AbstractVisitor.result
+        block()
+        if (node.parent() is AMemberPredicate && resultBefore is Expression) {
+            // is type info
+            resultBefore.type = result!!.type
+        }
     }
 
     override fun caseAIntervalExpression(node: AIntervalExpression) {
@@ -425,7 +438,11 @@ class ExpressionVisitor : AbstractVisitor() {
         val isOneDimensional = collection is InfiniteSet
         if (node.parent() is AMemberPredicate && resultBefore is Expression) {
             // is type info
-            resultBefore.type = if (isOneDimensional) TypeSet((collection as InfiniteSet).setType) else TypeFunction(FunctionType.PARTIAL)
+            resultBefore.type = if (isOneDimensional) TypeSet((collection as InfiniteSet).setType) else TypeFunction(
+                FunctionType.PARTIAL,
+                (collection.type as TypeCouple).from,
+                (collection.type as TypeCouple).to
+            )
         }
     }
 

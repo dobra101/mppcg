@@ -72,8 +72,8 @@ class ExecutionTestJava : ExecutionTest(Language.JAVA, "java.stg", ".java", runS
         }
 
         private fun compile(cp: String, vararg files: File) {
-            println("Compile: javac -cp $cp: ${files.joinToString(" ") { it.path }}")
-            val process: Process = Runtime.getRuntime().exec("javac -cp $cp: ${files.joinToString(" ") { it.path }}")
+            println("Compile: javac -Xlint:unchecked -cp $cp: ${files.joinToString(" ") { it.path }}")
+            val process: Process = Runtime.getRuntime().exec("javac -Xlint:unchecked -cp $cp: ${files.joinToString(" ") { it.path }}")
             process.waitFor()
             val error = process.errorReader().readText()
             process.errorReader().close()

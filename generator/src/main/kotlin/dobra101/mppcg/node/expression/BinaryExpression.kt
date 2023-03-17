@@ -20,7 +20,9 @@ enum class BinaryExpressionOperator {
 // TODO: replace by type inference
 private fun getType(left: Expression, right: Expression, operator: BinaryExpressionOperator): Type? {
     if (operator == BinaryExpressionOperator.MULT && (left.type is TypeSet || right.type is TypeSet)) {
-        return TypeCouple()
+        val leftType = (left.type as? TypeSet)?.type ?: left.type
+        val rightType = (right.type as? TypeSet)?.type ?: right.type
+        return TypeCouple(leftType, rightType)
     }
 
     if (left.type == null) {

@@ -1,8 +1,8 @@
-public class BCouple {
-    final Object left;
-    final Object right;
+public class BCouple<K, V> {
+    final K left;
+    final V right;
 
-    public BCouple(Object left, Object right) {
+    public BCouple(K left, V right) {
         this.left = left;
         this.right = right;
     }

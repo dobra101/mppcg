@@ -2,6 +2,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+@SuppressWarnings("unchecked")
 public class BSet<T> implements Set<T> {
     private final Set<T> entries;
 
@@ -9,8 +10,32 @@ public class BSet<T> implements Set<T> {
         this.entries = entries;
     }
 
+    @SuppressWarnings("unchecked")
+    public BSet(T... entries) {
+        this.entries = new HashSet<>();
+        this.entries.addAll(Arrays.asList(entries));
+    }
+
+    public BSet<T> union(BSet<T> other) {
+        Set<T> result = new HashSet<>(entries);
+        result.addAll(other.entries);
+        return new BSet<>(result);
+    }
+
     public int card() {
         return entries.size();
+    }
+
+    public BSet<T> plus(BSet<T> other) {
+        Set<T> result = new HashSet<>(entries);
+        result.addAll(other.entries);
+        return new BSet<>(result);
+    }
+
+    public BSet<T> minus(BSet<T> other) {
+        Set<T> result = new HashSet<>(entries);
+        result.removeAll(other.entries);
+        return new BSet<>(result);
     }
 
     @Override
@@ -93,4 +118,12 @@ public class BSet<T> implements Set<T> {
     public int hashCode() {
         return entries.hashCode();
     }
+
+    @Override
+    public String toString() {
+        // TODO: only for execTest
+        return entries.toString().replace("[", "{").replace("]", "}");
+    }
 }
+
+

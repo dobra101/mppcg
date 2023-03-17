@@ -2,21 +2,23 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-public class BRelation implements Set<BCouple> {
-    private final List<BCouple> entries;
+@SuppressWarnings("unchecked")
+public class BRelation<K, V> implements Set<BCouple<K, V>> {
+    private final List<BCouple<K, V>> entries;
 
-    public BRelation(List<BCouple> entries) {
+    public BRelation(List<BCouple<K, V>> entries) {
         this.entries = entries;
     }
 
-    public BRelation(BCouple... entries) {
+    @SafeVarargs
+    public BRelation(BCouple<K, V>... entries) {
         this.entries = new ArrayList<>();
         this.entries.addAll(Arrays.asList(entries));
     }
 
     public List<Object> image(BInterval interval) {
         List<Object> result = new ArrayList<>();
-        for (BCouple entry : entries) {
+        for (BCouple<K, V> entry : entries) {
             if (entry.left instanceof Integer && interval.contains((Integer) entry.left)) {
                 result.add(entry.right);
             }
@@ -28,20 +30,20 @@ public class BRelation implements Set<BCouple> {
         return entries.size();
     }
 
-    public BRelation forwardComposition(BRelation other) {
-        List<BCouple> composition = new ArrayList<>();
-        for (BCouple entry : entries) {
-            List<BCouple> list = other.entries.stream()
+    public BRelation<K, V> forwardComposition(BRelation<K, V> other) {
+        List<BCouple<K, V>> composition = new ArrayList<>();
+        for (BCouple<K, V> entry : entries) {
+            List<BCouple<K, V>> list = other.entries.stream()
                     .filter(c -> c.left == entry.right)
-                    .map(c -> new BCouple(entry.left, c.right))
+                    .map(c -> new BCouple<K, V>(entry.left, c.right))
                     .toList();
             composition.addAll(list);
         }
-        return new BRelation(composition);
+        return new BRelation<K, V>(composition);
     }
 
-    public Object get(Object key) {
-        for (BCouple entry : entries) {
+    public V get(K key) {
+        for (BCouple<K, V> entry : entries) {
             if (entry.left == key) return entry.right;
         }
         return null;
@@ -64,7 +66,7 @@ public class BRelation implements Set<BCouple> {
 
     @NotNull
     @Override
-    public Iterator<BCouple> iterator() {
+    public Iterator<BCouple<K, V>> iterator() {
         return entries.iterator();
     }
 
@@ -96,7 +98,7 @@ public class BRelation implements Set<BCouple> {
     }
 
     @Override
-    public boolean addAll(@NotNull final Collection<? extends BCouple> c) {
+    public boolean addAll(@NotNull final Collection<? extends BCouple<K, V>> c) {
         return entries.addAll(c);
     }
 

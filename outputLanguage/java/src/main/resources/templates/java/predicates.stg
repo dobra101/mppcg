@@ -1,5 +1,6 @@
-binaryPredicate(lhs, operator, rhs) ::= <<
-<lhs> <operator> <rhs>
+binaryPredicate(lhs, operator, rhs, isMethodCall) ::= <<
+<if(isMethodCall)><rhs>.<operator>(<lhs>)<else>
+<lhs> <operator> <rhs><endif>
 >>
 
 binaryPredicateMember(entry, set) ::= <<
