@@ -21,6 +21,7 @@ data class BinarySequenceExpression(
 // TODO: refactor
 private fun typeByOperator(sequence: Expression, operator: UnarySequenceExpressionOperator): Type? {
     return when (operator) {
+        UnarySequenceExpressionOperator.CONCAT,
         UnarySequenceExpressionOperator.REVERSE,
         UnarySequenceExpressionOperator.FRONT,
         UnarySequenceExpressionOperator.TAIL -> sequence.type
@@ -35,12 +36,14 @@ enum class UnarySequenceExpressionOperator : CustomMethodOperator {
     TAIL,
     FIRST,
     LAST,
-    REVERSE
+    REVERSE,
+    CONCAT
 }
 
 enum class BinarySequenceExpressionOperator : CustomMethodOperator {
     RESTRICT_FRONT,
     RESTRICT_TAIL,
     APPEND,
-    PREPEND
+    PREPEND,
+    CONCAT
 }

@@ -94,6 +94,7 @@ abstract class EnvironmentUtils {
             BinarySequenceExpressionOperator.RESTRICT_TAIL -> "restrict_tail"
             BinarySequenceExpressionOperator.APPEND -> "append"
             BinarySequenceExpressionOperator.PREPEND -> "prepend"
+            BinarySequenceExpressionOperator.CONCAT -> "concat"
         }
     }
 
@@ -104,6 +105,7 @@ abstract class EnvironmentUtils {
             UnarySequenceExpressionOperator.FIRST -> "first"
             UnarySequenceExpressionOperator.LAST -> "last"
             UnarySequenceExpressionOperator.REVERSE -> "reverse"
+            UnarySequenceExpressionOperator.CONCAT -> "concat"
         }
     }
 

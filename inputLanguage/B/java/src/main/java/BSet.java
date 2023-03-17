@@ -38,6 +38,28 @@ public class BSet<T> implements Set<T> {
         return new BSet<>(result);
     }
 
+    public BSequence concat() {
+        List<Object> result = new ArrayList<>();
+        List<BCouple<?, ?>> couples = new ArrayList<>((List<BCouple<?, ?>>) entries.stream().peek(entry -> {
+            if (!(entry instanceof BCouple<?, ?>)) {
+                throw new RuntimeException("Cannot concat elements of type " + entry.getClass());
+            }
+        }).toList());
+        couples.sort(new BCoupleComparator());
+
+        for (BCouple<?, ?> couple : couples) {
+            result.addAll((Collection<?>) couple.right);
+        }
+        return new BSequence(result);
+    }
+
+    private static class BCoupleComparator implements Comparator<BCouple<?, ?>> {
+        @Override
+        public int compare(final BCouple o1, final BCouple o2) {
+            return ((Integer) o1.left).compareTo((Integer) o2.left);
+        }
+    }
+
     @Override
     public int size() {
         return entries.size();

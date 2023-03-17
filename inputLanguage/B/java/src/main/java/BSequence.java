@@ -34,6 +34,12 @@ public class BSequence {
         return new BSequence(restricted);
     }
 
+    public BSequence concat(BSequence other) {
+        List<Object> result = new ArrayList<>(elements);
+        result.addAll(other.elements);
+        return new BSequence(result);
+    }
+
     @Override
     public String toString() {
         // TODO: only for execTest

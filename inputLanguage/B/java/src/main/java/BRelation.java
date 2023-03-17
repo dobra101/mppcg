@@ -1,6 +1,7 @@
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @SuppressWarnings("unchecked")
 public class BRelation<K, V> implements Set<BCouple<K, V>> {
@@ -26,6 +27,22 @@ public class BRelation<K, V> implements Set<BCouple<K, V>> {
         return result;
     }
 
+    public BSet<K> domain() {
+        return new BSet<>(
+                entries.stream()
+                        .map(c -> c.left)
+                        .collect(Collectors.toSet())
+        );
+    }
+
+    public BSet<V> range() {
+        return new BSet<>(
+                entries.stream()
+                        .map(c -> c.right)
+                        .collect(Collectors.toSet())
+        );
+    }
+
     public int card() {
         return entries.size();
     }
@@ -44,7 +61,9 @@ public class BRelation<K, V> implements Set<BCouple<K, V>> {
 
     public V get(K key) {
         for (BCouple<K, V> entry : entries) {
-            if (entry.left == key) return entry.right;
+            if (entry.left == key) {
+                return entry.right;
+            }
         }
         return null;
     }

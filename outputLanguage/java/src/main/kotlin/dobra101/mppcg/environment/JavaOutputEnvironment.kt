@@ -361,7 +361,11 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun UnaryFunctionExpression.renderSelf(): RenderResult {
-        TODO("Not yet implemented")
+        val map = mapOf(
+            "expression" to expression.render(),
+            "operator" to operator2String(operator)
+        )
+        return RenderResult(renderTemplate(map))
     }
 
     // HINT: SAME FOR JAVA AND PROLOG

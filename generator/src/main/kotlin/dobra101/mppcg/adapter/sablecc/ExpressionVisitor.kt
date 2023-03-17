@@ -515,7 +515,7 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseAIdentityExpression(node: AIdentityExpression) {
-        result = node.expression.convert()!! // TODO: thats it?
+        result = node.expression.convert()!! // TODO: that's it?
     }
 
     override fun caseAEventBIdentityExpression(node: AEventBIdentityExpression) {
@@ -718,7 +718,11 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseAConcatExpression(node: AConcatExpression) {
-        TODO("Not implemented ${node::class.simpleName}")
+        result = BinarySequenceExpression(
+            node.left.convert()!!,
+            node.right.convert()!!,
+            BinarySequenceExpressionOperator.CONCAT
+        )
     }
 
     override fun caseAInsertFrontExpression(node: AInsertFrontExpression) {
@@ -754,13 +758,12 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseAGeneralConcatExpression(node: AGeneralConcatExpression) {
-        println(node.expression.convert())
-        TODO()
-//        result = BinarySequenceExpression(
-//            node.expression
-//            node.left.convert()!!,
-//            node.right.convert()!!,
-//            BinarySequenceExpressionOperator.CONCAT
+        val anonymousSet = node.expression.convert()!!
+        if (anonymousSet !is AnonymousSetCollectionNode) {
+            throw VisitorException("Unknown set ${anonymousSet::class} for general concat.")
+        }
+
+        result = UnarySequenceExpression(node.expression.convert()!!, UnarySequenceExpressionOperator.CONCAT)
     }
 
     override fun caseADefinitionExpression(node: ADefinitionExpression) {

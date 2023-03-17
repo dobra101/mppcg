@@ -92,6 +92,10 @@ callFunction(expression, parameters) ::= <<
 <expression>.get(<parameters>)
 >>
 
+unaryFunctionExpression(expression, operator) ::= <<
+<expression>.<operator>()
+>>
+
 binaryFunctionExpression(left, right, operator) ::= <<
 <left>.<operator>(<right>)
 >>
@@ -106,4 +110,8 @@ new BSequence(<elements; separator=", ">)
 
 binarySequenceExpression(left, right, operator) ::= <<
 <left>.<operator>(<right>)
+>>
+
+unarySequenceExpression(sequence, operator) ::= <<
+<sequence>.<operator>()
 >>

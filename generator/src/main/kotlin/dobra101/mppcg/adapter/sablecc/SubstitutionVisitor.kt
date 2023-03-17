@@ -39,6 +39,7 @@ class SubstitutionVisitor : AbstractVisitor() {
                     assign.left.type is TypeNumber && rightType is TypeNatural -> {}
                     assign.left.type is TypeNumber && rightType is TypeNatural1 -> {}
                     assign.left.type is TypeAnonymousCollection && rightType is TypeCollection && assign.left.type == rightType -> {}
+                    assign.left.type is TypeSet && rightType is TypeCollection -> {}
                     assign.right.type is TypeAnonymousCollection -> {}
                     rightType is TypeSequence -> {} // TODO: fix
                     else -> {
