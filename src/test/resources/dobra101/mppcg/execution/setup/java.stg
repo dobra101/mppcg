@@ -3,7 +3,11 @@ public class <name>Setup {
     public static void main(String[] args) {
         <name> testmachine = new <name>();
         <execution :{ it | testmachine.<it.method><if(!it.parameterized)>()<endif>;}; separator="\n">
-        <result :{ it | System.out.println("<it.method>=" + testmachine.<it.method><if(!it.propertyAccess)>()<endif>); }; separator="\n">
+        <result :{ it | System.out.println("<it>=" + testmachine.<it>);}; separator="\n">
     }
 }
+>>
+
+methodChain(chain) ::= <<
+<chain :{ it | <it.method><if(!it.propertyAccess)>()<endif>}; separator=".">
 >>

@@ -346,18 +346,12 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseASuccessorExpression(node: ASuccessorExpression) {
-        TODO("Not implemented ${node::class.simpleName}")
-//        result = UnaryExpression(
-//            UnaryExpressionOperator.SUCC
-//        )
+        throw VisitorException("Successor Expression should not be reachable")
+
     }
 
     override fun caseAPredecessorExpression(node: APredecessorExpression) {
-        TODO("Not implemented ${node::class.simpleName}")
-//        result = UnaryExpression(
-//            node.convert()!!,
-//            UnaryExpressionOperator.PRED
-//        )
+        throw VisitorException("Predecessor Expression should not be reachable")
     }
 
     override fun caseAMaxExpression(node: AMaxExpression) {
@@ -774,7 +768,19 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseAFunctionExpression(node: AFunctionExpression) {
-        result = CallFunctionExpression(node.identifier.convert()!!, node.parameters.convert())
+        result = when (node.identifier) {
+            is APredecessorExpression -> {
+                UnaryExpression(node.parameters[0].convert()!!, UnaryExpressionOperator.PRED)
+            }
+
+            is ASuccessorExpression -> {
+                UnaryExpression(node.parameters[0].convert()!!, UnaryExpressionOperator.SUCC)
+            }
+
+            else -> {
+                CallFunctionExpression(node.identifier.convert()!!, node.parameters.convert())
+            }
+        }
     }
 
     override fun caseATreeExpression(node: ATreeExpression) {

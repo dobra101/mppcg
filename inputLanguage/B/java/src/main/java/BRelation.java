@@ -43,6 +43,12 @@ public class BRelation<K, V> implements Set<BCouple<K, V>> {
         );
     }
 
+    public BRelation<K, V> overwrite(BRelation<K, V> other) {
+        List<BCouple<K, V>> result = new ArrayList<>(other.entries);
+        result.addAll(domainSubtraction(other.domain()));
+        return new BRelation<>(result);
+    }
+
     public BRelation<K, V> domainRestriction(BSet<K> restriction) {
         List<BCouple<K, V>> restricted = entries.stream()
                 .filter(couple -> restriction.contains(couple.left))

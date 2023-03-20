@@ -4,6 +4,7 @@ import dobra101.mppcg.Launcher
 import dobra101.mppcg.Parser
 import dobra101.mppcg.environment.EnvironmentException
 import dobra101.mppcg.environment.Language
+import io.kotest.assertions.errorCollectorContextElement
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.ExpectSpec
 import io.kotest.inspectors.forAll
@@ -73,7 +74,8 @@ class ExecutionTestJava : ExecutionTest(Language.JAVA, "java.stg", ".java", runS
 
         private fun compile(cp: String, vararg files: File) {
             println("Compile: javac -Xlint:unchecked -cp $cp: ${files.joinToString(" ") { it.path }}")
-            val process: Process = Runtime.getRuntime().exec("javac -Xlint:unchecked -cp $cp: ${files.joinToString(" ") { it.path }}")
+            val process: Process =
+                Runtime.getRuntime().exec("javac -Xlint:unchecked -cp $cp: ${files.joinToString(" ") { it.path }}")
             process.waitFor()
             val error = process.errorReader().readText()
             process.errorReader().close()
@@ -106,6 +108,18 @@ abstract class ExecutionTest(
     setupFileExtension: String,
     runSetup: (String, File, File) -> String
 ) : ExpectSpec({
+
+    // TODO: use
+    fun List<ExecOperation>.methodChains(): List<String> {
+        val setup = STGroupFile("src/test/resources/dobra101/mppcg/execution/setup/$setupFileName")
+
+        return map {
+            val methodChain = setup.getInstanceOf("methodChain") ?: throw EnvironmentException("Template 'methodChain' not found")
+            methodChain.add("chain", it)
+            methodChain.render()
+        }.toList()
+    }
+
     if (!outputDir.exists()) outputDir.mkdir()
 
     // TODO: include deeper nested directories
@@ -142,9 +156,14 @@ abstract class ExecutionTest(
 
                             val resultString = runSetup(dir, file, setupFile)
                             val resultMap = string2ResultMap(resultString)
+                            println("Result String: $resultString")
+                            println("Map: $resultMap")
+                            println("Expected: ${execution.result}")
+                            println("=====")
                             for ((key, value) in execution.result) {
-                                withClue("Expect ${key.method} = $value") {
-                                    resultMap[key.method] shouldBeEqualIgnoringCase value
+                                withClue("Expect ${key.joinToString { it.method }} = $value") {
+                                    println(key.map { it.method })
+                                    resultMap[key.map { it.method }] shouldBeEqualIgnoringCase value
                                 }
                             }
                         }
@@ -164,10 +183,17 @@ private fun createSetupFile(
     execution: Execution
 ): File {
     val setup = STGroupFile("src/test/resources/dobra101/mppcg/execution/setup/$setupFileName")
+
+    val methodChains = execution.result.keys.map {
+        val methodChain = setup.getInstanceOf("methodChain") ?: throw EnvironmentException("Template 'methodChain' not found")
+        methodChain.add("chain", it)
+        methodChain.render()
+    }.toList()
+
     val st = setup.getInstanceOf("setup") ?: throw EnvironmentException("Template 'setup' not found")
     st.add("name", mchName)
     st.add("execution", execution.operations)
-    st.add("result", execution.result.keys)
+    st.add("result", methodChains)
 
     val directory = File("${outputDir.path}/$dir")
     if (!directory.exists()) directory.mkdir()
@@ -176,22 +202,23 @@ private fun createSetupFile(
     return setupFile
 }
 
-private fun string2ResultMap(string: String): Map<String, String> {
+private fun string2ResultMap(string: String): Map<List<String>, String> {
     return string.split("\n")
         .filter { it.isNotBlank() }
         .associate {
             val output = it.split("=")
-            output[0].trim() to output[1].trim()
+            output[0].split(".").map { s -> s.split("(")[0].trim() } to output[1].trim()
         }
 }
 
-data class Execution(val operations: List<ExecOperation>, val result: Map<ExecOperation, String>) {
+data class Execution(val operations: List<ExecOperation>, val result: Map<List<ExecOperation>, String>) {
     companion object {
         fun of(file: File): Execution {
             val content = file.readText()
             var operationsProcessed = false
             val operations = mutableListOf<ExecOperation>()
-            val result = mutableMapOf<ExecOperation, String>()
+            val result = mutableMapOf<List<ExecOperation>, String>()
+            var methodChainList: MutableList<ExecOperation> = mutableListOf()
 
             for (line in content.lines()) {
                 // TODO: not hardcoded
@@ -201,15 +228,20 @@ data class Execution(val operations: List<ExecOperation>, val result: Map<ExecOp
                 }
 
                 if (operationsProcessed) {
+                    // analyze result expression
                     val expect = line.split("=")
                     val value = expect[1].trim()
-                    var accessOrMethod = expect[0].trim()
-                    if (accessOrMethod.startsWith(".")) {
-                        val execOperation = ExecOperation(accessOrMethod.removePrefix("."), propertyAccess = true)
-                        result[execOperation] = value
-                    } else {
-                        result[ExecOperation(accessOrMethod)] = value
+                    methodChainList = mutableListOf()
+                    val methodChain = expect[0].split("|").map { it.trim() }
+                    methodChain.forEach {
+                        if (it.startsWith(".")) {
+                            val execOperation = ExecOperation(it.removePrefix("."), propertyAccess = true)
+                            methodChainList.add(execOperation)
+                        } else {
+                            methodChainList.add(ExecOperation(it))
+                        }
                     }
+                    result[methodChainList] = value
                 } else {
                     operations.add(ExecOperation(line, parameterized = line.endsWith(")")))
                 }

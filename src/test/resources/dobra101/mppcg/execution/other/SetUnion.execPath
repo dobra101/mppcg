@@ -1,2 +1,2 @@
 *** Expected Result:
-card(getYY)=2
+getYY | card=3

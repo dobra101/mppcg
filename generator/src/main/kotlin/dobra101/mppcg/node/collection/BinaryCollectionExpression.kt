@@ -22,6 +22,8 @@ private fun getType(left: Expression, right: Expression): Type? {
 
     // number type TODO: other has to be number
     if (left.type is TypeReal || right.type is TypeReal) return TypeReal()
+    if (left.type is TypeSequence && right.type is TypeFunction) return left.type
+    if (left.type is TypeFunction && right.type is TypeSequence) return right.type
 
     if (left.type != right.type) {
         if (right.type is TypeAnonymousCollection) {

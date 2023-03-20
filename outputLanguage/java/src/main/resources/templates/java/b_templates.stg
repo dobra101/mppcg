@@ -19,6 +19,14 @@ public class <name> {
     <transitions; separator="\n\n">
 
     <invariant>
+
+    private Integer succ(Integer x) {
+        return x+1;
+    }
+
+    private Integer pred(Integer x) {
+        return x-1;
+    }
 }
 >>
 

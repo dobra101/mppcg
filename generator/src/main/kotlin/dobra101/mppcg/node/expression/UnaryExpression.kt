@@ -21,6 +21,6 @@ enum class UnaryExpressionOperator: BMethod {
 
 private fun getType(value: MPPCGNode, operator: UnaryExpressionOperator): Type? {
     if (value is ValueExpression) return value.type
-    if (operator == UnaryExpressionOperator.MINUS && value is Expression) return value.type
-    return TypeBoolean()
+    if (operator == UnaryExpressionOperator.CONVERT_BOOLEAN) return TypeBoolean()
+    return (value as Expression).type
 }
