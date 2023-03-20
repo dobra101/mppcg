@@ -21,15 +21,34 @@ data class BinaryFunctionExpression(
     val left: Expression,
     val right: Expression,
     val operator: BinaryFunctionOperator
-) : Expression(left.type, "binaryFunctionExpression")
+) : Expression(getType(left, right, operator), "binaryFunctionExpression")
 
-enum class UnaryFunctionOperator: BMethod {
+enum class UnaryFunctionOperator : BMethod {
     DOMAIN,
     RANGE,
     REVERSE
 }
 
-enum class BinaryFunctionOperator: BMethod {
+private fun getType(left: Expression, right: Expression, operator: BinaryFunctionOperator): Type? {
+    return when (operator) {
+        BinaryFunctionOperator.DOMAIN_RESTRICTION,
+        BinaryFunctionOperator.DOMAIN_SUBTRACTION -> right.type
+
+        BinaryFunctionOperator.IMAGE -> ((right as Function).type as TypeFunction).to
+
+        BinaryFunctionOperator.OVERWRITE,
+        BinaryFunctionOperator.RANGE_RESTRICTION,
+        BinaryFunctionOperator.RANGE_SUBTRACTION -> left.type
+
+        BinaryFunctionOperator.FORWARD_COMPOSITION -> {
+            left as Function
+            right as Function
+            TypeFunction(left.functionType, (left.type as TypeFunction).from, (right.type as TypeFunction).to)
+        }
+    }
+}
+
+enum class BinaryFunctionOperator : BMethod {
     DOMAIN_RESTRICTION,
     DOMAIN_SUBTRACTION,
     IMAGE,

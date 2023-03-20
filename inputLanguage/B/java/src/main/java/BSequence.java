@@ -1,21 +1,21 @@
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.StringJoiner;
 
-public class BSequence {
-    private final List<Object> elements;
+public class BSequence<T> {
+    private final List<T> elements;
 
-    public BSequence(List<Object> elements) {
+    public BSequence(List<T> elements) {
         this.elements = elements;
     }
 
-    public BSequence(Object... elements) {
+    @SafeVarargs
+    public BSequence(T... elements) {
         this.elements = new ArrayList<>();
         this.elements.addAll(Arrays.asList(elements));
     }
 
-    public BSequence append(Object element) {
+    public BSequence<T> append(T element) {
         elements.add(element);
         return this;
     }
@@ -24,20 +24,36 @@ public class BSequence {
         return elements.size();
     }
 
-    public BSequence restrict_front(int count) {
-        List<Object> restricted = elements.subList(0, count);
-        return new BSequence(restricted);
+    public BSequence<T> restrict_front(int count) {
+        List<T> restricted = elements.subList(0, count);
+        return new BSequence<>(restricted);
     }
 
-    public BSequence restrict_tail(int count) {
-        List<Object> restricted = elements.subList(count, elements.size());
-        return new BSequence(restricted);
+    public BSequence<T> restrict_tail(int count) {
+        List<T> restricted = elements.subList(count, elements.size());
+        return new BSequence<>(restricted);
     }
 
-    public BSequence concat(BSequence other) {
-        List<Object> result = new ArrayList<>(elements);
+    public BSequence<T> concat(BSequence<T> other) {
+        List<T> result = new ArrayList<>(elements);
         result.addAll(other.elements);
-        return new BSequence(result);
+        return new BSequence<>(result);
+    }
+
+    public BSequence<T> front() {
+        return new BSequence<>(elements.subList(0, elements.size()-1));
+    }
+
+    public BSequence<T> tail() {
+        return new BSequence<>(elements.subList(1, elements.size()));
+    }
+
+    public T first() {
+        return elements.get(0);
+    }
+
+    public T last() {
+        return elements.get(elements.size()-1);
     }
 
     @Override

@@ -270,7 +270,8 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         val map = mapOf(
             "left" to left.render(),
             "right" to right.render(),
-            "operator" to operator2String(operator)
+            "operator" to operator2String(operator),
+            "swap" to (operator == BinaryFunctionOperator.DOMAIN_SUBTRACTION || operator == BinaryFunctionOperator.DOMAIN_RESTRICTION)
         )
         return RenderResult(renderTemplate(map))
     }
@@ -293,7 +294,32 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun ComprehensionSet.renderSelf(): RenderResult {
-        TODO("Not yet implemented")
+        fun Predicate.memberAndComprehensionSetIdentifier(identifiers: List<Expression>): Boolean {
+            if (this !is BinaryPredicate) return false
+            if (operator != BinaryPredicateOperator.MEMBER) return false
+            return identifiers.contains(left)
+        }
+
+        val predicateList = predicates.asList()
+        val condition: MutableList<Predicate> = mutableListOf()
+        val supplier: MutableList<Map<String, String>> = mutableListOf()
+        predicateList.forEach {
+            if (it.memberAndComprehensionSetIdentifier(identifiers)) {
+                val map = mapOf(
+                    (it as BinaryPredicate).left.render().rendered to it.right.render().rendered
+                )
+                supplier.add(map)
+            } else {
+                condition.add(it)
+            }
+        }
+
+        val map = mapOf(
+            "identifiers" to identifiers.render(),
+            "supplier" to supplier,
+            "predicates" to condition.render()
+        )
+        return RenderResult(renderTemplate(map))
     }
 
     override fun ConcreteIdentifierExpression.renderSelf(): RenderResult {
@@ -515,7 +541,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
                 }
             }
             is TypeSet -> "BSet<${nullableType2String(type.type)}>"
-            is TypeSequence -> "BSequence"
+            is TypeSequence -> "BSequence<${nullableType2String(type.type!!)}>"
             is TypeCouple -> {
                 if (type.from == null || type.to == null) {
                     "BCouple<>"
@@ -543,7 +569,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
                 }
             }
             is TypeSet -> "BSet<${nullableType2String(type.type)}>"
-            is TypeSequence -> "BSequence"
+            is TypeSequence -> "BSequence<${nullableType2String(type.type!!)}>"
             is TypeCouple -> {
                 if (type.from == null || type.to == null) {
                     "BCouple<>"

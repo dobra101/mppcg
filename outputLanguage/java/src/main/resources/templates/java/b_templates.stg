@@ -96,8 +96,9 @@ unaryFunctionExpression(expression, operator) ::= <<
 <expression>.<operator>()
 >>
 
-binaryFunctionExpression(left, right, operator) ::= <<
-<left>.<operator>(<right>)
+binaryFunctionExpression(left, right, operator, swap) ::= <<
+<if(swap)><right>.<operator>(<left>)<else>
+<left>.<operator>(<right>)<endif>
 >>
 
 couple(from, to) ::= <<
@@ -105,7 +106,7 @@ new BCouple\<\>(<from>, <to>)
 >>
 
 sequence(elements) ::= <<
-new BSequence(<elements; separator=", ">)
+new BSequence\<\>(<elements; separator=", ">)
 >>
 
 binarySequenceExpression(left, right, operator) ::= <<
@@ -114,4 +115,13 @@ binarySequenceExpression(left, right, operator) ::= <<
 
 unarySequenceExpression(sequence, operator) ::= <<
 <sequence>.<operator>()
+>>
+
+comprehensionSetExpression(identifiers, supplier, predicates) ::= <<
+<supplier: {s | <s.keys: {key | <s.(key)>.forEach(<key> -> ...)}>}; separator=", ">
+
+---
+<supplier>.forEach((<identifiers; separator=", ">) ->
+    (<predicates; separator=" && ">)
+)
 >>

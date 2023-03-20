@@ -177,7 +177,7 @@ class ExpressionVisitor : AbstractVisitor() {
     override fun caseAIntegerSetExpression(node: AIntegerSetExpression) {
         if (node.parent() is AMemberPredicate && AbstractVisitor.result is Expression) {
             // is type info
-            (AbstractVisitor.result as Expression).type = TypeSet(TypeInteger())
+            (AbstractVisitor.result as Expression).type = TypeInteger()
         }
         result = InfiniteSet(TypeInteger())
     }
@@ -185,7 +185,7 @@ class ExpressionVisitor : AbstractVisitor() {
     override fun caseANaturalSetExpression(node: ANaturalSetExpression) {
         if (node.parent() is AMemberPredicate && AbstractVisitor.result is Expression) {
             // is type info
-            (AbstractVisitor.result as Expression).type = TypeSet(TypeNatural())
+            (AbstractVisitor.result as Expression).type = TypeNatural()
         }
         result = InfiniteSet(TypeNatural())
     }
@@ -661,7 +661,10 @@ class ExpressionVisitor : AbstractVisitor() {
 
     override fun caseASeqExpression(node: ASeqExpression) {
         val previousResult = AbstractVisitor.result
-        val type = node.expression.convert()!!.type
+        var type = node.expression.convert()!!.type
+        if (type is TypeSet) {
+            type = type.type
+        }
         result = Sequence(sequenceType = type)
         if (node.parent() is AMemberPredicate && previousResult is Expression) {
             // is type info

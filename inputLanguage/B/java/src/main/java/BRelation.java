@@ -43,6 +43,34 @@ public class BRelation<K, V> implements Set<BCouple<K, V>> {
         );
     }
 
+    public BRelation<K, V> domainRestriction(BSet<K> restriction) {
+        List<BCouple<K, V>> restricted = entries.stream()
+                .filter(couple -> restriction.contains(couple.left))
+                .toList();
+        return new BRelation<>(restricted);
+    }
+
+    public BRelation<K, V> domainSubtraction(BSet<K> restriction) {
+        List<BCouple<K, V>> restricted = entries.stream()
+                .filter(couple -> !restriction.contains(couple.left))
+                .toList();
+        return new BRelation<>(restricted);
+    }
+
+    public BRelation<K, V> rangeRestriction(BSet<V> restriction) {
+        List<BCouple<K, V>> restricted = entries.stream()
+                .filter(couple -> restriction.contains(couple.right))
+                .toList();
+        return new BRelation<>(restricted);
+    }
+
+    public BRelation<K, V> rangeSubtraction(BSet<V> restriction) {
+        List<BCouple<K, V>> restricted = entries.stream()
+                .filter(couple -> !restriction.contains(couple.right))
+                .toList();
+        return new BRelation<>(restricted);
+    }
+
     public int card() {
         return entries.size();
     }
