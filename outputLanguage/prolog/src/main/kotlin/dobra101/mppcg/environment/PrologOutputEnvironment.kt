@@ -583,6 +583,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         return when (type) {
             is TypeNatural -> RenderResult(renderTemplate(mapOf("type" to "'NAT'")))
             is TypeInteger -> RenderResult(renderTemplate(mapOf("type" to "'INT'")))
+            is TypeSet -> RenderResult(renderTemplate(mapOf("type" to "???")))
             else -> TODO("Infinite Set not implemented (${type!!::class.simpleName})")
         }
     }

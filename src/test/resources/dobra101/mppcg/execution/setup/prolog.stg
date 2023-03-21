@@ -2,5 +2,9 @@ setup(name, execution, result) ::= <<
 start(S0),
 <execution :{ it | trans('<it.method>', S<i0>, S<i>)}; separator=",\n">,
 Result = S<length(execution)>,
-<result :{ it | (get(Result, '<it.method>', Result_<it.method>); out(Result, '<it.method>', Result_<it.method>)), !}; separator=",\n">.
+<result :{ it | (get(Result, '<it>', Result_<it>); out(Result, '<it>', Result_<it>)), !}; separator=",\n">.
+>>
+
+methodChain(chain) ::= <<
+<chain :{ it | <it.method>}; separator="->">
 >>

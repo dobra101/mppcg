@@ -31,7 +31,7 @@ public class <name> {
 >>
 
 operation(name, parameters, body, returnValues, type) ::= <<
-public <if(type)><type><else>void<endif> <name>(<parameters>) {
+public <if(type)><type><else>void<endif> <name>(<parameters; separator=", ">) {
     <body>
     <if(returnValues)>
     return <returnValues>;
@@ -40,7 +40,7 @@ public <if(type)><type><else>void<endif> <name>(<parameters>) {
 >>
 
 transition(name, body, parameters) ::= <<
-public boolean tr_<name>(<parameters>) {
+public boolean tr_<name>(<parameters; separator=", ">) {
     return <body>;
 }
 >>

@@ -54,7 +54,6 @@ class ExecutionTestProlog : ExecutionTest(Language.PROLOG, "prolog.stg", ".pl", 
                             sb.append("${k.removePrefix("Result_")}=$v")
                         }
                         sb.append("\n")
-
                     }
                 }
             }
@@ -156,13 +155,8 @@ abstract class ExecutionTest(
 
                             val resultString = runSetup(dir, file, setupFile)
                             val resultMap = string2ResultMap(resultString)
-                            println("Result String: $resultString")
-                            println("Map: $resultMap")
-                            println("Expected: ${execution.result}")
-                            println("=====")
                             for ((key, value) in execution.result) {
                                 withClue("Expect ${key.joinToString { it.method }} = $value") {
-                                    println(key.map { it.method })
                                     resultMap[key.map { it.method }] shouldBeEqualIgnoringCase value
                                 }
                             }
