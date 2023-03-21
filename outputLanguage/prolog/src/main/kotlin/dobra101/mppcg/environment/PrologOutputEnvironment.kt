@@ -1030,6 +1030,11 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
                 "setUnion",
                 mapOf("name" to operator2String(this))
             )
+
+            BinaryCollectionOperator.CONCAT -> renderTemplate(
+                "setConcat",
+                mapOf("name" to operator2String(this))
+            )
         }
     }
 

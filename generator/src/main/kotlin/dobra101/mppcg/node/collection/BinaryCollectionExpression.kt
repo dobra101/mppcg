@@ -7,20 +7,25 @@ data class BinaryCollectionExpression(
     val left: Expression,
     val right: Expression,
     val operator: BinaryCollectionOperator
-) : Expression(getType(left, right), "binaryCollectionExpression")
+) : Expression(getType(left, right, operator), "binaryCollectionExpression")
 
 enum class BinaryCollectionOperator: CustomMethodOperator {
     INTERSECTION,
     SUBTRACTION,
-    UNION
+    UNION,
+    CONCAT
 }
 
 // TODO: replace by type inference
-private fun getType(left: Expression, right: Expression): Type? {
+private fun getType(left: Expression, right: Expression, operator: BinaryCollectionOperator): Type? {
     if (left.type == null) return right.type
     if (right.type == null) return left.type
 
     // number type TODO: other has to be number
+    if (operator == BinaryCollectionOperator.CONCAT) {
+        return TypeSequence((left.type as TypeCouple).to)
+    }
+
     if (left.type is TypeReal || right.type is TypeReal) return TypeReal()
     if (left.type is TypeSequence && right.type is TypeFunction) return left.type
     if (left.type is TypeFunction && right.type is TypeSequence) return right.type

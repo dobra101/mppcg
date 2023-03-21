@@ -760,7 +760,11 @@ class ExpressionVisitor : AbstractVisitor() {
             throw VisitorException("Unknown set ${anonymousSet::class} for general concat.")
         }
 
-        result = UnarySequenceExpression(node.expression.convert()!!, UnarySequenceExpressionOperator.CONCAT)
+        result = BinaryCollectionExpression(
+            anonymousSet.elements[0],
+            AnonymousSetCollectionNode(anonymousSet.elements.subList(1, anonymousSet.elements.size)),
+            BinaryCollectionOperator.CONCAT
+        )
     }
 
     override fun caseADefinitionExpression(node: ADefinitionExpression) {

@@ -20,8 +20,9 @@ unaryCollectionExpression(collection, operator) ::= <<
 <collection>.<operator>()
 >>
 
-binaryCollectionExpression(lhs, rhs, operator) ::= <<
-<lhs>.<operator>(<rhs>)
+binaryCollectionExpression(lhs, rhs, operator, rhsIsList) ::= <<
+<if(rhsIsList)><lhs>.<operator>(<rhs; separator=", ">)<else>
+<lhs>.<operator>(<rhs>)<endif>
 >>
 
 enumCollectionExpression(name, elements) ::= <<

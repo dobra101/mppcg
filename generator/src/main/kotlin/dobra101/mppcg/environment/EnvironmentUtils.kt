@@ -54,6 +54,7 @@ abstract class EnvironmentUtils {
             BinaryCollectionOperator.INTERSECTION -> "intersection"
             BinaryCollectionOperator.SUBTRACTION -> "subtraction"
             BinaryCollectionOperator.UNION -> "union"
+            BinaryCollectionOperator.CONCAT -> "concat"
         }
     }
 
@@ -105,7 +106,6 @@ abstract class EnvironmentUtils {
             UnarySequenceExpressionOperator.FIRST -> "first"
             UnarySequenceExpressionOperator.LAST -> "last"
             UnarySequenceExpressionOperator.REVERSE -> "reverse"
-            UnarySequenceExpressionOperator.CONCAT -> "concat"
         }
     }
 

@@ -3,7 +3,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class BSequence<T> {
-    private final List<T> elements;
+    final List<T> elements;
 
     public BSequence(List<T> elements) {
         this.elements = elements;

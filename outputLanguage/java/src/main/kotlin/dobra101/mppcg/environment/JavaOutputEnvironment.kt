@@ -258,11 +258,20 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun BinaryCollectionExpression.renderSelf(): RenderResult {
-        val map = mapOf(
-            "lhs" to left.render(),
-            "rhs" to right.render(),
-            "operator" to operator2String(operator)
-        )
+        val map = if (operator == BinaryCollectionOperator.CONCAT && right is AnonymousSetCollectionNode) {
+            mapOf(
+                "lhs" to left.render(),
+                "rhs" to (right as AnonymousSetCollectionNode).elements.render(),
+                "operator" to operator2String(operator),
+                "rhsIsList" to true
+            )
+        } else {
+            mapOf(
+                "lhs" to left.render(),
+                "rhs" to right.render(),
+                "operator" to operator2String(operator)
+            )
+        }
         return RenderResult(renderTemplate(map))
     }
 
@@ -540,6 +549,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
                     "BRelation<${nullableType2String(type.from!!)}, ${nullableType2String(type.to!!)}>"
                 }
             }
+
             is TypeSet -> "BSet<${nullableType2String(type.type)}>"
             is TypeSequence -> "BSequence<${nullableType2String(type.type!!)}>"
             is TypeCouple -> {
@@ -549,6 +559,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
                     "BCouple<${nullableType2String(type.from!!)}, ${nullableType2String(type.to!!)}>"
                 }
             }
+
             else -> throw UnknownTypeException(type::class.simpleName!!)
         }
     }
@@ -568,6 +579,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
                     "BRelation<${nullableType2String(type.from!!)}, ${nullableType2String(type.to!!)}>"
                 }
             }
+
             is TypeSet -> "BSet<${nullableType2String(type.type)}>"
             is TypeSequence -> "BSequence<${nullableType2String(type.type!!)}>"
             is TypeCouple -> {
@@ -577,6 +589,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
                     "BCouple<${nullableType2String(type.from!!)}, ${nullableType2String(type.to!!)}>"
                 }
             }
+
             else -> throw UnknownTypeException(type::class.simpleName!!)
         }
     }
@@ -600,6 +613,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             BinaryCollectionOperator.INTERSECTION -> "intersection"
             BinaryCollectionOperator.SUBTRACTION -> "subtraction"
             BinaryCollectionOperator.UNION -> "union"
+            BinaryCollectionOperator.CONCAT -> "concat"
         }
     }
 
