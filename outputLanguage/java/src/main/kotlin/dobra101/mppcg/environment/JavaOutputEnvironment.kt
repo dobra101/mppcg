@@ -9,6 +9,7 @@ import dobra101.mppcg.node.expression.*
 import dobra101.mppcg.node.predicate.*
 import dobra101.mppcg.node.substitution.*
 import java.util.*
+import kotlin.math.exp
 
 // TODO: add constructor for generated classes
 class JavaOutputEnvironment : OutputLanguageEnvironment() {
@@ -19,10 +20,23 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
 
     private var codeRepresentation: Any? = null
 
-    private var currentOperation: Operation? = null// HINT: only for B
+    private var currentOperation: Operation? = null // HINT: only for B
+    private var inInvariant: Boolean = false // HINT: only for B
 
     /* ---------- EXPRESSIONS ---------- */
     override fun AnonymousSetCollectionNode.renderSelf(): RenderResult {
+        fun renderAnonymousSetAsRelation(set: AnonymousSetCollectionNode): RenderResult {
+            val map = mutableMapOf(
+                "elements" to set.elements.render()
+            )
+
+            return RenderResult(renderTemplate("anonymousSetAsRelation", map))
+        }
+
+        if (elements.isNotEmpty() && elements.first() is Couple) {
+            return renderAnonymousSetAsRelation(this)
+        }
+
         val map = mutableMapOf(
             "elements" to elements.render()
         )
@@ -120,7 +134,9 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             return RenderResult(renderTemplate(map))
         }
 
-        if (right is AnonymousSetCollectionNode || right is IntervalExpression) {
+        if (right is AnonymousSetCollectionNode || right is IntervalExpression ||
+            (right is IdentifierExpression && right.type is TypeSet)
+        ) {
             val map = mapOf(
                 "entry" to left.render(),
                 "set" to right.render()
@@ -128,8 +144,16 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             return RenderResult(renderTemplate("binaryPredicateMember", map))
         }
 
-        // type checks can be ignored in java
-        return RenderResult("")
+        // type checks in invariants can be ignored in java
+        if (inInvariant) {
+            return RenderResult("")
+        }
+        val map = mapOf(
+            "lhs" to left.render(),
+            "rhs" to right.render(),
+            "operator" to operator2String(operator)
+        )
+        return RenderResult(renderTemplate(map))
     }
 
     override fun BinaryLogicPredicate.renderSelf(): RenderResult {
@@ -172,6 +196,20 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             return RenderResult(renderTemplate("anonymousSetAsRelation", map))
         }
 
+        if (left is CallFunctionExpression) {
+            val parameters = (left as CallFunctionExpression).parameters.toMutableList()
+            parameters.add(right)
+            val newLeft = CallFunctionExpression(
+                (left as CallFunctionExpression).expression,
+                parameters,
+                (left as CallFunctionExpression).operator
+            )
+
+            // TODO: refactor
+            val rendered = newLeft.renderSelf()
+            return RenderResult(rendered.rendered + ";", rendered.info)
+        }
+
         if (optimize) optimizer.renderOptimized(this)?.let { return it }
 
         val rhs = if (right is AnonymousSetCollectionNode && left.type is TypeFunction) {
@@ -179,8 +217,9 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         } else {
             right.render()
         }
+
         val map = mapOf(
-            "identifier" to (left as IdentifierExpression).render(),
+            "identifier" to left.render(),
             "rhs" to rhs
         )
 
@@ -295,9 +334,21 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun CallFunctionExpression.renderSelf(): RenderResult {
+        if (expression is BinaryCollectionExpression && (
+                    (expression as BinaryCollectionExpression).operator == BinaryCollectionOperator.PRJ1 ||
+                            (expression as BinaryCollectionExpression).operator == BinaryCollectionOperator.PRJ2)
+        ) {
+            val map = mapOf(
+                "expression" to parameters.render(),
+                "operator" to operator2String((expression as BinaryCollectionExpression).operator)
+            )
+            return RenderResult(renderTemplate(map))
+        }
+
         val map = mapOf(
             "expression" to expression.render(),
-            "parameters" to parameters.render()
+            "parameters" to parameters.render(),
+            "operator" to operator2String(operator)
         )
         return RenderResult(renderTemplate(map))
     }
@@ -405,6 +456,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
 
     // HINT: SAME FOR JAVA AND PROLOG
     override fun Invariant.renderSelf(): RenderResult {
+        inInvariant = true
         val renderedPredicates = List(predicates.size) { idx ->
             val body = predicates[idx].render()
             val ignoreTypeCheck = body.info.isEmpty()
@@ -417,6 +469,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         }
 
         val map = mapOf("list" to renderedPredicates)
+        inInvariant = false
 
         return RenderResult(renderTemplate("invariants", map))
     }
@@ -434,6 +487,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         return RenderResult(renderTemplate(map))
     }
 
+    // TODO: use temp variables
     override fun ParallelSubstitution.renderSelf(): RenderResult {
         val map = mapOf(
             "substitutions" to substitutions.render()
@@ -614,6 +668,8 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             BinaryCollectionOperator.SUBTRACTION -> "subtraction"
             BinaryCollectionOperator.UNION -> "union"
             BinaryCollectionOperator.CONCAT -> "concat"
+            BinaryCollectionOperator.PRJ1 -> "prj1"
+            BinaryCollectionOperator.PRJ2 -> "prj2"
         }
     }
 

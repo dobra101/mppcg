@@ -13,7 +13,9 @@ enum class BinaryCollectionOperator: CustomMethodOperator {
     INTERSECTION,
     SUBTRACTION,
     UNION,
-    CONCAT
+    CONCAT,
+    PRJ1,
+    PRJ2
 }
 
 // TODO: replace by type inference

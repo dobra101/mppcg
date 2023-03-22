@@ -1,9 +1,10 @@
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 @SuppressWarnings("unchecked")
-public class BSet<T> implements Set<T> {
+public class BSet<T extends Comparable<T>> implements Set<T> {
     private final Set<T> entries;
 
     public BSet(Set<T> entries) {
@@ -104,6 +105,19 @@ public class BSet<T> implements Set<T> {
     @Override
     public void clear() {
         entries.clear();
+    }
+
+    public BSet<T> intersection(BSet<T> other) {
+        Set<T> intersection = entries.stream().filter(other::contains).collect(Collectors.toSet());
+        return new BSet<>(intersection);
+    }
+
+    public T max() {
+        return entries.stream().max(Comparable::compareTo).orElse(null);
+    }
+
+    public T min() {
+        return entries.stream().min(Comparable::compareTo).orElse(null);
     }
 
     @Override

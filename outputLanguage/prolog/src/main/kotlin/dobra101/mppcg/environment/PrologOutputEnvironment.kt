@@ -535,7 +535,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         val rendered = renderTemplate(map)
 
         if (optimize) optimizer.evaluated[this] = expr(exprCount)
-        usedBMethods.add(CallFunctionExpression.CallFunctionOperator)
+        usedBMethods.add(operator)
 
         return RenderResult("$before$rendered", mapOf("resultExpr" to IndividualInfo(expr(exprCount++))))
     }
@@ -896,7 +896,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
                 is BinaryFunctionOperator -> it.render()
                 is BinaryPredicateOperator -> it.render()
                 is BinarySequenceExpressionOperator -> it.render()
-                is CallFunctionExpression.CallFunctionOperator -> it.render()
+                is CallFunctionOperator -> it.render()
                 is UnarySequenceExpressionOperator -> it.render()
                 else -> throw EnvironmentException("Rendering of custom method for operator '$it' (${it::class.simpleName}) is not implemented.")
             }
@@ -1035,6 +1035,16 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
                 "setConcat",
                 mapOf("name" to operator2String(this))
             )
+
+            BinaryCollectionOperator.PRJ1 -> renderTemplate(
+                "setPrj1",
+                mapOf("name" to operator2String(this))
+            )
+
+            BinaryCollectionOperator.PRJ2 -> renderTemplate(
+                "setPrj2",
+                mapOf("name" to operator2String(this))
+            )
         }
     }
 
@@ -1054,7 +1064,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         }
     }
 
-    private fun CallFunctionExpression.CallFunctionOperator.render(): String {
+    private fun CallFunctionOperator.render(): String {
         return renderTemplate(
             "callFunctionPredicate",
             mapOf("memberName" to operator2String(BinaryPredicateOperator.MEMBER))

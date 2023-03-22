@@ -24,6 +24,20 @@ public class BCouple<K, V> {
         return (V) new BSequence<>(result);
     }
 
+    public K prj1() {
+        return left;
+    }
+
+    public V prj2() {
+        return right;
+    }
+
+    // TODO: only for test cases
+    @Override
+    public String toString() {
+        return "(" + left + " |-> " + right + ")";
+    }
+
     private static class BCoupleComparator implements Comparator<BCouple<?, ?>> {
         @Override
         public int compare(final BCouple<?, ?> o1, final BCouple<?, ?> o2) {

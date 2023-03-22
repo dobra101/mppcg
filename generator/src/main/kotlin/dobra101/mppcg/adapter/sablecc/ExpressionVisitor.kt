@@ -258,37 +258,37 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseARealSetExpression(node: ARealSetExpression) {
-        trySetPreviousResultType(TypeReal())
+        trySetPreviousResultType(node, TypeReal())
         result = InfiniteSet(TypeReal())
     }
 
     override fun caseAFloatSetExpression(node: AFloatSetExpression) {
-        trySetPreviousResultType(TypeFloat())
+        trySetPreviousResultType(node, TypeFloat())
         result = InfiniteSet(TypeFloat())
     }
 
     override fun caseANatural1SetExpression(node: ANatural1SetExpression) {
-        trySetPreviousResultType(TypeNatural1())
+        trySetPreviousResultType(node, TypeNatural1())
         result = InfiniteSet(TypeNatural1())
     }
 
     override fun caseANatSetExpression(node: ANatSetExpression) {
-        trySetPreviousResultType(TypeNatural())
+        trySetPreviousResultType(node, TypeNatural())
         result = InfiniteSet(TypeNatural())
     }
 
     override fun caseANat1SetExpression(node: ANat1SetExpression) {
-        trySetPreviousResultType(TypeNatural1())
+        trySetPreviousResultType(node, TypeNatural1())
         result = InfiniteSet(TypeNatural1())
     }
 
     override fun caseAIntSetExpression(node: AIntSetExpression) {
-        trySetPreviousResultType(TypeInteger())
+        trySetPreviousResultType(node, TypeInteger())
         result = InfiniteSet(TypeInteger())
     }
 
     override fun caseABoolSetExpression(node: ABoolSetExpression) {
-        trySetPreviousResultType(TypeBoolean())
+        trySetPreviousResultType(node, TypeBoolean())
         result = InfiniteSet(TypeBoolean())
     }
 
@@ -314,7 +314,14 @@ class ExpressionVisitor : AbstractVisitor() {
 
     override fun caseAMultOrCartExpression(node: AMultOrCartExpression) {
         // TODO: implement cart
+        val prevResult = AbstractVisitor.result
         result = BinaryExpression(node.left.convert()!!, node.right.convert()!!, BinaryExpressionOperator.MULT)
+
+        if (prevResult !is Expression) return
+
+        if ((prevResult.type == null || prevResult.type is TypeAnonymousCollection)) {
+            prevResult.type = result!!.type
+        }
     }
 
     override fun caseADivExpression(node: ADivExpression) {
@@ -505,6 +512,9 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseARelationsExpression(node: ARelationsExpression) {
+        println(node.left.convert())
+        println(node.right.convert())
+        //result = UnaryFunctionExpression(node.)
         TODO("Not implemented ${node::class.simpleName}")
     }
 
@@ -517,7 +527,7 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseAFirstProjectionExpression(node: AFirstProjectionExpression) {
-        TODO("Not implemented ${node::class.simpleName}")
+        result = BinaryCollectionExpression(node.exp1.convert()!!, node.exp2.convert()!!, BinaryCollectionOperator.PRJ1)
     }
 
     override fun caseAEventBFirstProjectionExpression(node: AEventBFirstProjectionExpression) {
@@ -529,7 +539,7 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseASecondProjectionExpression(node: ASecondProjectionExpression) {
-        TODO("Not implemented ${node::class.simpleName}")
+        result = BinaryCollectionExpression(node.exp1.convert()!!, node.exp2.convert()!!, BinaryCollectionOperator.PRJ2)
     }
 
     override fun caseAEventBSecondProjectionExpression(node: AEventBSecondProjectionExpression) {
@@ -565,7 +575,7 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseAIterationExpression(node: AIterationExpression) {
-        TODO("Not implemented ${node::class.simpleName}")
+        result = BinaryFunctionExpression(node.left.convert()!!, node.right.convert()!!, BinaryFunctionOperator.ITERATE)
     }
 
     override fun caseAReflexiveClosureExpression(node: AReflexiveClosureExpression) {
@@ -904,8 +914,9 @@ class ExpressionVisitor : AbstractVisitor() {
         }
     }
 
-    private fun trySetPreviousResultType(type: Type) {
+    private fun trySetPreviousResultType(node: Node, type: Type) {
         if (AbstractVisitor.result !is Expression) return
+        if (node.parent() !is AMemberPredicate) return
 
         val expr = AbstractVisitor.result as Expression
         if ((expr.type == null || expr.type == type || expr.type is TypeAnonymousCollection)) {

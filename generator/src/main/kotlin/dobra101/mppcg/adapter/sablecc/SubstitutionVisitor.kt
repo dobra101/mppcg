@@ -2,8 +2,11 @@ package dobra101.mppcg.adapter.sablecc
 
 import de.be4.classicalb.core.parser.node.*
 import dobra101.mppcg.node.*
+import dobra101.mppcg.node.b.CallFunctionExpression
+import dobra101.mppcg.node.b.CallFunctionOperator
 import dobra101.mppcg.node.b.Precondition
 import dobra101.mppcg.node.b.Select
+import dobra101.mppcg.node.expression.IdentifierExpression
 import dobra101.mppcg.node.substitution.*
 
 class SubstitutionVisitor : AbstractVisitor() {
@@ -26,6 +29,9 @@ class SubstitutionVisitor : AbstractVisitor() {
 
             // left type is null and right has type
             left[i].type = left[i].type ?: rightType
+            if (left[i] is CallFunctionExpression) {
+                (left[i] as CallFunctionExpression).operator = CallFunctionOperator.SET
+            }
             val assign = AssignSubstitution(left[i], right[i])
             if (rightType == null) {
                 assignments.add(assign)
@@ -55,7 +61,7 @@ class SubstitutionVisitor : AbstractVisitor() {
             }
 
             // TODO: refactor
-            if (!machineVisitor.knownIdentifier().contains(left[i])) {
+            if (left[i] is IdentifierExpression && !machineVisitor.knownIdentifier().contains(left[i])) {
                 assignments.add(DeclarationSubstitution(assign.left.type!!, assign))
             } else {
                 assignments.add(assign)

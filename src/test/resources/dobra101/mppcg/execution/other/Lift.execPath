@@ -2,4 +2,4 @@ inc
 inc
 inc
 *** Expected Result:
-getLevel=3
+getlevel=3

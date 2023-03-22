@@ -3,6 +3,7 @@ package dobra101.mppcg.node.collection
 import dobra101.mppcg.node.CustomMethodOperator
 import dobra101.mppcg.node.Type
 import dobra101.mppcg.node.TypeNatural
+import dobra101.mppcg.node.TypeSet
 import dobra101.mppcg.node.expression.Expression
 
 data class UnaryCollectionExpression(
@@ -15,8 +16,10 @@ private fun getType(expr: Expression, operator: UnaryCollectionOperator): Type? 
     if (operator == UnaryCollectionOperator.CARD) return TypeNatural()
     // TODO: fix
     return when (operator) {
-        UnaryCollectionOperator.MAX, UnaryCollectionOperator.MIN ->
-            expr.type
+        UnaryCollectionOperator.MAX, UnaryCollectionOperator.MIN -> {
+            if (expr.type is TypeSet) (expr.type as TypeSet).type
+            else expr.type
+        }
 
         UnaryCollectionOperator.POW, UnaryCollectionOperator.POW1 -> {
             expr.type

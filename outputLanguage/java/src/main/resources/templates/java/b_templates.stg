@@ -96,8 +96,8 @@ P: <predicate>
 E: <expression>
 >>
 
-callFunction(expression, parameters) ::= <<
-<expression>.get(<parameters>)
+callFunction(expression, parameters, operator) ::= <<
+<expression>.<operator>(<parameters; separator=", ">)
 >>
 
 unaryFunctionExpression(expression, operator) ::= <<

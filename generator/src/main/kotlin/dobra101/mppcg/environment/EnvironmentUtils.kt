@@ -55,6 +55,8 @@ abstract class EnvironmentUtils {
             BinaryCollectionOperator.SUBTRACTION -> "subtraction"
             BinaryCollectionOperator.UNION -> "union"
             BinaryCollectionOperator.CONCAT -> "concat"
+            BinaryCollectionOperator.PRJ1 -> "prj1"
+            BinaryCollectionOperator.PRJ2 -> "prj2"
         }
     }
 
@@ -68,6 +70,7 @@ abstract class EnvironmentUtils {
             BinaryFunctionOperator.RANGE_RESTRICTION -> "rangeRestriction"
             BinaryFunctionOperator.RANGE_SUBTRACTION -> "rangeSubtraction"
             BinaryFunctionOperator.FORWARD_COMPOSITION -> "forwardComposition"
+            BinaryFunctionOperator.ITERATE -> "iterate"
         }
     }
 
@@ -78,6 +81,13 @@ abstract class EnvironmentUtils {
             UnaryCollectionOperator.CARD -> "card"
             UnaryCollectionOperator.POW -> "pow"
             UnaryCollectionOperator.POW1 -> "pow1"
+        }
+    }
+
+    open fun operator2String(operator: CallFunctionOperator): String {
+        return when (operator) {
+            CallFunctionOperator.GET -> "get"
+            CallFunctionOperator.SET -> "put"
         }
     }
 

@@ -7,9 +7,13 @@ import dobra101.mppcg.node.expression.Expression
 // TODO: fix expression types
 data class CallFunctionExpression(
     val expression: Expression,
-    val parameters: List<Expression>
-) : Expression(null, "callFunction") {
-    companion object CallFunctionOperator : BMethod
+    val parameters: List<Expression>,
+    var operator: CallFunctionOperator = CallFunctionOperator.GET
+) : Expression(null, "callFunction")
+
+enum class CallFunctionOperator : BMethod {
+    GET,
+    SET
 }
 
 data class UnaryFunctionExpression(
@@ -45,6 +49,8 @@ private fun getType(left: Expression, right: Expression, operator: BinaryFunctio
             right as Function
             TypeFunction(left.functionType, (left.type as TypeFunction).from, (right.type as TypeFunction).to)
         }
+
+        BinaryFunctionOperator.ITERATE -> TODO()
     }
 }
 
@@ -55,7 +61,8 @@ enum class BinaryFunctionOperator : BMethod {
     OVERWRITE,
     RANGE_RESTRICTION,
     RANGE_SUBTRACTION,
-    FORWARD_COMPOSITION
+    FORWARD_COMPOSITION,
+    ITERATE
 }
 
 // TODO: duplicate

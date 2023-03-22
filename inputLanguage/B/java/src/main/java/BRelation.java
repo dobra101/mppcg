@@ -4,7 +4,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("unchecked")
-public class BRelation<K, V> implements Set<BCouple<K, V>> {
+public class BRelation<K extends Comparable<K>, V extends Comparable<V>> implements Set<BCouple<K, V>> {
     private final List<BCouple<K, V>> entries;
 
     public BRelation(List<BCouple<K, V>> entries) {
@@ -25,6 +25,11 @@ public class BRelation<K, V> implements Set<BCouple<K, V>> {
             }
         }
         return result;
+    }
+
+    public BRelation<V, K> reverse() {
+        List<BCouple<V, K>> reversed = entries.stream().map(c -> new BCouple<V, K>(c.right, c.left)).toList();
+        return new BRelation<>(reversed);
     }
 
     public BSet<K> domain() {
@@ -136,33 +141,33 @@ public class BRelation<K, V> implements Set<BCouple<K, V>> {
     }
 
     @Override
-    public boolean add(final BCouple bCouple) {
-        return entries.add(bCouple);
+    public boolean add(final BCouple<K, V> c) {
+        return entries.add(c);
     }
 
     @Override
-    public boolean remove(final Object o) {
-        return entries.remove(o);
+    public boolean remove(final Object key) {
+        return entries.remove(key);
     }
 
     @Override
     public boolean containsAll(@NotNull final Collection<?> c) {
-        return entries.containsAll(c);
+        return false;
     }
 
     @Override
     public boolean addAll(@NotNull final Collection<? extends BCouple<K, V>> c) {
-        return entries.addAll(c);
+        return false;
     }
 
     @Override
     public boolean retainAll(@NotNull final Collection<?> c) {
-        return entries.retainAll(c);
+        return false;
     }
 
     @Override
     public boolean removeAll(@NotNull final Collection<?> c) {
-        return entries.removeAll(c);
+        return false;
     }
 
     @Override
@@ -172,7 +177,10 @@ public class BRelation<K, V> implements Set<BCouple<K, V>> {
 
     @Override
     public boolean equals(final Object o) {
-        return entries.equals(o);
+        if (!(o instanceof BRelation<?, ?>)) {
+            return false;
+        }
+        return entries.equals(((BRelation<?, ?>) o).entries);
     }
 
     @Override
