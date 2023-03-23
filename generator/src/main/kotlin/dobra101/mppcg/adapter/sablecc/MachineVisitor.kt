@@ -29,13 +29,22 @@ class MachineVisitor : AbstractVisitor() {
     private var assertions: List<Predicate> = emptyList()
     private var operations: List<Operation> = emptyList()
 
-    var knownInScope: MutableList<Expression> = mutableListOf()
+    val scope = Scope()
+    var currentScope: Scope = scope
+
+    fun recognize(expr: Expression) {
+        currentScope.known.add(expr)
+    }
+
+    fun recognize(expr: List<Expression>) {
+        currentScope.known.addAll(expr)
+    }
 
     fun setTypeIfKnown(expr: Expression, type: Type?) {
-        val idx = knownInScope.indexOf(expr)
+        val idx = currentScope.known.indexOf(expr)
         if (idx < 0) return
         expr.type = type
-        knownInScope[idx].type = type
+        currentScope.known[idx].type = type
     }
 
     // TODO: not as function?
@@ -45,7 +54,7 @@ class MachineVisitor : AbstractVisitor() {
         known += constants
         known += concreteConstants
         known += concreteVariables
-        known += knownInScope
+        known += currentScope.known
         return known.filterIsInstance<IdentifierExpression>().toSet()
     }
 

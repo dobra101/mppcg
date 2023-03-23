@@ -4,8 +4,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("unchecked")
-public class BRelation<K extends Comparable<K>, V extends Comparable<V>> implements Set<BCouple<K, V>> {
-    private final List<BCouple<K, V>> entries;
+public class BRelation<K extends Comparable<K>, V extends Comparable<V>> implements Set<BCouple<K, V>>, Comparable<BRelation<Integer, Integer>> {
+    final List<BCouple<K, V>> entries;
 
     public BRelation(List<BCouple<K, V>> entries) {
         this.entries = entries;
@@ -186,5 +186,10 @@ public class BRelation<K extends Comparable<K>, V extends Comparable<V>> impleme
     @Override
     public int hashCode() {
         return entries.hashCode();
+    }
+
+    @Override
+    public int compareTo(@NotNull final BRelation<Integer, Integer> o) {
+        return 0;
     }
 }

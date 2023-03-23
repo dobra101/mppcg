@@ -108,17 +108,6 @@ abstract class ExecutionTest(
     runSetup: (String, File, File) -> String
 ) : ExpectSpec({
 
-    // TODO: use
-    fun List<ExecOperation>.methodChains(): List<String> {
-        val setup = STGroupFile("src/test/resources/dobra101/mppcg/execution/setup/$setupFileName")
-
-        return map {
-            val methodChain = setup.getInstanceOf("methodChain") ?: throw EnvironmentException("Template 'methodChain' not found")
-            methodChain.add("chain", it)
-            methodChain.render()
-        }.toList()
-    }
-
     if (!outputDir.exists()) outputDir.mkdir()
 
     // TODO: include deeper nested directories
@@ -201,7 +190,7 @@ private fun string2ResultMap(string: String): Map<List<String>, String> {
         .filter { it.isNotBlank() }
         .associate {
             val output = it.split("=")
-            output[0].split(".").map { s -> s.split("(")[0].trim() } to output[1].trim()
+            output[0].split(".").map { s -> s.removeSuffix("()").trim() } to output[1].trim()
         }
 }
 
@@ -212,7 +201,7 @@ data class Execution(val operations: List<ExecOperation>, val result: Map<List<E
             var operationsProcessed = false
             val operations = mutableListOf<ExecOperation>()
             val result = mutableMapOf<List<ExecOperation>, String>()
-            var methodChainList: MutableList<ExecOperation> = mutableListOf()
+            var methodChainList: MutableList<ExecOperation>
 
             for (line in content.lines()) {
                 // TODO: not hardcoded
@@ -233,11 +222,12 @@ data class Execution(val operations: List<ExecOperation>, val result: Map<List<E
                             methodChainList.add(execOperation)
                         } else {
                             methodChainList.add(ExecOperation(it))
+                            println(methodChainList)
                         }
                     }
                     result[methodChainList] = value
                 } else {
-                    operations.add(ExecOperation(line, parameterized = line.endsWith(")")))
+                    operations.add(ExecOperation(line))
                 }
             }
 
@@ -246,4 +236,7 @@ data class Execution(val operations: List<ExecOperation>, val result: Map<List<E
     }
 }
 
-data class ExecOperation(val method: String, val parameterized: Boolean = false, val propertyAccess: Boolean = false)
+data class ExecOperation(val method: String, val propertyAccess: Boolean = false) {
+    // needed in .stg
+    val parameterized: Boolean = method.endsWith(")")
+}

@@ -2,7 +2,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class BSequence<T> {
+public class BSequence<T extends Comparable<T>> {
     final List<T> elements;
 
     public BSequence(List<T> elements) {
@@ -38,6 +38,10 @@ public class BSequence<T> {
         List<T> result = new ArrayList<>(elements);
         result.addAll(other.elements);
         return new BSequence<>(result);
+    }
+
+    public BSequence<T> union(BRelation<?, T> other) {
+        return new BSequence<>(other.entries.stream().map(c -> c.right).toList());
     }
 
     public BSequence<T> front() {

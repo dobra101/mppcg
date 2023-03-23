@@ -17,10 +17,11 @@ class OperationVisitor : AbstractVisitor() {
     }
 
     override fun caseAOperation(node: AOperation) {
-        machineVisitor.knownInScope = mutableListOf()
+        machineVisitor.currentScope = Scope(machineVisitor.scope)
+
         returnValues = node.returnValues.convert()
         parameters = node.parameters.convert()
-        machineVisitor.knownInScope.addAll(parameters)
+        machineVisitor.recognize(parameters)
         operationType = TypeVoid()
 
         // TODO: when more than one name?
@@ -31,6 +32,6 @@ class OperationVisitor : AbstractVisitor() {
             body = node.operationBody.convert(),
             type = operationType
         )
-        machineVisitor.knownInScope = mutableListOf()
+        machineVisitor.currentScope = machineVisitor.currentScope.parent!!
     }
 }

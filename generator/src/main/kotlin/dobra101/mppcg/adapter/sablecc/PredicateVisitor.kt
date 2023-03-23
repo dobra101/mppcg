@@ -52,7 +52,7 @@ class PredicateVisitor : AbstractVisitor() {
             BinaryPredicateOperator.MEMBER
         )
 
-        if (node.parent() is ASelectSubstitution && AbstractVisitor.result is Expression) {
+        if ((node.parent() is APreconditionSubstitution || node.parent() is ASelectSubstitution) && AbstractVisitor.result is Expression) {
             val left = predicate.left
             val idx = OperationVisitor.parameters.indexOf(left)
             // is type info

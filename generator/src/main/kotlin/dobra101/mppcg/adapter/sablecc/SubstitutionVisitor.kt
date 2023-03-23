@@ -67,14 +67,16 @@ class SubstitutionVisitor : AbstractVisitor() {
                 assignments.add(assign)
             }
 
-            machineVisitor.knownInScope.add(assign.left)
+            machineVisitor.recognize(assign.left)
         }
 
         result = if (assignments.size == 1) assignments[0] else ParallelSubstitution(assignments)
     }
 
     override fun caseAPreconditionSubstitution(node: APreconditionSubstitution) {
+        machineVisitor.currentScope = Scope(machineVisitor.currentScope)
         result = Precondition(node.substitution.convert()!!, node.predicate.convert()!!)
+        machineVisitor.currentScope = machineVisitor.currentScope.parent!!
     }
 
     override fun caseASelectSubstitution(node: ASelectSubstitution) {
