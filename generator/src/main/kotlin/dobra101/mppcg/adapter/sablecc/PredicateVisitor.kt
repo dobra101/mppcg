@@ -5,6 +5,7 @@ import dobra101.mppcg.node.BooleanValue
 import dobra101.mppcg.node.Type
 import dobra101.mppcg.node.TypeBoolean
 import dobra101.mppcg.node.TypeInterval
+import dobra101.mppcg.node.collection.BinaryCollectionExpression
 import dobra101.mppcg.node.expression.Expression
 import dobra101.mppcg.node.expression.IdentifierExpression
 import dobra101.mppcg.node.expression.IntervalExpression
@@ -42,6 +43,8 @@ class PredicateVisitor : AbstractVisitor() {
         fun typeByMember(expr: Expression): Type {
             return when (expr) {
                 is IntervalExpression -> (expr.type as TypeInterval).type
+                is IdentifierExpression -> expr.type!!
+                is BinaryCollectionExpression -> expr.type!!
                 else -> TODO("Not implemented typeByMember $expr")
             }
         }

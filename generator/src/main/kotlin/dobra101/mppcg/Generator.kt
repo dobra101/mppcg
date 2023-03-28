@@ -235,7 +235,7 @@ class Generator {
             is Initialization -> substitutions.forEach { it.getAllIdentifiers() }
             is ParallelSubstitution -> substitutions.forEach { it.getAllIdentifiers() }
             is Precondition -> {
-                substitution.getAllIdentifiers()
+                substitution?.getAllIdentifiers()
                 predicate.getAllIdentifiers()
             }
 

@@ -9,7 +9,6 @@ import dobra101.mppcg.node.expression.*
 import dobra101.mppcg.node.predicate.*
 import dobra101.mppcg.node.substitution.*
 import java.util.*
-import kotlin.math.exp
 
 // TODO: add constructor for generated classes
 class JavaOutputEnvironment : OutputLanguageEnvironment() {

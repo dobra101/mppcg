@@ -222,7 +222,6 @@ data class Execution(val operations: List<ExecOperation>, val result: Map<List<E
                             methodChainList.add(execOperation)
                         } else {
                             methodChainList.add(ExecOperation(it))
-                            println(methodChainList)
                         }
                     }
                     result[methodChainList] = value
@@ -237,6 +236,5 @@ data class Execution(val operations: List<ExecOperation>, val result: Map<List<E
 }
 
 data class ExecOperation(val method: String, val propertyAccess: Boolean = false) {
-    // needed in .stg
-    val parameterized: Boolean = method.endsWith(")")
+    val parameterized: Boolean = method.endsWith(")") // needed in .stg
 }

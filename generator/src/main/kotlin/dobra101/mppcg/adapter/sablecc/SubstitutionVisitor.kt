@@ -75,7 +75,7 @@ class SubstitutionVisitor : AbstractVisitor() {
 
     override fun caseAPreconditionSubstitution(node: APreconditionSubstitution) {
         machineVisitor.currentScope = Scope(machineVisitor.currentScope)
-        result = Precondition(node.substitution.convert()!!, node.predicate.convert()!!)
+        result = Precondition(node.substitution.convert(), node.predicate.convert()!!)
         machineVisitor.currentScope = machineVisitor.currentScope.parent!!
     }
 

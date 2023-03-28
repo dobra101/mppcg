@@ -69,12 +69,14 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
 
         val expanded = ExpandedBinary.of(left, right)
 
+        val infiniteSet = ((left is InfiniteSet) || (right is InfiniteSet))
         val map = mapOf(
             "lhs" to expanded.lhs,
             "rhs" to expanded.rhs,
-            "operator" to operator2String(operator),
+            "operator" to operator2String(operator, infiniteSet),
             "exprCount" to exprCount,
-            "math" to isMathOperator(operator)
+            "math" to isMathOperator(operator),
+            "infiniteSet" to infiniteSet
         )
 
         val rendered = renderTemplate(map)
@@ -261,16 +263,19 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun ValuePredicate.renderSelf(): RenderResult {
-        TODO("Not yet implemented")
+        val map = if (type is TypeBoolean) {
+            mapOf("value" to (type as TypeBoolean).value?.name?.lowercase())
+        } else {
+            mapOf("value" to value)
+        }
+        return RenderResult(renderTemplate(map))
     }
 
     /* ---------- SUBSTITUTIONS ---------- */
     override fun AssignSubstitution.renderSelf(): RenderResult {
-        val identifier = (left as IdentifierExpression).name
-
         val expandedRhs = ExpandedExpression.of(right)
         val map = mapOf(
-            "identifier" to identifier,
+            "identifier" to left.render(),
             "rhs" to expandedRhs.expression,
             "stateCount" to stateCount,
             "resultStateCount" to ++stateCount
@@ -579,13 +584,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun InfiniteSet.renderSelf(): RenderResult {
-        // TODO: not hardcoded type
-        return when (type) {
-            is TypeNatural -> RenderResult(renderTemplate(mapOf("type" to "'NAT'")))
-            is TypeInteger -> RenderResult(renderTemplate(mapOf("type" to "'INT'")))
-            is TypeSet -> RenderResult(renderTemplate(mapOf("type" to "???")))
-            else -> TODO("Infinite Set not implemented (${type!!::class.simpleName})")
-        }
+        return RenderResult(renderTemplate(mapOf("type" to type2String(type))))
     }
 
     override fun LambdaExpression.renderSelf(): RenderResult {
@@ -655,7 +654,19 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun UnaryExpression.renderSelf(): RenderResult {
-        TODO("Not yet implemented")
+        if (optimize) optimizer.loadIfEvaluated(this)?.let { return it }
+
+        val map = mapOf(
+            "value" to value.render(),
+            "operator" to operator2String(operator),
+            "convertBoolean" to (operator == UnaryExpressionOperator.CONVERT_BOOLEAN),
+            "exprCount" to exprCount
+        )
+        val rendered = renderTemplate(map)
+
+        if (optimize) optimizer.evaluated[this] = expr(exprCount)
+
+        return RenderResult(rendered, mapOf("resultExpr" to IndividualInfo(expr(exprCount++))))
     }
 
     override fun UnaryFunctionExpression.renderSelf(): RenderResult {
@@ -764,7 +775,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
 
         val map = mapOf(
             "predicate" to predicate.render().rendered,
-            "substitution" to substitution.render().rendered
+            "substitution" to (substitution?.render()?.rendered ?: "")
         )
 
         return RenderResult(renderTemplate(map))
@@ -845,6 +856,19 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             BinaryExpressionOperator.DIV -> true
             BinaryExpressionOperator.MOD -> true
         }
+    }
+
+    private fun operator2String(operator: BinaryExpressionOperator, infiniteSet: Boolean): String {
+        if (infiniteSet) {
+            return when (operator) {
+                BinaryExpressionOperator.ADD -> "mppcg_add"
+                BinaryExpressionOperator.MINUS -> "mppcg_minus"
+                BinaryExpressionOperator.MULT -> "mppcg_mult"
+                BinaryExpressionOperator.DIV -> "mppcg_div"
+                BinaryExpressionOperator.MOD -> "mppcg_mod"
+            }
+        }
+        return operator2String(operator)
     }
 
     override fun operator2String(operator: BinaryExpressionOperator): String {
@@ -1075,6 +1099,15 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         return renderTemplate("sequenceFront", mapOf("name" to operator2String(this)))
     }
 
+    override fun type2String(type: Type?): String {
+        return when (type) {
+            is TypeNatural -> "'NAT'"
+            is TypeInteger -> "'INT'"
+            is TypeSet -> type2String(type.type)
+            is TypeBoolean -> "'BOOL'"
+            else -> TODO("Infinite Set not implemented (${type!!::class.simpleName})")
+        }
+    }
 }
 
 // TODO: rename?

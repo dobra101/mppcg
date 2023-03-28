@@ -29,5 +29,9 @@ implication(lhs, rhs, inline) ::= <<
 >>
 
 unaryLogicPredicate(predicate, operator) ::= <<
-<operator><predicate>
+<operator>(<predicate>)
+>>
+
+valuePredicate(value) ::= <<
+<value>
 >>

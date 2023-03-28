@@ -63,7 +63,7 @@ object Launcher {
     }
 
     fun benchmarkProlog(file: File): ProBResult {
-        val prologResourcesPath = "prolog/src/main/resources"
+        val prologResourcesPath = "outputLanguage/prolog/src/main/resources"
         val probPath = "$prologResourcesPath/ProB_Signed/probcli.sh"
         val probArgs =
             "--model-check -disable-time-out -p OPERATION_REUSE full -pref_group model_check unlimited -p COMPRESSION TRUE -noass -memory"

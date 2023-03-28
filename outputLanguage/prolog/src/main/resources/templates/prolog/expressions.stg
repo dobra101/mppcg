@@ -2,8 +2,9 @@ anonymousSetCollectionExpression(elements) ::= <<
 set([<elements; separator=", ">])
 >>
 
-binaryExpression(lhs, rhs, operator, exprCount, math) ::= <<
-Expr_<exprCount> <if(math)>is<else>=<endif> <lhs> <operator> <rhs>
+binaryExpression(lhs, rhs, operator, exprCount, math, infiniteSet) ::= <<
+<if(infiniteSet)><operator>(<lhs>, <rhs>, Expr_<exprCount>)<else>
+Expr_<exprCount> <if(math)>is<else>=<endif> <lhs> <operator> <rhs><endif>
 >>
 
 unaryCollectionExpression(collection, operator, exprCount) ::= <<
@@ -36,6 +37,12 @@ intervalExpression(lhs, rhs) ::= <<
 // TODO: add set name?
 setEntryExpression(name) ::= <<
 '<name>'
+>>
+
+unaryExpression(value, operator, convertBoolean, exprCount) ::= <<
+<if(convertBoolean)>
+(<value> -> Expr_<exprCount> = true; Expr_<exprCount> = false)<else>
+<operator>(<value>, Expr_<exprCount>)<endif>
 >>
 
 // TODO: add type ?

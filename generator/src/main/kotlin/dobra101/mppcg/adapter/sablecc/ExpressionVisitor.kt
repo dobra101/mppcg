@@ -436,10 +436,10 @@ class ExpressionVisitor : AbstractVisitor() {
         )
 
         val collection = (result as UnaryCollectionExpression).collection
-        val isOneDimensional = collection is InfiniteSet
         if (node.parent() is AMemberPredicate && resultBefore is Expression) {
+            val type = (collection as? InfiniteSet)?.setType ?: (collection as? EnumCollectionNode)?.type
             // is type info
-            resultBefore.type = if (isOneDimensional) TypeSet((collection as InfiniteSet).setType) else TypeFunction(
+            resultBefore.type = if (type != null) TypeSet(type) else TypeFunction(
                 FunctionType.PARTIAL,
                 (collection.type as TypeCouple).from,
                 (collection.type as TypeCouple).to

@@ -11,7 +11,7 @@ import io.kotest.matchers.shouldBe
 import java.io.File
 
 class PrologTest : ExpectSpec({
-    val include = listOf("Cruise_finite1_deterministic_MC.mch")
+    val include = listOf("Cruise_finite1_deterministic_MC.mch", "TrafficLight_MC.mch", "scheduler_deterministic_MC.mch", "Lift.mch")
 
     val machines = File("src/main/resources/machines/").walk()
         .filter { it.isFile && it.name.endsWith(".mch") }
@@ -19,7 +19,7 @@ class PrologTest : ExpectSpec({
         .toList()
 
     fun runProB(machine: File): ProBResult {
-        val prologResourcesPath = "prolog/src/main/resources"
+        val prologResourcesPath = "outputLanguage/prolog/src/main/resources"
         val probPath = "$prologResourcesPath/ProB_Signed/probcli.sh"
         val probArgs =
             "--model-check -disable-time-out -p OPERATION_REUSE full -pref_group model_check unlimited -p COMPRESSION TRUE -noass -memory"

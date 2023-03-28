@@ -44,7 +44,7 @@ avl2List(AVL, List) :-
 // TODO: improve return values
 operation(name, parameters, returnValues, body, resultStateCount) ::= <<
 <if(returnValues)>
-out(State_0, '<name>', Value) :-
+out(State_0, '<name>'<if(parameters)>(<parameters :{ p | <p>=Expr_<p>}; separator=", ">)<endif>, Value) :-
     <body>,
     get(State_<resultStateCount>, '<returnValues>', Value).<else>
 <if(body)>
@@ -210,6 +210,8 @@ check_inv(State) :-
 
 // TODO: function: check if e.g. only one solution is found
 member(name) ::= <<
+<name>(true, 'BOOL').
+<name>(false, 'BOOL').
 <name>(Element, 'INT') :-
     integer(Element).
 <name>(Element, 'NAT') :-

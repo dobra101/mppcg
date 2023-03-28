@@ -38,7 +38,13 @@ private fun getType(left: Expression, right: Expression, operator: BinaryFunctio
         BinaryFunctionOperator.DOMAIN_RESTRICTION,
         BinaryFunctionOperator.DOMAIN_SUBTRACTION -> right.type
 
-        BinaryFunctionOperator.IMAGE -> ((right as Function).type as TypeFunction).to
+        BinaryFunctionOperator.IMAGE -> {
+            if (right is Function) {
+                (right.type as TypeFunction).to
+            } else {
+                right.type
+            }
+        }
 
         BinaryFunctionOperator.OVERWRITE,
         BinaryFunctionOperator.RANGE_RESTRICTION,
