@@ -47,7 +47,17 @@ class ExecutionTestProlog : ExecutionTest(Language.PROLOG, "prolog.stg", ".pl", 
                                         (setArg as SPTerm).toTermArray().toList().joinToString(",", "{", "}")
                                     }
                                 sb.append("${k.removePrefix("Result_")}=$value")
+                            } else if (v.isList) {
+                                v.toPrologTermArray().forEach {
+                                    if (it.functorName == "/") {
+                                        val asString = it.toString().removePrefix("/").removeSurrounding("(", ")")
+                                        val split = asString.split(",")
+                                        sb.append("${k.removePrefix("Result_")}=${split[1]}")
+                                    }
+                                }
                             } else {
+                                println(v)
+                                println(v::class.java)
                                 sb.append("${k.removePrefix("Result_")}=$v")
                             }
                         } catch (e: Exception) {
@@ -168,7 +178,8 @@ private fun createSetupFile(
     val setup = STGroupFile("src/test/resources/dobra101/mppcg/execution/setup/$setupFileName")
 
     val methodChains = execution.result.keys.map {
-        val methodChain = setup.getInstanceOf("methodChain") ?: throw EnvironmentException("Template 'methodChain' not found")
+        val methodChain =
+            setup.getInstanceOf("methodChain") ?: throw EnvironmentException("Template 'methodChain' not found")
         methodChain.add("chain", it)
         methodChain.render()
     }.toList()

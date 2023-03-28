@@ -1,5 +1,5 @@
 assignSubstitution(identifier, rhs, stateCount, resultStateCount) ::= <<
-update('<identifier>', <rhs>, State_<stateCount>, State_<resultStateCount>)
+update(<identifier>, <rhs>, State_<stateCount>, State_<resultStateCount>)
 >>
 
 elseIfSubstitution(condition, then) ::= <<

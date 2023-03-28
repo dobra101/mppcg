@@ -43,14 +43,14 @@ avl2List(AVL, List) :-
 
 // TODO: improve return values
 operation(name, parameters, returnValues, body, resultStateCount) ::= <<
-<if(returnValues)>
-out(State_0, '<name>'<if(parameters)>(<parameters :{ p | <p>=Expr_<p>}; separator=", ">)<endif>, Value) :-
-    <body>,
-    get(State_<resultStateCount>, '<returnValues>', Value).<else>
 <if(body)>
 trans('<name>'<if(parameters)>(<parameters :{ p | <p>=Expr_<p>}; separator=", ">)<endif>, State_0, State_<resultStateCount>) :-
     <body>.<else>
-trans('<name>'<if(parameters)>(<parameters :{ p | <p>=Expr_<p>}; separator=", ">)<endif>, State, State).<endif><endif>
+trans('<name>'<if(parameters)>(<parameters :{ p | <p>=Expr_<p>}; separator=", ">)<endif>, State, State).<endif>
+<if(returnValues)>
+out(State_0, '<name>'<if(parameters)>(<parameters :{ p | <p>=Expr_<p>}; separator=", ">)<endif>, Values) :-
+    trans('<name>'<if(parameters)>(<parameters :{ p | <p>=Expr_<p>}; separator=", ">)<endif>, State_0, State_1),
+    findall((X/Value), (member(X, [<returnValues; separator=", ">]), get(State_1, X, Value)), Values).<endif>
 >>
 
 // TODO: use type and mapType
@@ -92,10 +92,14 @@ flatten([set(Head) | Tail], Acc, Flat) :-
     flatten(Tail, NewAcc, Flat).
 >>
 
-concreteIdentifier(name, value, inline) ::= <<
+concreteIdentifierDeclaration(name, value, inline, exprCount) ::= <<
 <if(inline)><name>(<value>).<else>
-<name>(Result) :-
+<name>(Expr_<exprCount>) :-
     <value>.<endif>
+>>
+
+concreteIdentifier(name, exprCount) ::= <<
+<name>(Expr_<exprCount>)
 >>
 
 couple(from, to) ::= <<
@@ -167,8 +171,10 @@ parallelSubstitution(tempVars, substitutions) ::= <<
 >>
 
 precondition(predicate, substitution) ::= <<
+<if(substitution)>
 <predicate>,
-<substitution>
+<substitution><else>
+<predicate><endif>
 >>
 
 // TODO: add else, when

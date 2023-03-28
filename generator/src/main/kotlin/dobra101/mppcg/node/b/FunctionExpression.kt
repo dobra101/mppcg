@@ -1,6 +1,8 @@
 package dobra101.mppcg.node.b
 
-import dobra101.mppcg.node.*
+import dobra101.mppcg.node.Type
+import dobra101.mppcg.node.TypeCollection
+import dobra101.mppcg.node.TypeFunction
 import dobra101.mppcg.node.collection.CollectionType
 import dobra101.mppcg.node.expression.Expression
 

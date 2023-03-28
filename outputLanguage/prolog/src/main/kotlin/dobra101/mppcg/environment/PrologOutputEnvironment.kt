@@ -33,6 +33,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     val whileDefinitions: MutableList<String> = mutableListOf() // HINT: only for B
     var whileCount = 0 // HINT: only for B
     var currentOperation: String = "" // HINT: only for B
+    var declarationStep: Boolean = true // HINT: only for B
 
     private fun expr(name: Any): String = "Expr_$name"
 
@@ -80,9 +81,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         )
 
         val rendered = renderTemplate(map)
-        if (optimize) optimizer.evaluated[this] = expr(exprCount)
-        val info = mapOf("resultExpr" to IndividualInfo(expr(exprCount++))) // TODO: map to Int?
-        return RenderResult("${expanded.before}$rendered", info)
+        return RenderResult("${expanded.before}$rendered", exprToInfo(this))
     }
 
     override fun EnumCollectionNode.renderSelf(): RenderResult {
@@ -97,7 +96,8 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         if (optimize) optimizer.evaluated[this] = expr(exprCount)
         val rendered = renderTemplate(map)
         if (isParameter) {
-            val info = mapOf("resultExpr" to IndividualInfo(expr(exprCount))) // TODO: map to Int?
+            val info = mapOf("resultExpr" to IndividualInfo(expr(exprCount)))
+            // expr is now assigned -> increase
             exprCount++
             return RenderResult(rendered, info)
         }
@@ -144,10 +144,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
                 )
                 renderTemplate(map)
             }
-        if (optimize) optimizer.evaluated[this] = expr(exprCount)
-        val info = mapOf("resultExpr" to IndividualInfo(expr(exprCount++))) // TODO: map to Int?
-
-        return RenderResult(rendered, info)
+        return RenderResult(rendered, exprToInfo(this))
     }
 
     override fun IntervalExpression.renderSelf(): RenderResult {
@@ -273,9 +270,25 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
 
     /* ---------- SUBSTITUTIONS ---------- */
     override fun AssignSubstitution.renderSelf(): RenderResult {
+        if (left !is IdentifierExpression) {
+            val expanded = ExpandedBinary.of(left, right)
+            val map = mapOf(
+                "identifier" to expanded.lhs,
+                "rhs" to expanded.rhs,
+                "stateCount" to stateCount,
+                "resultStateCount" to ++stateCount
+            )
+            val rendered = renderTemplate(map)
+
+            if (optimize && !temporaryVariables.contains(left)) {
+                optimizer.evaluated[left] = expanded.lhs
+            }
+            return RenderResult("${expanded.before}$rendered")
+        }
+
         val expandedRhs = ExpandedExpression.of(right)
         val map = mapOf(
-            "identifier" to left.render(),
+            "identifier" to "'${(left as IdentifierExpression).name}'",
             "rhs" to expandedRhs.expression,
             "stateCount" to stateCount,
             "resultStateCount" to ++stateCount
@@ -475,8 +488,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             usedBMethods.add(operator)
         }
 
-        if (optimize) optimizer.evaluated[this] = expr(exprCount)
-        return RenderResult("${expanded.before}$rendered", mapOf("resultExpr" to IndividualInfo(expr(exprCount++))))
+        return RenderResult("${expanded.before}$rendered", exprToInfo(this))
     }
 
     // TODO: reuse BinaryExpression?
@@ -501,8 +513,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             usedBMethods.add(BinaryPredicateOperator.MEMBER)
         }
 
-        if (optimize) optimizer.evaluated[this] = expr(exprCount)
-        return RenderResult("${expanded.before}$rendered", mapOf("resultExpr" to IndividualInfo(expr(exprCount++))))
+        return RenderResult("${expanded.before}$rendered", exprToInfo(this))
     }
 
     override fun BinarySequenceExpression.renderSelf(): RenderResult {
@@ -520,8 +531,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         val rendered = renderTemplate(map)
 
         usedBMethods.add(operator)
-        if (optimize) optimizer.evaluated[this] = expr(exprCount)
-        return RenderResult("${expanded.before}$rendered", mapOf("resultExpr" to IndividualInfo(expr(exprCount++))))
+        return RenderResult("${expanded.before}$rendered", exprToInfo(this))
     }
 
     override fun CallFunctionExpression.renderSelf(): RenderResult {
@@ -539,10 +549,8 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         val before = "${before1.before}${before2.before}"
         val rendered = renderTemplate(map)
 
-        if (optimize) optimizer.evaluated[this] = expr(exprCount)
         usedBMethods.add(operator)
-
-        return RenderResult("$before$rendered", mapOf("resultExpr" to IndividualInfo(expr(exprCount++))))
+        return RenderResult("$before$rendered", exprToInfo(this))
     }
 
     override fun ComprehensionSet.renderSelf(): RenderResult {
@@ -554,23 +562,31 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             "exprCount" to exprCount
         )
         comprehensionSetIdentifier = comprehensionSetIdentifierBefore
-        if (optimize) optimizer.evaluated[this] = expr(exprCount)
-
-        return RenderResult(renderTemplate(map), mapOf("resultExpr" to IndividualInfo(expr(exprCount++))))
+        return RenderResult(renderTemplate(map), exprToInfo(this))
     }
 
     override fun ConcreteIdentifierExpression.renderSelf(): RenderResult {
-        if (optimize) optimizer.evaluated = hashMapOf()
-        stateCount = 0
-        exprCount = 0
-        temporaryVariables = hashSetOf()
+        if (declarationStep) {
+            if (optimize) optimizer.evaluated = hashMapOf()
+            stateCount = 0
+            exprCount = 0
+            temporaryVariables = hashSetOf()
+        }
 
+        if (declarationStep) {
+            val map = mapOf(
+                "name" to name,
+                "value" to value.render(),
+                "inline" to (value !is ComprehensionSet && value !is LambdaExpression),
+                "exprCount" to exprCount - 1 // last assigned expression
+            )
+            return RenderResult(renderTemplate("concreteIdentifierDeclaration", map))
+        }
         val map = mapOf(
             "name" to name,
-            "value" to value.render(),
-            "inline" to (value !is ComprehensionSet && value !is LambdaExpression)
+            "exprCount" to exprCount
         )
-        return RenderResult(renderTemplate(map))
+        return RenderResult(renderTemplate(map), exprToInfo(this))
     }
 
     override fun Couple.renderSelf(): RenderResult {
@@ -598,9 +614,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         )
         lambdaExpressionIdentifier = emptyList()
 
-        if (optimize) optimizer.evaluated[this] = expr(exprCount)
-
-        return RenderResult(renderTemplate(map), mapOf("resultExpr" to IndividualInfo(expr(exprCount++))))
+        return RenderResult(renderTemplate(map), exprToInfo(this))
     }
 
     override fun Sequence.renderSelf(): RenderResult {
@@ -618,14 +632,9 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             "exprCount" to exprCount
         )
 
-        if (optimize) optimizer.evaluated[this] = expr(exprCount)
-
         usedBMethods.add(operator)
 
-        return RenderResult(
-            "${expanded.before}${renderTemplate(map)}",
-            mapOf("resultExpr" to IndividualInfo(expr(exprCount++)))
-        )
+        return RenderResult("${expanded.before}${renderTemplate(map)}", exprToInfo(this))
     }
 
     override fun UnaryCollectionExpression.renderSelf(): RenderResult {
@@ -638,7 +647,6 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             "exprCount" to exprCount
         )
 
-        if (optimize) optimizer.evaluated[this] = expr(exprCount)
 
         if (needsCustomMethod(operator)) {
             usedBMethods.add(operator)
@@ -647,10 +655,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             }
         }
 
-        return RenderResult(
-            "${expanded.before}${renderTemplate(map)}",
-            mapOf("resultExpr" to IndividualInfo(expr(exprCount++)))
-        )
+        return RenderResult("${expanded.before}${renderTemplate(map)}", exprToInfo(this))
     }
 
     override fun UnaryExpression.renderSelf(): RenderResult {
@@ -664,9 +669,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         )
         val rendered = renderTemplate(map)
 
-        if (optimize) optimizer.evaluated[this] = expr(exprCount)
-
-        return RenderResult(rendered, mapOf("resultExpr" to IndividualInfo(expr(exprCount++))))
+        return RenderResult(rendered, exprToInfo(this))
     }
 
     override fun UnaryFunctionExpression.renderSelf(): RenderResult {
@@ -683,12 +686,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
 
         val rendered = renderTemplate(map)
 
-        if (optimize) optimizer.evaluated[this] = expr(exprCount)
-
-        return RenderResult(
-            "${expanded.before}$rendered",
-            mapOf("resultExpr" to IndividualInfo(expr(exprCount++)))
-        )
+        return RenderResult("${expanded.before}$rendered", exprToInfo(this))
     }
 
     // HINT: SAME FOR JAVA AND PROLOG
@@ -775,7 +773,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
 
         val map = mapOf(
             "predicate" to predicate.render().rendered,
-            "substitution" to (substitution?.render()?.rendered ?: "")
+            "substitution" to substitution?.render()?.rendered
         )
 
         return RenderResult(renderTemplate(map))
@@ -793,6 +791,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
 
     override fun Machine.renderSelf(): RenderResult {
         if (optimize) optimizer.evaluated = hashMapOf()
+        declarationStep = true
         this@PrologOutputEnvironment.concreteConstants = concreteConstants
         this@PrologOutputEnvironment.constants = constants
         stateCount = 0
@@ -800,13 +799,16 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         operationParameters = parameters.map { it as IdentifierExpression }
         temporaryVariables = hashSetOf()
 
+        val concreteConstantsRendered = concreteConstants.render()
+        declarationStep = false
+
         val map = mapOf(
             "name" to name,
             "parameters" to parameters.render(),
             "constraints" to constraints?.render(),
             "sets" to sets.render(),
             "constants" to constants.render(),
-            "concrete_constants" to concreteConstants.render(),
+            "concrete_constants" to concreteConstantsRendered,
 //            "properties" to properties?.render(), // TODO: use properties
             "definitions" to definitions?.render(),
             "variables" to variables.render(),
@@ -1107,6 +1109,14 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             is TypeBoolean -> "'BOOL'"
             else -> TODO("Infinite Set not implemented (${type!!::class.simpleName})")
         }
+    }
+
+    private fun exprToInfo(node: MPPCGNode): Map<String, IndividualInfo> {
+        if (optimize) optimizer.evaluated[node] = expr(exprCount)
+        val info = mapOf("resultExpr" to IndividualInfo(expr(exprCount)))
+        // expr is now assigned -> increase
+        exprCount++
+        return info
     }
 }
 
