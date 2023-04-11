@@ -34,6 +34,9 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     var whileCount = 0 // HINT: only for B
     var currentOperation: String = "" // HINT: only for B
     var declarationStep: Boolean = true // HINT: only for B
+    var ignoreOutput: Boolean = false // HINT: only for B
+    var returnValues: List<Expression> = listOf() // HINT: only for B
+    var quantifierIdentifier: List<IdentifierExpression> = listOf() // HINT: only for B
 
     private fun expr(name: Any): String = "Expr_$name"
 
@@ -128,6 +131,11 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         if (temporaryVariables.contains(this)) {
             if (optimize) optimizer.evaluated[this] = expr("tmp_$name")
             return RenderResult(expr("tmp_$name"))
+        }
+
+        if (quantifierIdentifier.contains(this)) {
+            if (optimize) optimizer.evaluated[this] = expr("tmp_$name")
+            return RenderResult(expr("q_$name"))
         }
 
         // TODO: not hardcoded and not always
@@ -252,6 +260,18 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun UnaryLogicPredicate.renderSelf(): RenderResult {
+        // evaluated needs reset because of scoping
+        if (optimize) {
+            val evaluated: HashMap<MPPCGNode, String> = hashMapOf()
+            evaluated.putAll(optimizer.evaluated)
+            val map = mapOf(
+                "predicate" to predicate.render(),
+                "operator" to operator2String(operator)
+            )
+            optimizer.evaluated = evaluated
+            return RenderResult(renderTemplate(map))
+        }
+
         val map = mapOf(
             "predicate" to predicate.render(),
             "operator" to operator2String(operator)
@@ -270,25 +290,27 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
 
     /* ---------- SUBSTITUTIONS ---------- */
     override fun AssignSubstitution.renderSelf(): RenderResult {
-        if (left !is IdentifierExpression) {
-            val expanded = ExpandedBinary.of(left, right)
-            val map = mapOf(
-                "identifier" to expanded.lhs,
-                "rhs" to expanded.rhs,
-                "stateCount" to stateCount,
-                "resultStateCount" to ++stateCount
-            )
-            val rendered = renderTemplate(map)
+        if (ignoreOutput && returnValues.contains(left)) {
+            return RenderResult("true")
+        }
 
-            if (optimize && !temporaryVariables.contains(left)) {
-                optimizer.evaluated[left] = expanded.lhs
+        val identifier = when (left) {
+            is IdentifierExpression -> "'${(left as IdentifierExpression).name}'"
+
+            is CallFunctionExpression -> {
+                val map = mapOf(
+                    "expression" to ((left as CallFunctionExpression).expression as IdentifierExpression).name,
+                    "parameters" to (left as CallFunctionExpression).parameters.render(),
+                )
+                renderTemplate("callFunctionAccess", map)
             }
-            return RenderResult("${expanded.before}$rendered")
+
+            else -> left.render().rendered
         }
 
         val expandedRhs = ExpandedExpression.of(right)
         val map = mapOf(
-            "identifier" to "'${(left as IdentifierExpression).name}'",
+            "identifier" to identifier,
             "rhs" to expandedRhs.expression,
             "stateCount" to stateCount,
             "resultStateCount" to ++stateCount
@@ -426,18 +448,29 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun WhileSubstitution.renderSelf(): RenderResult {
+        fun getDefinitionMap(): Map<String, Any> {
+            val evaluated = optimizer.evaluated
+            optimizer.evaluated = hashMapOf()
+            val conditionRendered = condition.render()
+            optimizer.evaluated = hashMapOf()
+            val map = mapOf(
+                "name" to currentOperation,
+                "count" to whileCount,
+                "condition" to conditionRendered,
+                "body" to body.render(),
+                "lastState" to stateCount
+            )
+            optimizer.evaluated = evaluated
+            return map
+        }
+
         val stateCountBefore = stateCount
         val exprCountBefore = exprCount
         stateCount = 0
         exprCount = 0
 
-        val whileDefinitionMap = mapOf(
-            "name" to currentOperation,
-            "count" to whileCount,
-            "condition" to condition.render(),
-            "body" to body.render(),
-            "lastState" to stateCount
-        )
+
+        val whileDefinitionMap = getDefinitionMap()
 
         stateCount = stateCountBefore
         exprCount = exprCountBefore
@@ -714,6 +747,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun QuantifierPredicate.renderSelf(): RenderResult {
+        quantifierIdentifier = identifier
         val map = mapOf(
             "identifier" to identifier.render(),
             "predicate" to predicate.render(),
@@ -833,12 +867,28 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         currentOperation = name
         whileCount = 0
 
+        ignoreOutput = true
+        this@PrologOutputEnvironment.returnValues = returnValues
+        val bodyNoOutput = body?.render()
+        val stateCountNoOutput = stateCount
+        ignoreOutput = false
+        if (optimize) optimizer.evaluated = hashMapOf()
+        stateCount = 0
+        exprCount = 0
+        operationParameters = parameters.map { it as IdentifierExpression }
+        temporaryVariables = hashSetOf()
+        currentOperation = name
+        whileCount = 0
+        val bodyWithOutput = body?.render()
+
         val map = mapOf(
             "name" to name,
             "parameters" to operationParameters.map { it.name.lowercase() },
             "returnValues" to returnValues.map { (it as? IdentifierExpression)?.name }, // TODO: add returnValues?
-            "body" to body?.render(),
-            "resultStateCount" to stateCount
+            "bodyWithOutput" to bodyWithOutput,
+            "body" to bodyNoOutput?.rendered?.removeSuffix(EXPRESSION_SEPARATOR),
+            "resultStateCount" to stateCountNoOutput,
+            "resultStateCountWithOutput" to stateCount
         )
 
         return RenderResult(renderTemplate(map))

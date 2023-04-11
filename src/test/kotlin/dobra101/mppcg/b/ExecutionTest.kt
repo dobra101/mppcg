@@ -21,6 +21,22 @@ val outputDir = File("build/executionTests/")
 // TODO: refactor: load file in setup file and execute setup file?
 class ExecutionTestProlog : ExecutionTest(Language.PROLOG, "prolog.stg", ".pl", runSetup) {
     companion object {
+        // TODO: refactor
+        private fun set2String(possibleSet: String): String {
+            if (!possibleSet.startsWith("set(")) return possibleSet
+
+            val sb = StringBuilder("{")
+            var list = possibleSet.removeSurrounding("set(", ")")
+            while (list.startsWith(".(")) {
+                list = list.removeSurrounding(".(", ")")
+                val split = list.split(",")
+                list = split[1]
+                sb.append(split[0])
+            }
+            sb.append("}")
+            return sb.toString()
+        }
+
         private var sicstus: SICStus? = null
         private val runSetup = { _: String, file: File, setupFile: File ->
             val sb = StringBuilder()
@@ -51,13 +67,11 @@ class ExecutionTestProlog : ExecutionTest(Language.PROLOG, "prolog.stg", ".pl", 
                                 v.toPrologTermArray().forEach {
                                     if (it.functorName == "/") {
                                         val asString = it.toString().removePrefix("/").removeSurrounding("(", ")")
-                                        val split = asString.split(",")
-                                        sb.append("${k.removePrefix("Result_")}=${split[1]}")
+                                        val split = asString.split(",", limit = 2)
+                                        sb.append("${k.removePrefix("Result_")}=${set2String(split[1])}")
                                     }
                                 }
                             } else {
-                                println(v)
-                                println(v::class.java)
                                 sb.append("${k.removePrefix("Result_")}=$v")
                             }
                         } catch (e: Exception) {
@@ -187,6 +201,7 @@ private fun createSetupFile(
     val st = setup.getInstanceOf("setup") ?: throw EnvironmentException("Template 'setup' not found")
     st.add("name", mchName)
     st.add("execution", execution.operations)
+    println(execution)
     st.add("result", methodChains)
 
     val directory = File("${outputDir.path}/$dir")

@@ -95,7 +95,7 @@ abstract class EnvironmentUtils {
         return when (operator) {
             UnaryFunctionOperator.DOMAIN -> "domain"
             UnaryFunctionOperator.RANGE -> "range"
-            UnaryFunctionOperator.REVERSE -> "reverse"
+            UnaryFunctionOperator.REVERSE -> "inverse"
         }
     }
 

@@ -35,22 +35,34 @@ get(State, Key, Value) :-
 empty(T) :- avl:empty_avl(T).
 
 update(Key, Value, AVL, NewAVL) :-
+    functor(Key, Functor, 1),
+    arg(1, Key, Parameter),
+    get(AVL, Functor, set(FuncRel)),
+    updateFunction(FuncRel, Parameter, Value, NewValue),
+    avl:avl_store(Functor, AVL, set(NewValue), NewAVL),
+    !.
+update(Key, Value, AVL, NewAVL) :-
     avl:avl_store(Key, AVL, Value, NewAVL).
 
 avl2List(AVL, List) :-
     avl:avl_to_list(AVL, List).
+
+updateFunction([], Parameter, Value, [Parameter/Value]).
+updateFunction([Parameter/_ | Tail], Parameter, Value, [Parameter/Value | Tail]) :- !.
+updateFunction([K/V | Tail], Parameter, Value, [K/V | NewTail]) :-
+    updateFunction(Tail, Parameter, Value, NewTail).
 >>
 
 // TODO: improve return values
-operation(name, parameters, returnValues, body, resultStateCount) ::= <<
+operation(name, parameters, returnValues, body, bodyWithOutput, resultStateCount, resultStateCountWithOutput) ::= <<
 <if(body)>
 trans('<name>'<if(parameters)>(<parameters :{ p | <p>=Expr_<p>}; separator=", ">)<endif>, State_0, State_<resultStateCount>) :-
     <body>.<else>
 trans('<name>'<if(parameters)>(<parameters :{ p | <p>=Expr_<p>}; separator=", ">)<endif>, State, State).<endif>
 <if(returnValues)>
 out(State_0, '<name>'<if(parameters)>(<parameters :{ p | <p>=Expr_<p>}; separator=", ">)<endif>, Values) :-
-    trans('<name>'<if(parameters)>(<parameters :{ p | <p>=Expr_<p>}; separator=", ">)<endif>, State_0, State_1),
-    findall((X/Value), (member(X, [<returnValues; separator=", ">]), get(State_1, X, Value)), Values).<endif>
+    <bodyWithOutput>,
+    findall((X/Value), (member(X, [<returnValues :{r | '<r>'}; separator=", ">]), get(State_<resultStateCountWithOutput>, X, Value)), Values).<endif>
 >>
 
 // TODO: use type and mapType
@@ -60,6 +72,10 @@ function(<lhs>, <rhs>)
 
 binaryFunctionExpression(lhs, rhs, operator, exprCount) ::= <<
 <operator>(<lhs>, <rhs>, Expr_<exprCount>)
+>>
+
+callFunctionAccess(expression, parameters) ::= <<
+<expression>(<parameters>)
 >>
 
 callFunction(expression, parameters, exprCount) ::= <<
@@ -216,6 +232,8 @@ check_inv(State) :-
 
 // TODO: function: check if e.g. only one solution is found
 member(name) ::= <<
+<name>(set(Set), pow(X)) :-
+    findall(_, (<name>(E, Set), \+ <name>(E, X)), []).
 <name>(true, 'BOOL').
 <name>(false, 'BOOL').
 <name>(Element, 'INT') :-
@@ -305,6 +323,7 @@ range(name) ::= <<
 >>
 
 reverse(name) ::= <<
+<name>(set(L), set(L1)) :- <name>(L, L1), !.
 <name>([], []) :- !.
 <name>([(X/Y) | Tail], [(Y/X) | NewTail]) :-
     <name>(Tail, NewTail),
@@ -370,6 +389,9 @@ rangeRestriction(name) ::= <<
 <name>(Relation, set(Set), set(Result)) :-
     <name>(Relation, Set, Result),
     !.
+<name>(set(Relation), set(Set), set(Result)) :-
+    <name>(Relation, Set, Result),
+    !.
 <name>([], _, []) :- !.
 <name>([(X/Y) | Tail], Range, [(X/Y) | NewTail]) :-
     member(Y, Range),
@@ -395,6 +417,7 @@ rangeSubtraction(name) ::= <<
 >>
 
 powerSet(name, subsetName) ::= <<
+<name>('INT', pow('INT')) :- !.
 <name>(set(Set), Powerset) :-
     <name>(Set, Powerset),
     !.
@@ -405,6 +428,7 @@ powerSet(name, subsetName) ::= <<
 >>
 
 powerSet1(name, subsetName) ::= <<
+<name>('INT', pow1('INT')) :- !.
 <name>(set(Set), Powerset) :-
     <name>(Set, Powerset),
     !.

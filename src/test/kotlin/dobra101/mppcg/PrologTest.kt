@@ -32,12 +32,14 @@ class PrologTest : ExpectSpec({
         return result
     }
 
-    val include: List<String> = listOf()
+    val include: List<String> = listOf(
+//        "CAN_BUS_tlc.mch",
 //        "Cruise_finite1_deterministic_MC.mch",
-//        "TrafficLight_MC.mch",
+//        "Lift.mch",
 //        "scheduler_deterministic_MC.mch",
-//        "Lift.mch"
-
+//        "sort_m2_data1000.mch",
+//        "TrafficLight_MC"
+    )
     val machines = File("src/main/resources/machines/").walk()
         .filter { it.isFile && it.name.endsWith(".mch") }
         .filter { if (include.isNotEmpty()) include.contains(it.name) else true }

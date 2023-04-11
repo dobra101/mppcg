@@ -26,7 +26,7 @@ class PrologOptimizer(private val environment: PrologOutputEnvironment) {
      * @return The render result or null, if optimization is not applicable
      */
     fun renderOptimized(node: BinaryPredicate): RenderResult? {
-        if ((node.operator == BinaryPredicateOperator.EQUAL || node.operator == BinaryPredicateOperator.NOT_EQUAL)  &&
+        if ((node.operator == BinaryPredicateOperator.EQUAL || node.operator == BinaryPredicateOperator.NOT_EQUAL) &&
             (node.right is IdentifierExpression
                     || node.right is SetEntry
                     || node.right is CollectionEntry
@@ -48,17 +48,21 @@ class PrologOptimizer(private val environment: PrologOutputEnvironment) {
                     }
                     evaluated[node.right] ?: "'${(node.right as IdentifierExpression).name}'"
                 }
+
                 is SetEntry -> "'${(node.right as SetEntry).name}'"
                 is CollectionEntry -> "'${(node.right as CollectionEntry).name}'"
                 is ValueExpression -> (node.right as ValueExpression).rendered()
                 else -> "" // when is exhaustive
             }
 
+            val lhs = evaluated[node.left] ?: (node.left as IdentifierExpression).name
+
             val map = mapOf(
-                "lhs" to (node.left as IdentifierExpression).name,
+                "lhs" to lhs,
                 "rhs" to rhs,
                 "stateCount" to environment.stateCount,
-                "negate" to (node.operator == BinaryPredicateOperator.NOT_EQUAL)
+                "negate" to (node.operator == BinaryPredicateOperator.NOT_EQUAL),
+                "useGet" to !environment.quantifierIdentifier.contains(node.left)
             )
             val rendered = environment.renderTemplate("optimizedBinaryPredicateEqual", map)
             return RenderResult("$before$rendered")
