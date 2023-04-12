@@ -70,10 +70,13 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
 
     override fun BinaryExpression.renderSelf(): RenderResult {
         if (optimize) optimizer.loadIfEvaluated(this)?.let { return it }
-
         val expanded = ExpandedBinary.of(left, right)
 
-        val infiniteSet = ((left is InfiniteSet) || (right is InfiniteSet))
+        val infiniteSet = (
+                (left is InfiniteSet) || (right is InfiniteSet)
+                        || (left is IntervalExpression) || (right is IntervalExpression)
+                        || (left.type is TypeInterval) || (right.type is TypeInterval)
+                )
         val map = mapOf(
             "lhs" to expanded.lhs,
             "rhs" to expanded.rhs,
@@ -82,6 +85,10 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             "math" to isMathOperator(operator),
             "infiniteSet" to infiniteSet
         )
+
+        if (needsCustomMethod(operator)) {
+            usedBMethods.add(operator)
+        }
 
         val rendered = renderTemplate(map)
         return RenderResult("${expanded.before}$rendered", exprToInfo(this))
@@ -202,16 +209,17 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             BinaryPredicateOperator.SUBSET
         )
 
+        val infiniteSet = (left is IntervalExpression || right is IntervalExpression || left.type is TypeCollection || right.type is TypeCollection)
         val map = mapOf(
             "lhs" to expanded.lhs,
             "rhs" to expanded.rhs,
-            "operator" to operator2String(operator),
-            "prefixOperator" to prefixOperators.contains(operator)
+            "operator" to operator2String(operator, infiniteSet),
+            "prefixOperator" to (prefixOperators.contains(operator) || infiniteSet)
         )
         val rendered = renderTemplate(map)
 
         // TODO: function which knows all dependencies
-        if (needsCustomMethod(operator)) {
+        if (needsCustomMethod(operator) && (operator != BinaryPredicateOperator.EQUAL || infiniteSet)) {
             usedBMethods.add(operator)
         }
 
@@ -607,10 +615,14 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         }
 
         if (declarationStep) {
+            val renderedValue = value.render()
+            val before = if (renderedValue.containsKey("before")) renderedValue["before"].info else ""
             val map = mapOf(
                 "name" to name,
-                "value" to value.render(),
-                "inline" to (value !is ComprehensionSet && value !is LambdaExpression),
+                "before" to before.removeSuffix(EXPRESSION_SEPARATOR),
+                "value" to renderedValue.rendered,
+                "interval" to (value is IntervalExpression),
+                "inline" to (!renderedValue.rendered.contains(EXPRESSION_SEPARATOR) && value !is ComprehensionSet && value !is LambdaExpression), // TODO: type checks needed?
                 "exprCount" to exprCount - 1 // last assigned expression
             )
             return RenderResult(renderTemplate("concreteIdentifierDeclaration", map))
@@ -747,13 +759,14 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun QuantifierPredicate.renderSelf(): RenderResult {
-        quantifierIdentifier = identifier
+        quantifierIdentifier = quantifierIdentifier + identifier
         val map = mapOf(
             "identifier" to identifier.render(),
             "predicate" to predicate.render(),
             "quantification" to quantification?.render(),
             "universalQuantifier" to (type == QuantifierType.FORALL)
         )
+        quantifierIdentifier = quantifierIdentifier - identifier.toSet()
         return RenderResult(renderTemplate(map))
     }
 
@@ -923,6 +936,17 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         return operator2String(operator)
     }
 
+    private fun operator2String(operator: BinaryPredicateOperator, infiniteSet: Boolean): String {
+        if (infiniteSet) {
+            return when (operator) {
+                BinaryPredicateOperator.EQUAL -> "mppcg_equal"
+                BinaryPredicateOperator.NOT_EQUAL -> "mppcg_not_equal"
+                else -> operator2String(operator)
+            }
+        }
+        return operator2String(operator)
+    }
+
     override fun operator2String(operator: BinaryExpressionOperator): String {
         return when (operator) {
             BinaryExpressionOperator.MOD -> "mod"
@@ -945,10 +969,14 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         if (operator is BMethod) return true
         return when (operator) {
             BinaryPredicateOperator.MEMBER,
-            BinaryPredicateOperator.SUBSET -> true
+            BinaryPredicateOperator.SUBSET,
+            BinaryPredicateOperator.EQUAL,
+            BinaryPredicateOperator.NOT_EQUAL -> true
 
             is BinaryCollectionOperator -> true
             is UnaryCollectionOperator -> true
+
+            BinaryExpressionOperator.MULT -> true
 
             else -> false
         }
@@ -974,8 +1002,18 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
                 is BinarySequenceExpressionOperator -> it.render()
                 is CallFunctionOperator -> it.render()
                 is UnarySequenceExpressionOperator -> it.render()
+                is BinaryExpressionOperator -> it.render()
                 else -> throw EnvironmentException("Rendering of custom method for operator '$it' (${it::class.simpleName}) is not implemented.")
             }
+        }
+    }
+
+    private fun BinaryExpressionOperator.render(): String {
+        return when (this) {
+            BinaryExpressionOperator.MULT -> renderTemplate(
+                "mult", mapOf("name" to operator2String(this, true), "memberName" to operator2String(BinaryPredicateOperator.MEMBER))
+            )
+            else -> throw EnvironmentException("Rendering of custom method for operator '${name}' (${this::class.simpleName}) is not implemented.")
         }
     }
 
@@ -1085,6 +1123,8 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         return when (this) {
             BinaryPredicateOperator.MEMBER -> renderTemplate("member", mapOf("name" to operator2String(this)))
             BinaryPredicateOperator.SUBSET -> renderTemplate("subset", mapOf("name" to operator2String(this)))
+            BinaryPredicateOperator.EQUAL -> renderTemplate("equal", mapOf("name" to operator2String(this, true), "memberName" to operator2String(BinaryPredicateOperator.MEMBER)))
+            BinaryPredicateOperator.NOT_EQUAL -> renderTemplate("not_equal", mapOf("name" to operator2String(this, true), "memberName" to operator2String(BinaryPredicateOperator.MEMBER)))
 
             else -> throw EnvironmentException("Rendering of custom method for operator '${name}' (${this::class.simpleName}) is not implemented.")
         }

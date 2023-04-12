@@ -9,7 +9,7 @@ data class BinaryExpression(
     val operator: BinaryExpressionOperator
 ) : Expression(getType(left, right, operator), "binaryExpression")
 
-enum class BinaryExpressionOperator {
+enum class BinaryExpressionOperator: CustomMethodOperator {
     ADD,
     MINUS,
     MULT,

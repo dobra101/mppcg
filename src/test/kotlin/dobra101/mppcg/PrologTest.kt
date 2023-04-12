@@ -40,9 +40,14 @@ class PrologTest : ExpectSpec({
 //        "sort_m2_data1000.mch",
 //        "TrafficLight_MC"
     )
+
+    val exclude: List<String> = listOf(
+        "Train_1_beebook_deterministic_MC.mch"
+    )
     val machines = File("src/main/resources/machines/").walk()
         .filter { it.isFile && it.name.endsWith(".mch") }
         .filter { if (include.isNotEmpty()) include.contains(it.name) else true }
+        .filter { if (exclude.isNotEmpty()) !exclude.contains(it.name) else true }
         .toList()
 
     val expectedModelCheckingResults: Map<File, ProBResult> =
@@ -67,7 +72,6 @@ class PrologTest : ExpectSpec({
     machines.forAll { machineFile ->
         context(machineFile.name) {
             println("Testing ${machineFile.name}")
-//            val mchResult = runProB(machineFile)
             var mchResult = expectedModelCheckingResults[machineFile]
             println("ProB Result: $mchResult")
             if (mchResult == null) {

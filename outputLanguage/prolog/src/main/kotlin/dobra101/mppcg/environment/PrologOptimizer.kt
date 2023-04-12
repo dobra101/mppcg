@@ -33,6 +33,8 @@ class PrologOptimizer(private val environment: PrologOutputEnvironment) {
                     || node.right is ValueExpression)
         ) {
             if (node.left !is IdentifierExpression) return null
+            if (environment.quantifierIdentifier.contains(node.left)) return null
+            if (environment.temporaryVariables.contains(node.left)) return null
 
             var before = ""
             val rhs = when (node.right) {

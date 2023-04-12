@@ -108,10 +108,11 @@ flatten([set(Head) | Tail], Acc, Flat) :-
     flatten(Tail, NewAcc, Flat).
 >>
 
-concreteIdentifierDeclaration(name, value, inline, exprCount) ::= <<
+concreteIdentifierDeclaration(name, before, value, inline, exprCount, interval) ::= <<
+<if(interval)><name>(<value>) :- <before>.<else>
 <if(inline)><name>(<value>).<else>
 <name>(Expr_<exprCount>) :-
-    <value>.<endif>
+    <value>.<endif><endif>
 >>
 
 concreteIdentifier(name, exprCount) ::= <<
@@ -307,16 +308,18 @@ setUnion(name) ::= <<
 >>
 
 domain(name) ::= <<
-<name>(set(Relation), set(Domain)) :-
-    <name>(Relation, Domain).
+<name>(set(Relation), set(Sorted)) :-
+    <name>(Relation, Domain),
+    sort(Domain, Sorted).
 <name>([], []) :- !.
 <name>([(X/_) | Tail], [X | NewTail]) :-
     <name>(Tail, NewTail).
 >>
 
 range(name) ::= <<
-<name>(set(Relation), set(Range)) :-
-    <name>(Relation, Range).
+<name>(set(Relation), set(Sorted)) :-
+    <name>(Relation, Range),
+    sort(Range, Sorted).
 <name>([], []) :- !.
 <name>([(_/Y) | Tail], [Y | NewTail]) :-
     <name>(Tail, NewTail).
@@ -564,4 +567,24 @@ forwardComposition(name, memberName) ::= <<
         (<memberName>((X/Z), P), <memberName>((Z/Y), Q)),
         Result
     ).
+>>
+
+mult(name, memberName) ::= <<
+<name>(Interval1, Interval2, Result) :-
+    findall((X/Y),
+        (<memberName>(X, Interval1), <memberName>(Y, Interval2)),
+        Result
+    ).
+>>
+
+equal(name, memberName) ::= <<
+<name>(set(Set), Other) :-
+    findall(X, (<memberName>(X, Set), \+ <memberName>(X, Other)), []), !,
+    findall(X, (<memberName>(X, Other), \+ <memberName>(X, Set)), []), !.
+>>
+
+not_equal(name, memberName) ::= <<
+<name>(set(Set), Other) :-
+    (<memberName>(X, Set), \+ <memberName>(X, Other));
+    (<memberName>(X, Other), \+ <memberName>(X, Set)), !.
 >>

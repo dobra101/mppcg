@@ -171,7 +171,11 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseAIntervalExpression(node: AIntervalExpression) {
+        val resultBefore = AbstractVisitor.result
         result = IntervalExpression(node.leftBorder.convert()!!, node.rightBorder.convert()!!)
+        if (resultBefore is Expression && resultBefore.type == null) {
+            resultBefore.type = result!!.type
+        }
     }
 
     override fun caseAIntegerSetExpression(node: AIntegerSetExpression) {
