@@ -680,6 +680,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             BinaryExpressionOperator.MULT -> "mult"
             BinaryExpressionOperator.DIV -> "div"
             BinaryExpressionOperator.MOD -> "mod"
+            BinaryExpressionOperator.POW -> "pow"
         }
     }
 

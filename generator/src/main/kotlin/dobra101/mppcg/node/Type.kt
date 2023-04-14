@@ -41,7 +41,7 @@ class TypeString : Type
 
 class TypeVoid : Type
 
-class TypeCollection(val type: CollectionType, val name: String = "") : Type {
+data class TypeCollection(val type: CollectionType, val name: String = "") : Type {
     override fun equals(other: Any?): Boolean {
         if (other !is TypeCollection) return false
         return type == other.type && name == other.name
@@ -52,7 +52,7 @@ class TypeCollection(val type: CollectionType, val name: String = "") : Type {
     }
 }
 
-class TypeAnonymousCollection(val type: CollectionType) : Type {
+data class TypeAnonymousCollection(val type: CollectionType) : Type {
     override fun equals(other: Any?): Boolean {
         if (other is TypeAnonymousCollection) return type == other.type
         if (other is TypeCollection) return type == other.type
@@ -78,11 +78,11 @@ class TypeSet(val type: Type) : Type {
     }
 }
 
-class TypeInterval(val type: TypeNumber) : Type
+data class TypeInterval(val type: TypeNumber) : Type
 
-class TypeCouple(val from: Type?, val to: Type?) : Type
+data class TypeCouple(val from: Type?, val to: Type?) : Type
 
-class TypeSequence(val type: Type?) : Type
+data class TypeSequence(val type: Type?) : Type
 
 enum class BooleanValue {
     TRUE,

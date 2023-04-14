@@ -319,7 +319,9 @@ class ExpressionVisitor : AbstractVisitor() {
     override fun caseAMultOrCartExpression(node: AMultOrCartExpression) {
         // TODO: implement cart
         val prevResult = AbstractVisitor.result
-        result = BinaryExpression(node.left.convert()!!, node.right.convert()!!, BinaryExpressionOperator.MULT)
+        val left = node.left.convert()!!.setParameterIfCollection()
+        val right = node.right.convert()!!.setParameterIfCollection()
+        result = BinaryExpression(left, right, BinaryExpressionOperator.MULT)
 
         if (prevResult !is Expression) return
 
@@ -353,7 +355,7 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseAPowerOfExpression(node: APowerOfExpression) {
-        TODO("Not implemented ${node::class.simpleName}")
+        result = BinaryExpression(node.left.convert()!!, node.right.convert()!!, BinaryExpressionOperator.POW)
     }
 
     override fun caseASuccessorExpression(node: ASuccessorExpression) {

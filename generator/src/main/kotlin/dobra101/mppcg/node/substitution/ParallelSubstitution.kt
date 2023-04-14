@@ -3,11 +3,9 @@ package dobra101.mppcg.node.substitution
 import dobra101.mppcg.node.b.*
 import dobra101.mppcg.node.collection.AnonymousSetCollectionNode
 import dobra101.mppcg.node.collection.BinaryCollectionExpression
+import dobra101.mppcg.node.collection.EnumCollectionNode
 import dobra101.mppcg.node.collection.EnumEntry
-import dobra101.mppcg.node.expression.BinaryExpression
-import dobra101.mppcg.node.expression.Expression
-import dobra101.mppcg.node.expression.IdentifierExpression
-import dobra101.mppcg.node.expression.ValueExpression
+import dobra101.mppcg.node.expression.*
 
 data class ParallelSubstitution(
     val substitutions: List<Substitution>
@@ -54,6 +52,8 @@ data class ParallelSubstitution(
             is ConcreteIdentifierExpression -> listOf(IdentifierExpression(name))
             is BinaryCollectionExpression -> left.getIdentifiers() + right.getIdentifiers()
             is UnaryFunctionExpression -> expression.getIdentifiers()
+            is EnumCollectionNode -> listOf(IdentifierExpression(name)) + elements.flatMap { it.getIdentifiers() }
+            is UnaryExpression -> (value as? Expression)?.getIdentifiers() ?: listOf()
             else -> TODO("Implement getIdentifier from Expression ${this::class.simpleName}")
         }
     }

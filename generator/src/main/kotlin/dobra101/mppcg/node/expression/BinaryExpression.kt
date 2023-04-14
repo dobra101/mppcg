@@ -2,6 +2,8 @@ package dobra101.mppcg.node.expression
 
 import dobra101.mppcg.adapter.sablecc.machineVisitor
 import dobra101.mppcg.node.*
+import dobra101.mppcg.node.b.FunctionType
+import dobra101.mppcg.node.collection.AnonymousSetCollectionNode
 
 data class BinaryExpression(
     val left: Expression,
@@ -14,7 +16,8 @@ enum class BinaryExpressionOperator: CustomMethodOperator {
     MINUS,
     MULT,
     DIV,
-    MOD
+    MOD,
+    POW
 }
 
 // TODO: replace by type inference
@@ -23,6 +26,11 @@ private fun getType(left: Expression, right: Expression, operator: BinaryExpress
         val leftType = (left.type as? TypeSet)?.type ?: left.type
         val rightType = (right.type as? TypeSet)?.type ?: right.type
         return TypeCouple(leftType, rightType)
+    }
+    if (operator == BinaryExpressionOperator.MULT && (left.type is TypeCollection || right.type is TypeCollection)) {
+        val leftType = if (left is AnonymousSetCollectionNode) left.elements[0].type else left.type
+        val rightType = if (right is AnonymousSetCollectionNode) right.elements[0].type else right.type
+        return TypeFunction(type = FunctionType.TOTAL, from = leftType, to = rightType)
     }
 
     if (left.type == null) {
@@ -43,7 +51,7 @@ private fun getType(left: Expression, right: Expression, operator: BinaryExpress
             return if (right.canBeNatural()) left.type else right.type
         }
 
-        throw InvalidTypeException("Types ${left.type} and ${right.type} do not match.")
+        throw InvalidTypeException("Types ${left.type} and ${right.type} do not match ($operator).")
     }
     return left.type
 }

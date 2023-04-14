@@ -39,10 +39,11 @@ setEntryExpression(name) ::= <<
 '<name>'
 >>
 
-unaryExpression(value, operator, convertBoolean, exprCount) ::= <<
+unaryExpression(value, operator, convertBoolean, isMinus, exprCount) ::= <<
+<if(isMinus)>Expr_<exprCount> = -<value><else>
 <if(convertBoolean)>
 (<value> -> Expr_<exprCount> = true; Expr_<exprCount> = false)<else>
-<operator>(<value>, Expr_<exprCount>)<endif>
+<operator>(<value>, Expr_<exprCount>)<endif><endif>
 >>
 
 // TODO: add type ?
