@@ -39,6 +39,7 @@ class PrologTest : ExpectSpec({
 //        "scheduler_deterministic_MC.mch",
 //        "sort_m2_data1000.mch",
 //        "TrafficLight_MC"
+        "LandingGear_R6.mch"
     )
 
     val exclude: List<String> = listOf(

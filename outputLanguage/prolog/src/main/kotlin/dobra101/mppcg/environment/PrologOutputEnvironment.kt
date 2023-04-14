@@ -72,7 +72,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         if (optimize) optimizer.loadIfEvaluated(this)?.let { return it }
         val expanded = ExpandedBinary.of(left, right)
 
-        val infiniteSet = (
+        val infiniteSet = operator == BinaryExpressionOperator.POW || (
                 (left is InfiniteSet) || (right is InfiniteSet)
                         || (left is IntervalExpression) || (right is IntervalExpression)
                         || (left.type is TypeInterval) || (right.type is TypeInterval)
@@ -208,7 +208,9 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         val prefixOperators = listOf(
             BinaryPredicateOperator.MEMBER,
             BinaryPredicateOperator.NOT_MEMBER,
-            BinaryPredicateOperator.SUBSET
+            BinaryPredicateOperator.SUBSET,
+            BinaryPredicateOperator.EQUAL,
+            BinaryPredicateOperator.NOT_EQUAL
         )
 
         val infiniteSet =
@@ -273,8 +275,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     override fun UnaryLogicPredicate.renderSelf(): RenderResult {
         // evaluated needs reset because of scoping
         if (optimize) {
-            val evaluated: HashMap<MPPCGNode, String> = hashMapOf()
-            evaluated.putAll(optimizer.evaluated)
+            val evaluated = optimizer.getCopyOfEvaluated()
             val map = mapOf(
                 "predicate" to predicate.render(),
                 "operator" to operator2String(operator)
@@ -460,7 +461,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
 
     override fun WhileSubstitution.renderSelf(): RenderResult {
         fun getDefinitionMap(): Map<String, Any> {
-            val evaluated = optimizer.evaluated
+            val evaluated = if (optimize) optimizer.getCopyOfEvaluated() else hashMapOf()
             optimizer.evaluated = hashMapOf()
             val conditionRendered = condition.render()
             optimizer.evaluated = hashMapOf()
@@ -597,15 +598,18 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         return RenderResult("$before$rendered", exprToInfo(this))
     }
 
+    // TODO: optimizer.getCopyOfEvaluated
     override fun ComprehensionSet.renderSelf(): RenderResult {
-        val comprehensionSetIdentifierBefore = comprehensionSetIdentifier
+        val evaluated = if (optimize) optimizer.getCopyOfEvaluated() else hashMapOf()
         comprehensionSetIdentifier = comprehensionSetIdentifier + identifiers.filterIsInstance<IdentifierExpression>()
         val map = mapOf(
             "identifiers" to identifiers.render(),
             "predicates" to predicates.render(),
             "exprCount" to exprCount
         )
-        comprehensionSetIdentifier = comprehensionSetIdentifierBefore
+        comprehensionSetIdentifier =
+            comprehensionSetIdentifier - identifiers.filterIsInstance<IdentifierExpression>().toSet()
+        if (optimize) optimizer.evaluated = evaluated
         return RenderResult(renderTemplate(map), exprToInfo(this))
     }
 
@@ -764,6 +768,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun QuantifierPredicate.renderSelf(): RenderResult {
+        val evaluated = if (optimize) optimizer.getCopyOfEvaluated() else hashMapOf()
         quantifierIdentifier = quantifierIdentifier + identifier
         val map = mapOf(
             "identifier" to identifier.render(),
@@ -772,6 +777,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             "universalQuantifier" to (type == QuantifierType.FORALL)
         )
         quantifierIdentifier = quantifierIdentifier - identifier.toSet()
+        if (optimize) optimizer.evaluated = evaluated
         return RenderResult(renderTemplate(map))
     }
 
@@ -959,6 +965,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         return when (operator) {
             BinaryExpressionOperator.MOD -> "mod"
             BinaryExpressionOperator.DIV -> "//"
+            BinaryExpressionOperator.POW -> "mppcg_pow"
             else -> super.operator2String(operator)
         }
     }
@@ -985,6 +992,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             is UnaryCollectionOperator -> true
 
             BinaryExpressionOperator.MULT -> true
+            BinaryExpressionOperator.POW -> true
 
             else -> false
         }
@@ -1024,6 +1032,10 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
                     "name" to operator2String(this, true),
                     "memberName" to operator2String(BinaryPredicateOperator.MEMBER)
                 )
+            )
+
+            BinaryExpressionOperator.POW -> renderTemplate(
+                "pow", mapOf("name" to operator2String(this, true))
             )
 
             else -> throw EnvironmentException("Rendering of custom method for operator '${name}' (${this::class.simpleName}) is not implemented.")
@@ -1272,12 +1284,13 @@ private data class ExpandedBinary(val before: String = "", val lhs: String = "",
             environment: PrologOutputEnvironment? = null
         ): ExpandedBinary {
             // true copy of map
-            val evaluatedBefore = environment?.optimizer?.evaluated?.toMutableMap() as? HashMap<MPPCGNode, String>
+            val evaluated =
+                if (environment?.optimize == true) environment.optimizer.getCopyOfEvaluated() else hashMapOf()
 
             val lhsRendered = left.render()
-            if (differentBranches && environment != null) environment.optimizer.evaluated = evaluatedBefore!!
+            if (differentBranches && environment != null) environment.optimizer.evaluated = evaluated
             val rhsRendered = right.render()
-            if (differentBranches && environment != null) environment.optimizer.evaluated = evaluatedBefore!!
+            if (differentBranches && environment != null) environment.optimizer.evaluated = evaluated
 
             var before = ""
             val lhs: String

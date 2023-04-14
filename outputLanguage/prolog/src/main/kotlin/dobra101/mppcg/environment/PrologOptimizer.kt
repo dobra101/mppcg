@@ -88,4 +88,8 @@ class PrologOptimizer(private val environment: PrologOutputEnvironment) {
         }
         return null
     }
+
+    fun getCopyOfEvaluated(): HashMap<MPPCGNode, String> {
+        return HashMap(evaluated)
+    }
 }

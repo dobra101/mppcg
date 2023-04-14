@@ -1,0 +1,23 @@
+ArithmeticExpLaws.mch, 2651, 7106, 123200, true
+ArithmeticLaws.mch, 5617, 21227, 39400, false
+BoolLaws.mch, 10, 26, 100, false
+BoolLaws_SetCompr.mch, 3, 2, 100, true
+BoolWithArithLaws.mch, 66, 146, 100, true
+CardinalityLaws.mch, 17, 22, 100, true
+CSM.mch, 341, 1229, 200, false
+Doors.mch, 5, 17, 100, false
+EqualityLaws.mch, 2, 2, 100, false
+ExplicitChecks.mch, 1002, 2002, 1500, false
+Fin1Test.mch, 2, 1, 100, true
+NatRangeLaws.mch, 31, 361, 200, false
+SetLaws.mch, 513, 3841, 4500, false
+SetLawsNat.mch, 4097, 98305, 31300, false
+SetLawsPow.mch, 4097, 63865, 32800, false
+SetLawsPow2.mch, 4097, 36865, 53500, false
+SetLawsPowPow.mch
+SetLawsPowPowCart.mch
+StringLaws.mch
+SubsetLaws.mch
+SubstitutionLaws.mch
+TautologiesPL.mch
+tictac.mch
