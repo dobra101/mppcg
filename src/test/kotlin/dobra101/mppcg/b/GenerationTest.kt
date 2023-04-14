@@ -4,8 +4,11 @@ import dobra101.mppcg.Launcher
 import dobra101.mppcg.Parser
 import dobra101.mppcg.environment.Language
 import io.kotest.assertions.throwables.shouldNotThrowAny
+import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.ExpectSpec
 import io.kotest.inspectors.forAll
+import io.kotest.matchers.longs.shouldBeGreaterThan
+import io.kotest.matchers.shouldBe
 import java.io.File
 
 class GenerationTest : ExpectSpec({
@@ -19,16 +22,22 @@ class GenerationTest : ExpectSpec({
             listOf(true, false).forAll { optimize ->
                 val expectName = if (optimize) "optimized" else "regular"
                 expect(expectName) {
+                    var file: File? = null
                     shouldNotThrowAny {
-                        val file = Launcher.launch(
+                        file = Launcher.launch(
                             lang = Language.PROLOG,
                             file = machineFile,
                             parser = Parser.SableCC,
                             optimize = optimize,
                             benchmark = false
                         )
-
-                        Launcher.benchmarkProlog(file)
+                    }
+                    val result = Launcher.benchmarkProlog(file!!)
+                    withClue("Counterexample found") {
+                        result.counterExample shouldBe null
+                    }
+                    withClue("No states available") {
+                        result.statesAnalysed shouldBeGreaterThan 0
                     }
                 }
             }

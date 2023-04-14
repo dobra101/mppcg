@@ -10,9 +10,20 @@ object ProBResultAnalyser {
     fun analyze(probOutput: String): ProBResult {
         val builder = ProBResult.Builder()
         val lines = probOutput.split("\n")
-        var deadlock = false
+        var counterExample = false
+        var counterExampleReason = ""
+        var idx: Int = -1
         lines.forEach {
-            if (it == "deadlock") deadlock = true
+            if (it == "deadlock") {
+                counterExample = true
+                counterExampleReason = "deadlock"
+            }
+            if (it.contains("COUNTER EXAMPLE FOUND")) {
+                counterExample = true
+                counterExampleReason = "counter example"
+            }
+
+            if (it.contains("*** TRACE")) idx = lines.indexOf(it)
 
             timeRegex.matchEntire(it)?.let { res ->
                 builder.modelCheckingTime(res.groupValues[1].toLong()).wallTime(res.groupValues[2].toLong())
@@ -23,16 +34,14 @@ object ProBResultAnalyser {
             }
         }
 
-        if (deadlock) {
-            val idx = lines.indexOf("deadlock") + 1
-
+        if (counterExample) {
             val trace: MutableList<String> = mutableListOf()
             for (i: Int in idx + 1..lines.lastIndex) {
                 if (lines[i].isBlank()) break
                 trace.add(lines[i])
             }
 
-            builder.counterExample(CounterExample("deadlock", trace))
+            builder.counterExample(CounterExample(counterExampleReason, trace))
         }
 
         return builder.build()
