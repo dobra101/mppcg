@@ -29,7 +29,8 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     var temporaryVariables: Set<IdentifierExpression> = hashSetOf() // HINT: only for B
     var concreteConstants: List<Expression> = emptyList() // HINT: only for B
     var constants: List<Expression> = emptyList() // HINT: only for B
-    var usedBMethods: HashSet<CustomMethodOperator> = hashSetOf() // HINT: only for B
+    var concreteVariables: List<Expression> = emptyList() // HINT: only for B
+    var variables: ClassVariables = ClassVariables() // HINT: only for B
     val whileDefinitions: MutableList<String> = mutableListOf() // HINT: only for B
     var whileCount = 0 // HINT: only for B
     var currentOperation: String = "" // HINT: only for B
@@ -87,10 +88,6 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             "math" to isMathOperator(operator),
             "infiniteSet" to infiniteSet
         )
-
-        if (needsCustomMethod(operator)) {
-            usedBMethods.add(operator)
-        }
 
         val rendered = renderTemplate(map)
         return RenderResult("${expanded.before}$rendered", exprToInfo(this))
@@ -222,11 +219,6 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             "prefixOperator" to (prefixOperators.contains(operator) || infiniteSet)
         )
         val rendered = renderTemplate(map)
-
-        // TODO: function which knows all dependencies
-        if (needsCustomMethod(operator) && (operator != BinaryPredicateOperator.EQUAL || infiniteSet)) {
-            usedBMethods.add(operator)
-        }
 
         return RenderResult("${expanded.before}$rendered")
     }
@@ -529,10 +521,6 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         )
         val rendered = renderTemplate(map)
 
-        if (needsCustomMethod(operator)) {
-            usedBMethods.add(operator)
-        }
-
         return RenderResult("${expanded.before}$rendered", exprToInfo(this))
     }
 
@@ -549,14 +537,6 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             "exprCount" to exprCount
         )
         val rendered = renderTemplate(map)
-
-        usedBMethods.add(operator)
-        if (operator == BinaryFunctionOperator.OVERWRITE) {
-            usedBMethods.add(BinaryFunctionOperator.DOMAIN_SUBTRACTION)
-            usedBMethods.add(UnaryFunctionOperator.DOMAIN)
-        } else if (operator == BinaryFunctionOperator.IMAGE) {
-            usedBMethods.add(BinaryPredicateOperator.MEMBER)
-        }
 
         return RenderResult("${expanded.before}$rendered", exprToInfo(this))
     }
@@ -575,7 +555,6 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         )
         val rendered = renderTemplate(map)
 
-        usedBMethods.add(operator)
         return RenderResult("${expanded.before}$rendered", exprToInfo(this))
     }
 
@@ -594,7 +573,6 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         val before = "${before1.before}${before2.before}"
         val rendered = renderTemplate(map)
 
-        usedBMethods.add(operator)
         return RenderResult("$before$rendered", exprToInfo(this))
     }
 
@@ -684,8 +662,6 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             "exprCount" to exprCount
         )
 
-        usedBMethods.add(operator)
-
         return RenderResult("${expanded.before}${renderTemplate(map)}", exprToInfo(this))
     }
 
@@ -698,14 +674,6 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             "operator" to operator2String(operator),
             "exprCount" to exprCount
         )
-
-
-        if (needsCustomMethod(operator)) {
-            usedBMethods.add(operator)
-            if (operator == UnaryCollectionOperator.POW) {
-                usedBMethods.add(BinaryPredicateOperator.SUBSET)
-            }
-        }
 
         return RenderResult("${expanded.before}${renderTemplate(map)}", exprToInfo(this))
     }
@@ -728,7 +696,6 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
 
     override fun UnaryFunctionExpression.renderSelf(): RenderResult {
         if (optimize) optimizer.loadIfEvaluated(this)?.let { return it }
-        usedBMethods.add(operator)
 
         val expanded = ExpandedExpression.of(expression)
 
@@ -857,6 +824,8 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         exprCount = 0
         operationParameters = parameters.map { it as IdentifierExpression }
         temporaryVariables = hashSetOf()
+        this@PrologOutputEnvironment.concreteVariables = concreteVariables
+        this@PrologOutputEnvironment.variables = variables
 
         val concreteConstantsRendered = concreteConstants.render()
         declarationStep = false
@@ -876,7 +845,6 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             "invariant" to invariant.render(),
             "assertions" to assertions.render(),
             "operations" to operations.render(),
-            "methods" to usedBMethods.render(),
             "whileDefinitions" to whileDefinitions
         )
 
@@ -950,11 +918,50 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         return operator2String(operator)
     }
 
+    override fun operator2String(operator: BinaryCollectionOperator): String {
+        return when (operator) {
+            BinaryCollectionOperator.INTERSECTION -> "mppcg_setIntersection"
+            BinaryCollectionOperator.SUBTRACTION -> "mppcg_setSubtraction"
+            BinaryCollectionOperator.UNION -> "mppcg_setUnion"
+            BinaryCollectionOperator.CONCAT -> "mppcg_concat"
+            BinaryCollectionOperator.PRJ1 -> "mppcg_prj1"
+            BinaryCollectionOperator.PRJ2 -> "mppcg_prj2"
+        }
+    }
+
+    override fun operator2String(operator: BinaryFunctionOperator): String {
+        return "mppcg_" + super.operator2String(operator)
+    }
+
+    override fun operator2String(operator: UnaryCollectionOperator): String {
+        return when (operator) {
+            UnaryCollectionOperator.MAX -> "mppcg_max"
+            UnaryCollectionOperator.MIN -> "mppcg_min"
+            UnaryCollectionOperator.CARD -> "mppcg_card"
+            UnaryCollectionOperator.POW -> "mppcg_powerSet"
+            UnaryCollectionOperator.POW1 -> "mppcg_powerSet1"
+        }
+    }
+
+    override fun operator2String(operator: UnaryFunctionOperator): String {
+        return "mppcg_" + super.operator2String(operator)
+    }
+
+    override fun operator2String(operator: BinarySequenceExpressionOperator): String {
+        return when (operator) {
+            BinarySequenceExpressionOperator.RESTRICT_FRONT -> "mppcg_sequenceRestrictFront"
+            BinarySequenceExpressionOperator.RESTRICT_TAIL -> "mppcg_sequenceRestrictTail"
+            BinarySequenceExpressionOperator.APPEND -> "append"
+            BinarySequenceExpressionOperator.PREPEND -> "prepend"
+            BinarySequenceExpressionOperator.CONCAT -> "concat"
+        }
+    }
+
     private fun operator2String(operator: BinaryPredicateOperator, infiniteSet: Boolean): String {
         if (infiniteSet) {
             return when (operator) {
                 BinaryPredicateOperator.EQUAL -> "mppcg_equal"
-                BinaryPredicateOperator.NOT_EQUAL -> "mppcg_not_equal"
+                BinaryPredicateOperator.NOT_EQUAL -> "mppcg_notEqual"
                 else -> operator2String(operator)
             }
         }
@@ -980,24 +987,6 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         }
     }
 
-    private fun needsCustomMethod(operator: CustomMethodOperator): Boolean {
-        if (operator is BMethod) return true
-        return when (operator) {
-            BinaryPredicateOperator.MEMBER,
-            BinaryPredicateOperator.SUBSET,
-            BinaryPredicateOperator.EQUAL,
-            BinaryPredicateOperator.NOT_EQUAL -> true
-
-            is BinaryCollectionOperator -> true
-            is UnaryCollectionOperator -> true
-
-            BinaryExpressionOperator.MULT -> true
-            BinaryExpressionOperator.POW -> true
-
-            else -> false
-        }
-    }
-
     internal fun isConstant(identifierExpression: IdentifierExpression): Boolean {
         if (constants.contains(identifierExpression)) return true
         if (concreteConstants.contains(identifierExpression)) return true
@@ -1006,227 +995,12 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         return concreteConstants.find { (it as? ConcreteIdentifierExpression)?.name == cc.name } != null
     }
 
-    // HINT: input language specific
-    private fun HashSet<CustomMethodOperator>.render(): List<String> {
-        return map {
-            when (it) {
-                is UnaryCollectionOperator -> it.render()
-                is UnaryFunctionOperator -> it.render()
-                is BinaryCollectionOperator -> it.render()
-                is BinaryFunctionOperator -> it.render()
-                is BinaryPredicateOperator -> it.render()
-                is BinarySequenceExpressionOperator -> it.render()
-                is CallFunctionOperator -> it.render()
-                is UnarySequenceExpressionOperator -> it.render()
-                is BinaryExpressionOperator -> it.render()
-                else -> throw EnvironmentException("Rendering of custom method for operator '$it' (${it::class.simpleName}) is not implemented.")
-            }
-        }
-    }
+    internal fun isVariable(identifierExpression: IdentifierExpression): Boolean {
+        if (variables.variables.contains(identifierExpression)) return true
+        if (concreteVariables.contains(identifierExpression)) return true
 
-    private fun BinaryExpressionOperator.render(): String {
-        return when (this) {
-            BinaryExpressionOperator.MULT -> renderTemplate(
-                "mult",
-                mapOf(
-                    "name" to operator2String(this, true),
-                    "memberName" to operator2String(BinaryPredicateOperator.MEMBER)
-                )
-            )
-
-            BinaryExpressionOperator.POW -> renderTemplate(
-                "pow", mapOf("name" to operator2String(this, true))
-            )
-
-            else -> throw EnvironmentException("Rendering of custom method for operator '${name}' (${this::class.simpleName}) is not implemented.")
-        }
-    }
-
-    private fun UnaryCollectionOperator.render(): String {
-        return when (this) {
-            UnaryCollectionOperator.CARD -> renderTemplate(
-                "cardinality",
-                mapOf(
-                    "name" to operator2String(this)
-                )
-            )
-
-            UnaryCollectionOperator.POW -> renderTemplate(
-                "powerSet",
-                mapOf(
-                    "name" to operator2String(this),
-                    "subsetName" to operator2String(BinaryPredicateOperator.SUBSET)
-                )
-            )
-
-            UnaryCollectionOperator.POW1 -> renderTemplate(
-                "powerSet1",
-                mapOf(
-                    "name" to operator2String(this),
-                    "subsetName" to operator2String(BinaryPredicateOperator.SUBSET)
-                )
-            )
-
-            UnaryCollectionOperator.MAX -> renderTemplate(
-                "maxSet",
-                mapOf(
-                    "name" to operator2String(this)
-                )
-            )
-
-            UnaryCollectionOperator.MIN -> renderTemplate(
-                "minSet",
-                mapOf(
-                    "name" to operator2String(this)
-                )
-            )
-
-            else -> throw EnvironmentException("Rendering of custom method for operator '${name}' (${this::class.simpleName}) is not implemented.")
-        }
-    }
-
-    // HINT: input language specific
-    private fun UnaryFunctionOperator.render(): String {
-        return when (this) {
-            UnaryFunctionOperator.DOMAIN -> renderTemplate("domain", mapOf("name" to operator2String(this)))
-            UnaryFunctionOperator.RANGE -> renderTemplate("range", mapOf("name" to operator2String(this)))
-            UnaryFunctionOperator.REVERSE -> renderTemplate("reverse", mapOf("name" to operator2String(this)))
-            else -> throw EnvironmentException("Rendering of custom method for operator '${name}' (${this::class.simpleName}) is not implemented.")
-        }
-    }
-
-    // HINT: input language specific
-    private fun BinaryFunctionOperator.render(): String {
-        return when (this) {
-            BinaryFunctionOperator.DOMAIN_RESTRICTION -> renderTemplate(
-                "domainRestriction",
-                mapOf("name" to operator2String(this))
-            )
-
-            BinaryFunctionOperator.DOMAIN_SUBTRACTION -> renderTemplate(
-                "domainSubtraction",
-                mapOf("name" to operator2String(this))
-            )
-
-            BinaryFunctionOperator.IMAGE -> renderTemplate(
-                "image",
-                mapOf(
-                    "name" to operator2String(this),
-                    "memberName" to operator2String(BinaryPredicateOperator.MEMBER)
-                )
-            )
-
-            BinaryFunctionOperator.OVERWRITE -> renderTemplate(
-                "overwrite", mapOf(
-                    "name" to operator2String(this),
-                    "domainName" to operator2String(UnaryFunctionOperator.DOMAIN),
-                    "domainSubtractionName" to operator2String(BinaryFunctionOperator.DOMAIN_SUBTRACTION)
-                )
-            )
-
-            BinaryFunctionOperator.RANGE_RESTRICTION -> renderTemplate(
-                "rangeRestriction",
-                mapOf("name" to operator2String(this))
-            )
-
-            BinaryFunctionOperator.RANGE_SUBTRACTION -> renderTemplate(
-                "rangeSubtraction",
-                mapOf("name" to operator2String(this))
-            )
-
-            BinaryFunctionOperator.FORWARD_COMPOSITION -> renderTemplate(
-                "forwardComposition",
-                mapOf("name" to operator2String(this), "memberName" to operator2String(BinaryPredicateOperator.MEMBER))
-            )
-
-            else -> throw EnvironmentException("Rendering of custom method for operator '${name}' (${this::class.simpleName}) is not implemented.")
-        }
-    }
-
-    // HINT: input language specific
-    private fun BinaryPredicateOperator.render(): String {
-        return when (this) {
-            BinaryPredicateOperator.MEMBER -> renderTemplate("member", mapOf("name" to operator2String(this)))
-            BinaryPredicateOperator.SUBSET -> renderTemplate("subset", mapOf("name" to operator2String(this)))
-            BinaryPredicateOperator.EQUAL -> renderTemplate(
-                "equal",
-                mapOf(
-                    "name" to operator2String(this, true),
-                    "memberName" to operator2String(BinaryPredicateOperator.MEMBER)
-                )
-            )
-
-            BinaryPredicateOperator.NOT_EQUAL -> renderTemplate(
-                "not_equal",
-                mapOf(
-                    "name" to operator2String(this, true),
-                    "memberName" to operator2String(BinaryPredicateOperator.MEMBER)
-                )
-            )
-
-            else -> throw EnvironmentException("Rendering of custom method for operator '${name}' (${this::class.simpleName}) is not implemented.")
-        }
-    }
-
-    private fun BinaryCollectionOperator.render(): String {
-        return when (this) {
-            BinaryCollectionOperator.SUBTRACTION -> renderTemplate(
-                "setSubtraction",
-                mapOf("name" to operator2String(this))
-            )
-
-            BinaryCollectionOperator.INTERSECTION -> renderTemplate(
-                "setIntersection",
-                mapOf("name" to operator2String(this))
-            )
-
-            BinaryCollectionOperator.UNION -> renderTemplate(
-                "setUnion",
-                mapOf("name" to operator2String(this))
-            )
-
-            BinaryCollectionOperator.CONCAT -> renderTemplate(
-                "setConcat",
-                mapOf("name" to operator2String(this))
-            )
-
-            BinaryCollectionOperator.PRJ1 -> renderTemplate(
-                "setPrj1",
-                mapOf("name" to operator2String(this))
-            )
-
-            BinaryCollectionOperator.PRJ2 -> renderTemplate(
-                "setPrj2",
-                mapOf("name" to operator2String(this))
-            )
-        }
-    }
-
-    private fun BinarySequenceExpressionOperator.render(): String {
-        return when (this) {
-            BinarySequenceExpressionOperator.RESTRICT_FRONT -> renderTemplate(
-                "sequenceRestrictFront",
-                mapOf("name" to operator2String(this))
-            )
-
-            BinarySequenceExpressionOperator.RESTRICT_TAIL -> renderTemplate(
-                "sequenceRestrictTail",
-                mapOf("name" to operator2String(this))
-            )
-
-            else -> ""
-        }
-    }
-
-    private fun CallFunctionOperator.render(): String {
-        return renderTemplate(
-            "callFunctionPredicate",
-            mapOf("memberName" to operator2String(BinaryPredicateOperator.MEMBER))
-        )
-    }
-
-    private fun UnarySequenceExpressionOperator.render(): String {
-        return renderTemplate("sequenceFront", mapOf("name" to operator2String(this)))
+        val cc = ConcreteIdentifierExpression(identifierExpression.name, ValueExpression(), identifierExpression.type)
+        return concreteVariables.find { (it as? ConcreteIdentifierExpression)?.name == cc.name } != null
     }
 
     override fun type2String(type: Type?): String {

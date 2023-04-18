@@ -18,9 +18,9 @@ class GenerationTest : ExpectSpec({
     fun File.toExpectations(): List<Expectation> {
         if (!exists()) throw FileNotFoundException(path)
 
-        return readLines().map {
+        return readLines().mapNotNull {
             val fields = it.split(",")
-            if (fields.size != 5) {
+            if (fields.size != 6) {
                 null
             } else {
                 Expectation(
@@ -28,10 +28,11 @@ class GenerationTest : ExpectSpec({
                     states = fields[1].trim().toLong(),
                     transitions = fields[2].trim().toLong(),
                     walltime = fields[3].trim().toLong(),
-                    withDeadlock = fields[4].trim() == "true"
+                    withDeadlock = fields[4].trim() == "true",
+                    withInvariantViolation = fields[5].trim() == "true"
                 )
             }
-        }.filterNotNull().toList()
+        }.toList()
     }
 
     val expectations =
@@ -44,63 +45,70 @@ class GenerationTest : ExpectSpec({
         .forEach { println("No expectation for: ${it.name}") }
 
     // TODO: check expected model checking results
-    machines.forAll { machineFile ->
-        context(machineFile.name) {
-            println("Testing ${machineFile.name}")
-            listOf(true, false).forAll { optimize ->
-                val expectName = if (optimize) "optimized" else "regular"
-                expect(expectName) {
-                    val expectation = expectations.firstOrNull { it.file.name == machineFile.name }
-                    withClue("No expectation given") {
-                        expectation shouldNotBe null
-                    }
-                    var file: File? = null
-                    shouldNotThrowAny {
-                        file = Launcher.launch(
-                            lang = Language.PROLOG,
-                            file = machineFile,
-                            parser = Parser.SableCC,
-                            optimize = optimize,
-                            benchmark = false
-                        )
-                    }
+    machines
+        .sortedBy { expectations.find { ex -> ex.file == it }?.walltime }
+        .forAll { machineFile ->
+            context(machineFile.name) {
+                println("Testing ${machineFile.name}")
+                listOf(true, false).forAll { optimize ->
+                    val expectName = if (optimize) "optimized" else "regular"
+                    expect(expectName) {
+                        val expectation = expectations.firstOrNull { it.file.name == machineFile.name }
+                        withClue("No expectation given") {
+                            expectation shouldNotBe null
+                        }
+                        var file: File? = null
+                        shouldNotThrowAny {
+                            file = Launcher.launch(
+                                lang = Language.PROLOG,
+                                file = machineFile,
+                                parser = Parser.SableCC,
+                                optimize = optimize,
+                                benchmark = false
+                            )
+                        }
 
-                    if (expectation!!.withDeadlock) {
-                        // model check also without deadlock check
-                        val result = Launcher.benchmarkProlog(file!!, checkDeadlock = false, timeout = expectation.walltime * 2)
+                        if (expectation!!.withDeadlock || expectation.withInvariantViolation) {
+                            // model check also without deadlock check
+                            val result = Launcher.benchmarkProlog(
+                                file!!,
+                                checkDeadlock = !expectation.withDeadlock,
+                                checkInvariant = !expectation.withInvariantViolation,
+                                timeout = 1000 + expectation.walltime * 2
+                            )
+                            withClue("Counterexample found") {
+                                result.counterExample shouldBe null
+                            }
+                            withClue("States do not match") {
+                                result.statesAnalysed shouldBeExactly expectation.states
+                            }
+                            withClue("States do not match") {
+                                result.transitionsFired shouldBeExactly expectation.transitions
+                            }
+                            // TODO: print hint if times differ too much
+                        }
+
+                        // run with deadlock check
+                        val result = Launcher.benchmarkProlog(file!!, timeout = 1000 + expectation.walltime * 2)
                         withClue("Counterexample found") {
-                            result.counterExample shouldBe null
+                            if (expectation.withDeadlock) {
+                                result.counterExample shouldNotBe null
+                                result.counterExample!!.type shouldBe "deadlock"
+                            } else {
+                                result.counterExample shouldBe null
+                            }
                         }
                         withClue("States do not match") {
-                            result.statesAnalysed shouldBeExactly expectation.states - 1 // because of start state
+                            result.statesAnalysed shouldBeExactly expectation.states
                         }
                         withClue("States do not match") {
                             result.transitionsFired shouldBeExactly expectation.transitions
                         }
                         // TODO: print hint if times differ too much
                     }
-
-                    // run with deadlock check
-                    val result = Launcher.benchmarkProlog(file!!, timeout = expectation.walltime * 2)
-                    withClue("Counterexample found") {
-                        if (expectation.withDeadlock) {
-                            result.counterExample shouldNotBe null
-                            result.counterExample!!.type shouldBe "deadlock"
-                        } else {
-                            result.counterExample shouldBe null
-                        }
-                    }
-                    withClue("States do not match") {
-                        result.statesAnalysed shouldBeExactly expectation.states - 1 // because of start state
-                    }
-                    withClue("States do not match") {
-                        result.transitionsFired shouldBeExactly expectation.transitions
-                    }
-                    // TODO: print hint if times differ too much
                 }
             }
         }
-    }
 })
 
 private data class Expectation(
@@ -108,5 +116,6 @@ private data class Expectation(
     val states: Long,
     val transitions: Long,
     val walltime: Long,
-    val withDeadlock: Boolean
+    val withDeadlock: Boolean,
+    val withInvariantViolation: Boolean
 )

@@ -63,11 +63,11 @@ object Launcher {
         return launch(lang, machine, parser, optimize, benchmark, outputPath)
     }
 
-    fun benchmarkProlog(file: File, checkDeadlock: Boolean = true, timeout: Long? = null): ProBResult {
+    fun benchmarkProlog(file: File, checkDeadlock: Boolean = true, checkInvariant: Boolean = true, timeout: Long? = null): ProBResult {
         val prologResourcesPath = "outputLanguage/prolog/src/main/resources"
         val probPath = "$prologResourcesPath/ProB_Signed/probcli.sh"
         val probArgs =
-            "--model-check ${if (checkDeadlock) "" else "-nodead"} ${if (timeout != null) "--timeout $timeout" else "-disable-time-out"} -p OPERATION_REUSE full -pref_group model_check unlimited -p COMPRESSION TRUE -noass -memory"
+            "--model-check ${if (checkDeadlock) "" else "-nodead"} ${if (checkInvariant) "" else "-noinv"} ${if (timeout != null) "--timeout $timeout" else "-disable-time-out"} -p OPERATION_REUSE full -pref_group model_check unlimited -p COMPRESSION TRUE -noass -memory"
 
         val probFile = File("$prologResourcesPath/${file.nameWithoutExtension}.P")
 

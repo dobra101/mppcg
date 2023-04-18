@@ -20,3 +20,5 @@ tasks {
         dependsOn(fatJar)
     }
 }
+
+// TODO: copy files

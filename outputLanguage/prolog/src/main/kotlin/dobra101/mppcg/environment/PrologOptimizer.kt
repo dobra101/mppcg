@@ -39,7 +39,7 @@ class PrologOptimizer(private val environment: PrologOutputEnvironment) {
             var before = ""
             val rhs = when (node.right) {
                 is IdentifierExpression -> {
-                    if (environment.isConstant((node.right as IdentifierExpression))) {
+                    if (environment.isConstant((node.right as IdentifierExpression)) || environment.isVariable((node.right as IdentifierExpression))) {
                         evaluated[node.right] ?: run {
                             before = node.right.render().rendered
                             before += EXPRESSION_SEPARATOR
