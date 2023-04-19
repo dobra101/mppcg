@@ -33,7 +33,7 @@ class PrologOptimizer(private val environment: PrologOutputEnvironment) {
                     || node.right is ValueExpression)
         ) {
             if (node.left !is IdentifierExpression) return null
-            if (environment.quantifierIdentifier.contains(node.left)) return null
+            if (environment.ctrlStructIdentifier.contains(node.left)) return null
             if (environment.temporaryVariables.contains(node.left)) return null
 
             var before = ""
@@ -64,7 +64,7 @@ class PrologOptimizer(private val environment: PrologOutputEnvironment) {
                 "rhs" to rhs,
                 "stateCount" to environment.stateCount,
                 "negate" to (node.operator == BinaryPredicateOperator.NOT_EQUAL),
-                "useGet" to !environment.quantifierIdentifier.contains(node.left)
+                "useGet" to !environment.ctrlStructIdentifier.contains(node.left)
             )
             val rendered = environment.renderTemplate("optimizedBinaryPredicateEqual", map)
             return RenderResult("$before$rendered")

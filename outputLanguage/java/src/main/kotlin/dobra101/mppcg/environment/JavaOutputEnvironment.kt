@@ -399,6 +399,10 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         return RenderResult(renderTemplate(map))
     }
 
+    override fun GeneralSumOrProductExpression.renderSelf(): RenderResult {
+        TODO("Not yet implemented")
+    }
+
     override fun InfiniteSet.renderSelf(): RenderResult {
         // HINT: n : INTEGER -> n.type = INTEGER
         return RenderResult(type2String(type)) // TODO: refactor?
@@ -524,7 +528,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             "definitions" to definitions?.render(),
             "variables" to variables.render(),
             "concrete_variables" to concreteVariables.render(),
-            "initialization" to initialization?.render(),
+            "initialization" to initialization.render(),
             "invariant" to invariant.render(),
             "assertions" to assertions.render(),
             "operations" to operations.render(),

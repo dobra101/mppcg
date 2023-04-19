@@ -18,7 +18,7 @@ data class Machine(
     val definitions: Predicate? = null,
     val variables: ClassVariables = ClassVariables(),
     val concreteVariables: List<Expression> = emptyList(),
-    val initialization: Initialization? = null,
+    val initialization: Initialization = Initialization(),
     val invariant: Invariant = Invariant(),
     val assertions: List<Predicate> = emptyList(),
     val operations: List<Operation> = emptyList(),

@@ -37,7 +37,9 @@
     mppcg_equal/2,
     mppcg_notEqual/2,
     mppcg_pow/3,
-    mppcg_callFunction/3
+    mppcg_callFunction/3,
+    mppcg_listSum/2,
+    mppcg_listProduct/2
     ]).
 
 :- use_module(library(avl)).
@@ -391,3 +393,17 @@ flatten([Head | Tail], Acc, Flat) :-
 flatten([set(Head) | Tail], Acc, Flat) :-
     (is_list(Head) -> append(Head, Acc, NewAcc); append([Head], Acc, NewAcc)),
     flatten(Tail, NewAcc, Flat).
+
+mppcg_listSum(List, Sum) :-
+    mppcg_listSum(List, 0, Sum).
+mppcg_listSum([], Acc, Acc).
+mppcg_listSum([Head | Tail], Acc, Sum) :-
+    Acc1 is Acc + Head,
+    mppcg_listSum(Tail, Acc1, Sum).
+
+mppcg_listProduct(List, Prod) :-
+    mppcg_listProduct(List, 1, Prod).
+mppcg_listProduct([], Acc, Acc).
+mppcg_listProduct([Head | Tail], Acc, Prod) :-
+    Acc1 is Acc * Head,
+    mppcg_listProduct(Tail, Acc1, Prod).

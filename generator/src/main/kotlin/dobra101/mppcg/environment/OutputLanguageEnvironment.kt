@@ -105,6 +105,7 @@ abstract class OutputLanguageEnvironment : EnvironmentUtils(), BEnvironment {
             is ComprehensionSet -> node.renderSelf()
             is ConcreteIdentifierExpression -> node.renderSelf()
             is Couple -> node.renderSelf()
+            is GeneralSumOrProductExpression -> node.renderSelf()
             is InfiniteSet -> node.renderSelf()
             is LambdaExpression -> node.renderSelf()
             is Sequence -> node.renderSelf()

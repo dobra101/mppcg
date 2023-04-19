@@ -24,7 +24,7 @@ class MachineVisitor : AbstractVisitor() {
     private var definitions: Predicate? = null
     var variables: List<Expression> = emptyList()
     var concreteVariables: List<Expression> = emptyList()
-    private var initialization: Initialization? = null
+    private var initialization: Initialization = Initialization()
     private var invariant: Invariant = Invariant()
     private var assertions: List<Predicate> = emptyList()
     private var operations: List<Operation> = emptyList()
@@ -122,7 +122,7 @@ class MachineVisitor : AbstractVisitor() {
     override fun caseAInitialisationMachineClause(node: AInitialisationMachineClause) {
         val substitutions = node.substitutions.convert()
         initialization = if (substitutions == null) {
-            null
+            Initialization()
         } else {
             substitutions as? Initialization ?: Initialization(listOf(substitutions))
         }

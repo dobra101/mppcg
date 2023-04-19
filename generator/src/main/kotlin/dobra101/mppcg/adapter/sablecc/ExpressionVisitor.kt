@@ -401,11 +401,21 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseAGeneralSumExpression(node: AGeneralSumExpression) {
-        TODO("Not implemented ${node::class.simpleName}")
+        result = GeneralSumOrProductExpression(
+            node.identifiers.convert().map { it as IdentifierExpression },
+            node.predicates.convert()!!,
+            node.expression.convert()!!,
+            SumOrProductOperation.SUM
+        )
     }
 
     override fun caseAGeneralProductExpression(node: AGeneralProductExpression) {
-        TODO("Not implemented ${node::class.simpleName}")
+        result = GeneralSumOrProductExpression(
+            node.identifiers.convert().map { it as IdentifierExpression },
+            node.predicates.convert()!!,
+            node.expression.convert()!!,
+            SumOrProductOperation.PRODUCT
+        )
     }
 
     override fun caseACoupleExpression(node: ACoupleExpression) {

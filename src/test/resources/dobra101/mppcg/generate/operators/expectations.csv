@@ -2,7 +2,7 @@ ArithmeticExpLaws.mch, 2650, 7106, 123200, true, false
 ArithmeticLaws.mch, 5616, 21227, 39400, false, false
 BoolLaws.mch, 8, 25, 100, false, false
 BoolLaws_SetCompr.mch, 2, 2, 100, true, false
-BoolWithArithLaws.mch, 65, 146, 100, true, false
+BoolWithArithLaws.mch, 64, 145, 100, true, false
 CardinalityLaws.mch, 16, 22, 100, true, false
 CSM.mch, 340, 1229, 200, false, false
 Doors.mch, 4, 17, 100, false, false
@@ -16,7 +16,7 @@ SetLawsPow.mch, 4096, 63865, 32800, false, false
 SetLawsPow2.mch, 4096, 36865, 53500, false, false
 SetLawsPowPow.mch
 SetLawsPowPowCart.mch
-StringLaws.mch
+StringLaws.mch, 65, 769, 300, false, false
 SubsetLaws.mch, 373248, 3172609, 1754200, true, false
 SubstitutionLaws.mch, 3, 19, 100, false, false
 TautologiesPL.mch, 8, 65, 100, false, false

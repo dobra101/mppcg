@@ -336,7 +336,7 @@ INVARIANT
      =>
      x ** (y * z) = (x ** y) ** z
     )
-  & 
+  &
     #x.(
      x : 0..5
      &
@@ -393,27 +393,27 @@ INITIALISATION
       x,y,z := -3,-3,-3
     END
 OPERATIONS
-  IncX = 
-    PRE 
+  IncX =
+    PRE
         x < 50
     THEN
       x := x + 1
     END;
-  
-  IncY = 
-    PRE 
+
+  IncY =
+    PRE
         y < 9
     THEN
       y := y + 1
     END;
-  
-  IncZ = 
-    PRE 
+
+  IncZ =
+    PRE
         z < 4
     THEN
       z := z + 1
     END
- ; Reset = 
+ ; Reset =
     BEGIN
       x,y,z := -3,-3,-3
     END

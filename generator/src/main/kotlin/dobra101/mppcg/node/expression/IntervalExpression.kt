@@ -10,12 +10,11 @@ data class IntervalExpression(
     val right: Expression
 ) : Expression(getType(left, right), "intervalExpression")
 
-// TODO: replace by type inference
+// TODO: replace with type inference
 private fun getType(left: Expression, right: Expression): Type {
-    val type = if (left.type is TypeReal || right.type is TypeReal) {
+    return if (left.type is TypeReal || right.type is TypeReal) {
         TypeReal()
     } else {
         TypeInteger()
     }
-    return TypeInterval(type)
 }

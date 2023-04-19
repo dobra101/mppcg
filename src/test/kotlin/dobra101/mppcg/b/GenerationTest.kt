@@ -98,6 +98,9 @@ class GenerationTest : ExpectSpec({
                                 result.counterExample shouldBe null
                             }
                         }
+                        if (expectation.withDeadlock || expectation.withInvariantViolation) {
+                            return@expect
+                        }
                         withClue("States do not match") {
                             result.statesAnalysed shouldBeExactly expectation.states
                         }

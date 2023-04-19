@@ -172,6 +172,12 @@ class Generator {
             is UnaryExpression -> value.getAllIdentifiers()
             is UnaryFunctionExpression -> expression.getAllIdentifiers()
 
+            is GeneralSumOrProductExpression -> {
+                identifiers.forEach { it.getAllIdentifiers() }
+                predicate.getAllIdentifiers()
+                expression.getAllIdentifiers()
+            }
+
             else -> throw RuntimeException("Unknown ${this::class}")
         }
     }

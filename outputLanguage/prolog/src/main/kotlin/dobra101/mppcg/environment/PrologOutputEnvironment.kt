@@ -37,7 +37,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     var declarationStep: Boolean = true // HINT: only for B
     var ignoreOutput: Boolean = false // HINT: only for B
     var returnValues: List<Expression> = listOf() // HINT: only for B
-    var quantifierIdentifier: List<IdentifierExpression> = listOf() // HINT: only for B
+    var ctrlStructIdentifier: List<IdentifierExpression> = listOf() // HINT: only for B
 
     private fun expr(name: Any): String = "Expr_$name"
 
@@ -139,8 +139,8 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             return RenderResult(expr("tmp_$name"))
         }
 
-        if (quantifierIdentifier.contains(this)) {
-            if (optimize) optimizer.evaluated[this] = expr("tmp_$name")
+        if (ctrlStructIdentifier.contains(this)) {
+            if (optimize) optimizer.evaluated[this] = expr("q_$name")
             return RenderResult(expr("q_$name"))
         }
 
@@ -200,7 +200,13 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     override fun BinaryPredicate.renderSelf(): RenderResult {
         if (optimize) optimizer.renderOptimized(this)?.let { return it }
 
-        val expanded = ExpandedBinary.of(left, right)
+        val differentBranches = operator == BinaryPredicateOperator.EQUAL
+                && (
+                (left as? UnaryExpression)?.operator == UnaryExpressionOperator.CONVERT_BOOLEAN
+                        || (right as? UnaryExpression)?.operator == UnaryExpressionOperator.CONVERT_BOOLEAN
+                )
+        val expanded =
+            ExpandedBinary.of(left, right, differentBranches = differentBranches, this@PrologOutputEnvironment)
 
         val prefixOperators = listOf(
             BinaryPredicateOperator.MEMBER,
@@ -233,35 +239,40 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             return true
         }
 
-        val expanded = ExpandedBinary.of(
-            left,
-            right,
-            differentBranches = operator == LogicPredicateOperator.OR,
-            environment = this@PrologOutputEnvironment
-        )
+        val expanded = ExpandedBinary.of(left, right, true, this@PrologOutputEnvironment)
+        return when (operator) {
+            LogicPredicateOperator.EQUIVALENCE -> {
+                val map = mapOf(
+                    "lhs" to expanded.lhs,
+                    "rhs" to expanded.rhs
+                )
+                RenderResult(renderTemplate("equivalence", map))
+            }
 
-        val lineBreaksTotal = expanded.lhs.count { it == '\n' } + expanded.rhs.count { it == '\n' }
-        val map: MutableMap<String, Any> = mutableMapOf(
-            "lhs" to expanded.lhs,
-            "rhs" to expanded.rhs,
-        )
-
-        val rendered = when (operator) {
-            LogicPredicateOperator.EQUIVALENCE -> renderTemplate("equivalence", map)
             LogicPredicateOperator.IMPLIES -> {
-                map["inline"] = inline(lineBreaksTotal)
-                renderTemplate("implication", map)
+                val lineBreaksTotal = expanded.lhs.count { it == '\n' } + expanded.rhs.count { it == '\n' }
+
+                val map = mapOf(
+                    "lhs" to expanded.lhs,
+                    "rhs" to expanded.rhs,
+                    "inline" to inline(lineBreaksTotal)
+                )
+                RenderResult(renderTemplate("implication", map))
             }
 
             else -> {
-                map["operator"] = operator2String(operator)
-                map["addParentheses"] = operator == LogicPredicateOperator.OR
-                map["inline"] = inline(lineBreaksTotal)
-                renderTemplate(map)
+                val lineBreaksTotal = expanded.lhs.count { it == '\n' } + expanded.rhs.count { it == '\n' }
+                val map: MutableMap<String, Any> = mutableMapOf(
+                    "lhs" to expanded.lhs,
+                    "rhs" to expanded.rhs,
+                    "operator" to operator2String(operator),
+                    "addParentheses" to (operator == LogicPredicateOperator.OR),
+                    "inline" to inline(lineBreaksTotal)
+                )
+
+                RenderResult("${expanded.before}${renderTemplate(map)}")
             }
         }
-
-        return RenderResult("${expanded.before}$rendered")
     }
 
     override fun UnaryLogicPredicate.renderSelf(): RenderResult {
@@ -629,6 +640,24 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         return RenderResult(renderTemplate(map), info = mapOf("before" to IndividualInfo(expanded.before)))
     }
 
+    override fun GeneralSumOrProductExpression.renderSelf(): RenderResult {
+        val evaluated = if (optimize) optimizer.getCopyOfEvaluated() else hashMapOf()
+        ctrlStructIdentifier = ctrlStructIdentifier + identifiers
+
+        val map = mapOf(
+            "identifiers" to identifiers.render(),
+            "predicate" to predicate.render(),
+            "expression" to if (expression !is IdentifierExpression) expression.render() else null,
+            "isSum" to (operation == SumOrProductOperation.SUM),
+            "exprCount" to exprCount
+        )
+
+        ctrlStructIdentifier = ctrlStructIdentifier - identifiers.toSet()
+        if (optimize) optimizer.evaluated = evaluated
+
+        return RenderResult(renderTemplate(map), exprToInfo(this))
+    }
+
     override fun InfiniteSet.renderSelf(): RenderResult {
         return RenderResult(renderTemplate(mapOf("type" to type2String(type))))
     }
@@ -682,11 +711,17 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         // TODO: optimize minus
         if (optimize) optimizer.loadIfEvaluated(this)?.let { return it }
 
+        val renderedValue = if (optimize && optimizer.evaluated.contains(value)) null else value.render()
+        val resultAt =
+            if (optimize && optimizer.evaluated.contains(value)) optimizer.evaluated[value] else expr(exprCount - 1)
+
         val map = mapOf(
-            "value" to value.render(),
+            "value" to renderedValue,
             "operator" to operator2String(operator),
             "convertBoolean" to (operator == UnaryExpressionOperator.CONVERT_BOOLEAN),
             "isMinus" to (operator == UnaryExpressionOperator.MINUS),
+            "isMinusInline" to (value is ValueExpression || value is ConcreteIdentifierExpression),
+            "resultAt" to resultAt,
             "exprCount" to exprCount
         )
         val rendered = renderTemplate(map)
@@ -730,20 +765,19 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             "indices" to predicates.indices.map { it }
         )
 
-
         return RenderResult(renderTemplate("props", map))
     }
 
     override fun QuantifierPredicate.renderSelf(): RenderResult {
         val evaluated = if (optimize) optimizer.getCopyOfEvaluated() else hashMapOf()
-        quantifierIdentifier = quantifierIdentifier + identifier
+        ctrlStructIdentifier = ctrlStructIdentifier + identifier
         val map = mapOf(
             "identifier" to identifier.render(),
             "predicate" to predicate.render(),
             "quantification" to quantification?.render(),
             "universalQuantifier" to (type == QuantifierType.FORALL)
         )
-        quantifierIdentifier = quantifierIdentifier - identifier.toSet()
+        ctrlStructIdentifier = ctrlStructIdentifier - identifier.toSet()
         if (optimize) optimizer.evaluated = evaluated
         return RenderResult(renderTemplate(map))
     }
@@ -841,7 +875,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             "definitions" to definitions?.render(),
             "variables" to variables.render(),
             "concrete_variables" to concreteVariables.render(),
-            "initialization" to initialization?.render(),
+            "initialization" to initialization.render(),
             "invariant" to invariant.render(),
             "assertions" to assertions.render(),
             "operations" to operations.render(),
@@ -1052,10 +1086,16 @@ private data class ExpandedExpressionList(val before: String = "", val expressio
 private data class ExpandedBinary(val before: String = "", val lhs: String = "", val rhs: String = "") {
     companion object {
         fun of(
+            left: MPPCGNode, right: MPPCGNode
+        ): ExpandedBinary {
+            return of(left, right, false, null)
+        }
+
+        fun of(
             left: MPPCGNode,
             right: MPPCGNode,
-            differentBranches: Boolean = false,
-            environment: PrologOutputEnvironment? = null
+            differentBranches: Boolean,
+            environment: PrologOutputEnvironment?
         ): ExpandedBinary {
             // true copy of map
             val evaluated =

@@ -39,8 +39,9 @@ setEntryExpression(name) ::= <<
 '<name>'
 >>
 
-unaryExpression(value, operator, convertBoolean, isMinus, exprCount) ::= <<
-<if(isMinus)>Expr_<exprCount> = -<value><else>
+unaryExpression(value, operator, convertBoolean, isMinus, isMinusInline, exprCount, resultAt) ::= <<
+<if(isMinus)><if(isMinusInline)>Expr_<exprCount> = -<value><else><if(value)><value>,<endif>
+Expr_<exprCount> is -<resultAt><endif><else>
 <if(convertBoolean)>
 (<value> -> Expr_<exprCount> = true; Expr_<exprCount> = false)<else>
 <operator>(<value>, Expr_<exprCount>)<endif><endif>
@@ -49,4 +50,20 @@ unaryExpression(value, operator, convertBoolean, isMinus, exprCount) ::= <<
 // TODO: add type ?
 valueExpression(value) ::= <<
 <value>
+>>
+
+generalSumOrProductExpression(identifiers, predicate, expression, isSum, exprCount) ::= <<
+% general <if(isSum)>sum<else>product<endif>
+findall(
+    (<identifiers; separator="/">),
+    (
+        <predicate><if(expression)>,
+        <expression><endif>
+
+    ),
+    Expr_<exprCount>_<if(isSum)>Sum<else>Product<endif>
+),
+<if(isSum)>
+mppcg_listSum(Expr_<exprCount>_Sum, Expr_<exprCount>)<else>
+mppcg_listProduct(Expr_<exprCount>_Product, Expr_<exprCount>)<endif>
 >>

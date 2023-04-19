@@ -6,6 +6,7 @@ import dobra101.mppcg.node.b.Function
 import dobra101.mppcg.node.b.Sequence
 import dobra101.mppcg.node.collection.BinaryCollectionExpression
 import dobra101.mppcg.node.collection.UnaryCollectionExpression
+import dobra101.mppcg.node.expression.GeneralSumOrProductExpression
 import dobra101.mppcg.node.expression.LambdaExpression
 import dobra101.mppcg.node.expression.UnaryExpression
 import dobra101.mppcg.node.predicate.QuantifierPredicate
@@ -22,6 +23,7 @@ interface BEnvironment {
     fun ComprehensionSet.renderSelf(): RenderResult
     fun ConcreteIdentifierExpression.renderSelf(): RenderResult
     fun Couple.renderSelf(): RenderResult
+    fun GeneralSumOrProductExpression.renderSelf(): RenderResult
     fun InfiniteSet.renderSelf(): RenderResult
     fun LambdaExpression.renderSelf(): RenderResult
     fun Sequence.renderSelf(): RenderResult

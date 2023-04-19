@@ -13,13 +13,13 @@ machine(name, parameters, constraints, sets, constants, concrete_constants, prop
 <initialization>
 
 % Transitions
-<operations; separator="\n\n">
+<if(operations)><operations; separator="\n\n"><else>trans(skip, empty, done).<endif>
 
 % Invariant
 <invariant>
-
+<if(whileDefinitions)>
 % While definitions
-<whileDefinitions; separator="\n\n">
+<whileDefinitions; separator="\n\n"><endif>
 >>
 
 // TODO: improve return values
@@ -119,8 +119,8 @@ sort(Res_<exprCount>, Expr_<exprCount>)
 
 initialization(body, resultStateCount) ::= <<
 start(State_<resultStateCount>) :-
-    empty(State_0),
-    <body; separator=",\n">.
+    empty(State_0)<if(body)>,
+    <body; separator=",\n"><endif>.
 >>
 
 // TODO: make parallel
