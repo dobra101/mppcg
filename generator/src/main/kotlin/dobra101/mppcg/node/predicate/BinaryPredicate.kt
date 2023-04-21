@@ -18,5 +18,6 @@ enum class BinaryPredicateOperator: CustomMethodOperator {
     NOT_EQUAL,
     MEMBER,
     NOT_MEMBER,
-    SUBSET
+    SUBSET,
+    STRICT_SUBSET
 }

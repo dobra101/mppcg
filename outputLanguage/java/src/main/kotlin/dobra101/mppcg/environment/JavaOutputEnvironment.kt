@@ -662,6 +662,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             BinaryPredicateOperator.MEMBER -> "instanceof"
             BinaryPredicateOperator.NOT_MEMBER -> "notmember(java)"
             BinaryPredicateOperator.SUBSET -> "containsAll"
+            BinaryPredicateOperator.STRICT_SUBSET -> "containsAllStrict??"
         }
     }
 
@@ -685,6 +686,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             BinaryExpressionOperator.DIV -> "div"
             BinaryExpressionOperator.MOD -> "mod"
             BinaryExpressionOperator.POW -> "pow"
+            BinaryExpressionOperator.PARALLEL_PRODUCT -> "mppcg_parallelProduct"
         }
     }
 

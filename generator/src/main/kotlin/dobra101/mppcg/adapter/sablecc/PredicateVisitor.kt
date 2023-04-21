@@ -148,7 +148,11 @@ class PredicateVisitor : AbstractVisitor() {
     }
 
     override fun caseASubsetStrictPredicate(node: ASubsetStrictPredicate) {
-        TODO("Not implemented ${node::class.simpleName}")
+        result = BinaryPredicate(
+            node.left.convert()!!.setParameterIfCollection(),
+            node.right.convert()!!.setParameterIfCollection(),
+            BinaryPredicateOperator.STRICT_SUBSET
+        )
     }
 
     override fun caseANotSubsetPredicate(node: ANotSubsetPredicate) {
@@ -161,8 +165,12 @@ class PredicateVisitor : AbstractVisitor() {
     }
 
     override fun caseANotSubsetStrictPredicate(node: ANotSubsetStrictPredicate) {
-        TODO("Not implemented ${node::class.simpleName}")
-    }
+        val pred = BinaryPredicate(
+            node.left.convert()!!.setParameterIfCollection(),
+            node.right.convert()!!.setParameterIfCollection(),
+            BinaryPredicateOperator.STRICT_SUBSET
+        )
+        result = UnaryLogicPredicate(pred, LogicPredicateOperator.NOT)    }
 
     override fun caseATruthPredicate(node: ATruthPredicate) {
         result = ValuePredicate("", type = TypeBoolean(BooleanValue.TRUE))

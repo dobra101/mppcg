@@ -28,6 +28,10 @@ private fun getType(left: Expression, right: Expression, operator: BinaryCollect
         return TypeSequence((left.type as TypeCouple).to)
     }
 
+    if (operator == BinaryCollectionOperator.UNION) {
+        return commonType(left.type!!, right.type!!)
+    }
+
     if (left.type is TypeReal || right.type is TypeReal) return TypeReal()
     if (left.type is TypeSequence && right.type is TypeFunction) return left.type
     if (left.type is TypeFunction && right.type is TypeSequence) return right.type
@@ -45,7 +49,28 @@ private fun getType(left: Expression, right: Expression, operator: BinaryCollect
         }
         println("Left (${left.type}): $left")
         println("Right (${right.type}): $right")
+        println(operator)
+
         throw InvalidTypeException("Types ${left.type} and ${right.type} do not match.")
     }
     return left.type
+}
+
+private fun commonType(left: Type, right: Type): Type {
+    if (left is TypeInteger) {
+        return left
+    }
+
+    if (left is TypeNatural1) {
+        return right
+    }
+
+    if (left is TypeNatural) {
+        return when (right) {
+            is TypeInteger -> right
+            else -> left
+        }
+    }
+
+    return left
 }

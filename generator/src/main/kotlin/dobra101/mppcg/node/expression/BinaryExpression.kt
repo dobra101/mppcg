@@ -17,7 +17,8 @@ enum class BinaryExpressionOperator: CustomMethodOperator {
     MULT,
     DIV,
     MOD,
-    POW
+    POW,
+    PARALLEL_PRODUCT
 }
 
 // TODO: replace by type inference
@@ -31,6 +32,14 @@ private fun getType(left: Expression, right: Expression, operator: BinaryExpress
         val leftType = if (left is AnonymousSetCollectionNode) left.elements[0].type else left.type
         val rightType = if (right is AnonymousSetCollectionNode) right.elements[0].type else right.type
         return TypeFunction(type = FunctionType.TOTAL, from = leftType, to = rightType)
+    }
+
+    if (operator == BinaryExpressionOperator.MINUS && right.type is TypeNatural) {
+        return left.type
+    }
+
+    if (operator == BinaryExpressionOperator.MINUS && right.type is TypeSet && left.type is TypeSet) {
+        return left.type
     }
 
     if (left.type == null) {

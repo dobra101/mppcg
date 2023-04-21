@@ -11,6 +11,7 @@ import dobra101.mppcg.node.predicate.*
 import dobra101.mppcg.node.substitution.*
 import org.stringtemplate.v4.STGroup
 import org.stringtemplate.v4.STGroupFile
+import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
 import java.util.logging.LogManager
@@ -159,6 +160,7 @@ abstract class OutputLanguageEnvironment : EnvironmentUtils(), BEnvironment {
         st.importTemplates(STGroupFile("$templateDir/substitutions.stg"))
         st.importTemplates(STGroupFile("$templateDir/optimizer.stg"))
         st.importTemplates(STGroupFile("$templateDir/common.stg"))
+        st.importTemplates(STGroupFile("$templateDir/runCfg.stg"))
         return st
     }
 

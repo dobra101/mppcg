@@ -8,6 +8,7 @@
     mppcg_member/2,
     mppcg_member_list/2,
     mppcg_subset/2,
+    mppcg_subsetStrict/2,
     mppcg_setSubtraction/3,
     mppcg_setIntersection/3,
     mppcg_setUnion/3,
@@ -43,6 +44,13 @@
     ]).
 
 :- use_module(library(avl)).
+:- use_module(runCfg).
+
+% TODO: use
+int((Min, Max)) :- minInt(Min), maxInt(Max).
+nat((0, Max)) :- maxInt(Max).
+nat1((1, Max)) :- maxInt(Max).
+
 
 is_list([]).
 is_list([_ | Tail]) :-
@@ -79,15 +87,24 @@ mppcg_member(set(Set), pow(X)) :-
 mppcg_member(true, 'BOOL').
 mppcg_member(false, 'BOOL').
 mppcg_member(Element, 'INT') :-
-    integer(Element).
+    maxInt(Max),
+    minInt(Min),
+    between(Min, Max, Element).
 mppcg_member(Element, 'NAT') :-
     integer(Element),
-    between(0, infinite, Element).
+    maxInt(Max),
+    between(0, Max, Element).
 mppcg_member(Element, (A, B)) :-
+    nonvar(A),
+    nonvar(B),
     between(A, B, Element).
 mppcg_member(Set, function(From, To)) :-
+    nonvar(From),
+    nonvar(To),
     findall(_, (mppcg_member(E, Set), \+ mppcg_member(E, function(From, To))), []).
 mppcg_member(set(Set), function(From, To)) :-
+    nonvar(From),
+    nonvar(To),
     findall(_, (mppcg_member(E, Set), \+ mppcg_member(E, function(From, To))), []).
 mppcg_member((X/Y), function(From, To)) :-
     mppcg_member(X, From),
@@ -126,19 +143,26 @@ gen_int_between(Start, End, Int) :-
     gen_int_between(Start1, End, Int).
 
 mppcg_subset(set(Left), set(Right)) :-
-    findall(X, (member(X, Left), member(X, Right)), Left). % TODO: use mppcg_member here?
+    mppcg_subset(Left, Right).
+mppcg_subset(X, (A, B)) :-
+    findall(M, mppcg_member(M, (A, B)), IntervalList),
+    mppcg_subset(X, IntervalList).
 mppcg_subset([], []).
 mppcg_subset([Head | NewTail], [Head | Tail]) :-
     mppcg_subset(NewTail, Tail).
 mppcg_subset(NewTail, [_ | Tail]) :-
     mppcg_subset(NewTail, Tail).
 
+mppcg_subsetStrict(A, B) :-
+    A \= B,
+    mppcg_subset(A, B).
+
 mppcg_setSubtraction(set(Left), set(Right), set(Result)) :-
-    findall(X, (member(X, Left), \+ member(X, Right)), Res), % TODO: use mppcg_member here?
+    findall(X, (mppcg_member(X, Left), \+ mppcg_member(X, Right)), Res),
     sort(Res, Result).
 
 mppcg_setIntersection(set(Left), set(Right), set(Intersection)) :-
-    findall(X, (member(X, Left), member(X, Right)), Inter), % TODO: use mppcg_member here?
+    findall(X, (mppcg_member(X, Left), mppcg_member(X, Right)), Inter),
     sort(Inter, Intersection).
 
 mppcg_setUnion(set(Left), set(Right), set(Union)) :-
@@ -295,6 +319,8 @@ mppcg_min([_ | Tail], Acc, Min) :-
     mppcg_min(Tail, Acc, Min),
     !.
 
+mppcg_card((A, B), Length) :-
+    Length is (B - A)+1.
 mppcg_card(set(List),  Length) :-
     length(List, Length),
     !.
@@ -350,6 +376,30 @@ mppcg_equal(X, Y) :- number(X), number(Y), !, X =< Y, X >= Y. % e.g. X = 1.0, Y 
 mppcg_equal(set(Set), Other) :-
     findall(X, (mppcg_member(X, Set), \+ mppcg_member(X, Other)), []), !,
     findall(X, (mppcg_member(X, Other), \+ mppcg_member(X, Set)), []), !.
+mppcg_equal(Other, set(Set)) :-
+    findall(X, (mppcg_member(X, Set), \+ mppcg_member(X, Other)), []), !,
+    findall(X, (mppcg_member(X, Other), \+ mppcg_member(X, Set)), []), !.
+mppcg_equal('NAT', Other) :-
+    maxInt(Max),
+    mppcg_equal((0, Max), Other), !.
+mppcg_equal('NAT1', Other) :-
+    maxInt(Max),
+    mppcg_equal((1, Max), Other), !.
+mppcg_equal('INT', Other) :-
+    maxInt(Max),
+    minInt(Min),
+    mppcg_equal((Min, Max), Other), !.
+mppcg_equal(Other, 'NAT') :-
+    maxInt(Max),
+    mppcg_equal((0, Max), Other), !.
+mppcg_equal(Other, 'NAT1') :-
+    maxInt(Max),
+    mppcg_equal((1, Max), Other), !.
+mppcg_equal(Other, 'INT') :-
+    maxInt(Max),
+    minInt(Min),
+    mppcg_equal((Min, Max), Other), !.
+
 
 mppcg_notEqual(X, X) :- !, fail.
 mppcg_notEqual(X, Y) :- number(X), number(Y), !, (X < Y; X > Y).
@@ -357,6 +407,7 @@ mppcg_notEqual(X, Y) :- X \= Y, !.
 mppcg_notEqual(set(Set), Other) :-
     (mppcg_member(X, Set), \+ mppcg_member(X, Other));
     (mppcg_member(X, Other), \+ mppcg_member(X, Set)), !.
+% TODO: fix not equal
 
 mppcg_pow(X, Y, PowInt) :-
     mppcg_pow_1(X, Y, 1, Pow),

@@ -1,6 +1,8 @@
 package dobra101.mppcg.adapter.sablecc
 
 import de.be4.classicalb.core.parser.node.*
+import dobra101.mppcg.environment.BEnvironmentConfig
+import dobra101.mppcg.environment.RuntimeConfig
 import dobra101.mppcg.node.*
 import dobra101.mppcg.node.b.*
 import dobra101.mppcg.node.b.Function
@@ -254,11 +256,11 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseAMaxIntExpression(node: AMaxIntExpression) {
-        TODO("Not implemented ${node::class.simpleName}")
+        result = ValueExpression(value = (RuntimeConfig.config as BEnvironmentConfig).maxInteger.toString(), type = TypeInteger())
     }
 
     override fun caseAMinIntExpression(node: AMinIntExpression) {
-        TODO("Not implemented ${node::class.simpleName}")
+        result = ValueExpression(value = (RuntimeConfig.config as BEnvironmentConfig).minInteger.toString(), type = TypeInteger())
     }
 
     override fun caseARealSetExpression(node: ARealSetExpression) {
@@ -587,7 +589,8 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseAParallelProductExpression(node: AParallelProductExpression) {
-        TODO("Not implemented ${node::class.simpleName}")
+        result =
+            BinaryExpression(node.left.convert()!!, node.right.convert()!!, BinaryExpressionOperator.PARALLEL_PRODUCT)
     }
 
     override fun caseAIterationExpression(node: AIterationExpression) {

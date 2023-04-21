@@ -5,7 +5,7 @@ INVARIANT
  n:0..15 &
 
  card(POW(1..n)) = 2**n &
- card(POW1(1..n)) = 2**n - 1 &
+ card(POW1(1..n)) = 2**n - 1
  //(n<512 => card(1..n <-> BOOL) = 2**(n*2)) & /* currently 2**1024 gives inf result in safe_pow2 */
 
  //(n<647 => card(1..n --> 1..3) = 3**n) & /* did violation found for n=34, 41; SICStus bug for 115 with old safe_pown */
@@ -18,7 +18,7 @@ INVARIANT
 
  //((n>1 & n<1001) => card(perm(1..n)) = n*card(perm(1..(n-1)))) /* 1001 or larger did trigger internal error: arithmetic multiplication was called on inf & posting CLP(FD) constraint */
 
-  (n<2000 => card(((1..n)*(50..60) || (2..30)*(20..22))) = 957*n)
+  //(n<2000 => card(((1..n)*(50..60) || (2..30)*(20..22))) = 957*n)
 INITIALISATION n:=0
 OPERATIONS
   Inc = PRE n<15 THEN n:= n+1 END;

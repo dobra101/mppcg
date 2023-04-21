@@ -1,10 +1,7 @@
 package dobra101.mppcg
 
 import de.be4.classicalb.core.parser.BParser
-import dobra101.mppcg.environment.JavaOutputEnvironment
-import dobra101.mppcg.environment.Language
-import dobra101.mppcg.environment.OutputLanguageEnvironment
-import dobra101.mppcg.environment.PrologOutputEnvironment
+import dobra101.mppcg.environment.*
 import dobra101.mppcg.prob.ProBResult
 import dobra101.mppcg.prob.ProBResultAnalyser
 import kotlinx.cli.ArgParser
@@ -23,7 +20,9 @@ object Launcher {
         parser: Parser,
         optimize: Boolean = false,
         benchmark: Boolean = false,
-        outputPath: String = "generator/build/generated/"
+        outputPath: String = "generator/build/generated/",
+        minInt: Long = -10,
+        maxInt: Long = 10
     ): File {
         if (!File(outputPath).exists()) File(outputPath).mkdir()
 
@@ -34,7 +33,11 @@ object Launcher {
 
         Generator.environment = environmentOf(lang)
         Generator.environment.optimize = optimize
+        RuntimeConfig.config = BEnvironmentConfig(minInt, maxInt)
         val generated = Generator().generate(start, outputPath)
+        if (lang == Language.PROLOG) {
+            generateRunCfg("${outputPath}runCfg.pl")
+        }
 
         if (benchmark) {
             if (lang == Language.PROLOG) {
@@ -51,7 +54,9 @@ object Launcher {
         parser: Parser,
         optimize: Boolean = false,
         benchmark: Boolean = false,
-        outputPath: String = "generator/build/generated/"
+        outputPath: String = "generator/build/generated/",
+        minInt: Long = -10,
+        maxInt: Long = 10
     ): File {
         val filename = if (file.endsWith(".mch")) file else "$file.mch"
 
@@ -60,10 +65,15 @@ object Launcher {
                 .filter { fn -> fn.name == filename }.first()
         }
 
-        return launch(lang, machine, parser, optimize, benchmark, outputPath)
+        return launch(lang, machine, parser, optimize, benchmark, outputPath, minInt, maxInt)
     }
 
-    fun benchmarkProlog(file: File, checkDeadlock: Boolean = true, checkInvariant: Boolean = true, timeout: Long? = null): ProBResult {
+    fun benchmarkProlog(
+        file: File,
+        checkDeadlock: Boolean = true,
+        checkInvariant: Boolean = true,
+        timeout: Long? = null
+    ): ProBResult {
         val prologResourcesPath = "outputLanguage/prolog/src/main/resources"
         val probPath = "$prologResourcesPath/ProB_Signed/probcli.sh"
         val probArgs =
@@ -127,4 +137,19 @@ private fun environmentOf(language: Language): OutputLanguageEnvironment {
 enum class Parser {
     SableCC,
     ANTLR
+}
+
+private fun generateRunCfg(path: String) {
+    val file = File(path)
+    file.createNewFile()
+
+    val rendered = Generator.environment.renderTemplate(
+        "runCfg", mapOf(
+            "maxInt" to (RuntimeConfig.config as BEnvironmentConfig).maxInteger,
+            "minInt" to (RuntimeConfig.config as BEnvironmentConfig).minInteger
+        )
+    )
+
+    file.writeText(rendered)
+    println(file.path)
 }

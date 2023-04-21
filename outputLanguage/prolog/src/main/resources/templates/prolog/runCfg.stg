@@ -1,0 +1,6 @@
+runCfg(maxInt, minInt) ::= <<
+:- module(runCfg, [maxInt/1, minInt/1]).
+
+maxInt(<maxInt>).
+minInt(<minInt>).
+>>

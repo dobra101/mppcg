@@ -26,6 +26,7 @@ abstract class EnvironmentUtils {
             BinaryPredicateOperator.MEMBER -> "mppcg_member"
             BinaryPredicateOperator.NOT_MEMBER -> "\\+ ${operator2String(BinaryPredicateOperator.MEMBER)}"
             BinaryPredicateOperator.SUBSET -> "mppcg_subset"
+            BinaryPredicateOperator.STRICT_SUBSET -> "mppcg_subsetStrict"
         }
     }
 
@@ -37,6 +38,7 @@ abstract class EnvironmentUtils {
             BinaryExpressionOperator.DIV -> "/"
             BinaryExpressionOperator.MOD -> "%"
             BinaryExpressionOperator.POW -> "**"
+            BinaryExpressionOperator.PARALLEL_PRODUCT -> "mppcg_parallelProduct"
         }
     }
 

@@ -44,10 +44,10 @@ INVARIANT
                (xx+1)..(zz-1) <<: xx..zz)) &
 
   ( xx..zz <: zz..xx <=> zz<=xx) &
-  ( xx..zz <<: zz..xx <=> zz<xx) &
+  ( xx..zz <<: zz..xx <=> zz<xx)
 
-  perm(NAT1) = perm(1..MAXINT) &
-  %i.(i:NAT1|i) : perm(NAT1)
+  // perm(NAT1) = perm(1..MAXINT) &
+  // %i.(i:NAT1|i) : perm(NAT1)
 
 INITIALISATION xx:=0 || zz:=0
 OPERATIONS

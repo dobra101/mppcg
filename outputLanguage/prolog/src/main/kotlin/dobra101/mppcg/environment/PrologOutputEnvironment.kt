@@ -212,6 +212,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             BinaryPredicateOperator.MEMBER,
             BinaryPredicateOperator.NOT_MEMBER,
             BinaryPredicateOperator.SUBSET,
+            BinaryPredicateOperator.STRICT_SUBSET,
             BinaryPredicateOperator.EQUAL,
             BinaryPredicateOperator.NOT_EQUAL
         )
@@ -758,6 +759,9 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             renderTemplate(map)
         }
 
+        println(predicates[15])
+        println(checkInvs[15])
+
         val renderedCheckInvs = renderTemplate("invariants", mapOf("list" to checkInvs))
 
         val map = mapOf(
@@ -935,6 +939,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             BinaryExpressionOperator.DIV -> true
             BinaryExpressionOperator.MOD -> true
             BinaryExpressionOperator.POW -> true
+            BinaryExpressionOperator.PARALLEL_PRODUCT -> false
         }
     }
 
@@ -947,6 +952,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
                 BinaryExpressionOperator.DIV -> "mppcg_div"
                 BinaryExpressionOperator.MOD -> "mppcg_mod"
                 BinaryExpressionOperator.POW -> "mppcg_pow"
+                BinaryExpressionOperator.PARALLEL_PRODUCT -> "mppcg_parallelProduct"
             }
         }
         return operator2String(operator)
@@ -1039,6 +1045,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
 
     override fun type2String(type: Type?): String {
         return when (type) {
+            is TypeNatural1 -> "'NAT1'"
             is TypeNatural -> "'NAT'"
             is TypeInteger -> "'INT'"
             is TypeSet -> type2String(type.type)
@@ -1142,7 +1149,7 @@ private data class ExpandedExpression(val before: String = "", val expression: S
         fun of(expression: Expression): ExpandedExpression {
             val expanded = expression.render()
 
-            val before = if (expanded.rendered.isNotBlank() && expanded.containsKey("resultExpr")) {
+            var before = if (expanded.rendered.isNotBlank() && expanded.containsKey("resultExpr")) {
                 "${expanded.rendered}${PrologOutputEnvironment.EXPRESSION_SEPARATOR}"
             } else {
                 ""
@@ -1152,6 +1159,10 @@ private data class ExpandedExpression(val before: String = "", val expression: S
                 expanded["resultExpr"].info
             } else {
                 expanded.rendered
+            }
+
+            if (expanded.containsKey("before")) {
+                before += expanded["before"].info
             }
 
             return ExpandedExpression(before, expr)
