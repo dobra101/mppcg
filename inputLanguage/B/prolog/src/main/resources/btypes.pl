@@ -40,17 +40,12 @@
     mppcg_pow/3,
     mppcg_callFunction/3,
     mppcg_listSum/2,
-    mppcg_listProduct/2
+    mppcg_listProduct/2,
+    mppcg_minus/3
     ]).
 
 :- use_module(library(avl)).
 :- use_module(runCfg).
-
-% TODO: use
-int((Min, Max)) :- minInt(Min), maxInt(Max).
-nat((0, Max)) :- maxInt(Max).
-nat1((1, Max)) :- maxInt(Max).
-
 
 is_list([]).
 is_list([_ | Tail]) :-
@@ -82,36 +77,24 @@ updateFunction([K/V | Tail], Parameter, Value, [K/V | NewTail]) :-
 
 % Operators
 % TODO: function: check if e.g. only one solution is found
-mppcg_member(set(Set), pow(X)) :-
-    findall(_, (mppcg_member(E, Set), \+ mppcg_member(E, X)), []).
-mppcg_member(true, 'BOOL').
-mppcg_member(false, 'BOOL').
-mppcg_member(Element, 'INT') :-
-    maxInt(Max),
-    minInt(Min),
-    between(Min, Max, Element).
-mppcg_member(Element, 'NAT') :-
-    integer(Element),
-    maxInt(Max),
-    between(0, Max, Element).
-mppcg_member(Element, (A, B)) :-
-    nonvar(A),
-    nonvar(B),
-    between(A, B, Element).
-mppcg_member(Set, function(From, To)) :-
+mppcg_member(X, Y) :-
+    resolve(X, X1),
+    resolve(Y, Y1),
+    !,
+    mppcg_member_(X1, Y1).
+
+mppcg_member_(X, 'INTEGER') :-
+    gen_int_between(-infinite, infinite, X).
+mppcg_member_(X, 'NATURAL') :-
+    gen_int_between(0, infinite, X).
+mppcg_member_(Set, function(From, To)) :-
     nonvar(From),
     nonvar(To),
-    findall(_, (mppcg_member(E, Set), \+ mppcg_member(E, function(From, To))), []).
-mppcg_member(set(Set), function(From, To)) :-
-    nonvar(From),
-    nonvar(To),
-    findall(_, (mppcg_member(E, Set), \+ mppcg_member(E, function(From, To))), []).
-mppcg_member((X/Y), function(From, To)) :-
-    mppcg_member(X, From),
-    mppcg_member(Y, To).
-mppcg_member(Element, set(Set)) :-
-    mppcg_member(Element, Set).
-mppcg_member(Element, List) :-
+    findall(_, (mppcg_member(E, Set), \+ mppcg_member_(E, function(From, To))), []).
+mppcg_member_((X/Y), function(From, To)) :-
+    mppcg_member_(X, From),
+    mppcg_member_(Y, To).
+mppcg_member_(Element, List) :-
     is_list(List),
     mppcg_member_list(Element, List).
 
@@ -129,33 +112,40 @@ between(A, B, Element) :-
     Element >= A,
     (B \= infinite -> Element =< B; true).
 
-gen_int_between(Start, infinite, Start).
+gen_int_between(-infinite, infinite, Start) :-
+    gen_int_between(0, infinite, Int),
+    (Start is Int; Start is -Int).
+gen_int_between(Start, infinite, Start) :- Start \= -infinite.
 gen_int_between(Start, End, Start) :-
+    Start \= -infinite,
     End \= infinite,
     Start =< End.
 gen_int_between(Start, infinite, Int) :-
+    Start \= -infinite,
     Start1 is Start + 1,
     gen_int_between(Start1, infinite, Int).
 gen_int_between(Start, End, Int) :-
+    Start \= -infinite,
     End \= infinite,
     Start =< End,
     Start1 is Start + 1,
     gen_int_between(Start1, End, Int).
 
-mppcg_subset(set(Left), set(Right)) :-
-    mppcg_subset(Left, Right).
-mppcg_subset(X, (A, B)) :-
-    findall(M, mppcg_member(M, (A, B)), IntervalList),
-    mppcg_subset(X, IntervalList).
-mppcg_subset([], []).
-mppcg_subset([Head | NewTail], [Head | Tail]) :-
-    mppcg_subset(NewTail, Tail).
-mppcg_subset(NewTail, [_ | Tail]) :-
-    mppcg_subset(NewTail, Tail).
+mppcg_subset(X, Y) :-
+    resolve(X, X1),
+    resolve(Y, Y1),
+    mppcg_subset_(X1, Y1).
+mppcg_subset_([], []).
+mppcg_subset_([Head | NewTail], [Head | Tail]) :-
+    mppcg_subset_(NewTail, Tail).
+mppcg_subset_(NewTail, [_ | Tail]) :-
+    mppcg_subset_(NewTail, Tail).
 
 mppcg_subsetStrict(A, B) :-
-    A \= B,
-    mppcg_subset(A, B).
+    resolve(A, A1),
+    resolve(B, B1),
+    A1 \= B1,
+    mppcg_subset(A1, B1).
 
 mppcg_setSubtraction(set(Left), set(Right), set(Result)) :-
     findall(X, (mppcg_member(X, Left), \+ mppcg_member(X, Right)), Res),
@@ -165,8 +155,11 @@ mppcg_setIntersection(set(Left), set(Right), set(Intersection)) :-
     findall(X, (mppcg_member(X, Left), mppcg_member(X, Right)), Inter),
     sort(Inter, Intersection).
 
-mppcg_setUnion(set(Left), set(Right), set(Union)) :-
-    append(Left, Right, Appended),
+mppcg_setUnion(Left, Right, set(Union)) :-
+    resolve(Left, Left1),
+    resolve(Right, Right1),
+    append(Left1, Right1, Appended),
+    !,
     sort(Appended, Union).
 
 mppcg_domain(set(Relation), set(Sorted)) :-
@@ -263,68 +256,60 @@ mppcg_rangeSubtraction([_ | Tail], Range, NewTail) :-
     mppcg_rangeSubtraction(Tail, Range, NewTail),
     !.
 
-mppcg_powerSet('INT', pow('INT')) :- !.
-mppcg_powerSet(set(Set), Powerset) :-
-    mppcg_powerSet(Set, Powerset),
-    !.
-mppcg_powerSet(Set, set(Sorted)) :-
+mppcg_powerSet(X, PowerSet) :-
+    resolve(X, X1),
+    mppcg_powerSet_(X1, PowerSet).
+mppcg_powerSet_(Set, set(Sorted)) :-
     findall(set(Subset), (mppcg_subset(Sub, Set), sort(Sub, Subset)), Powerset),
     sort(Powerset, Sorted),
     !.
 
-mppcg_powerSet1('INT', pow1('INT')) :- !.
-mppcg_powerSet1(set(Set), Powerset) :-
-    mppcg_powerSet1(Set, Powerset),
-    !.
-mppcg_powerSet1(Set, set(Sorted)) :-
+mppcg_powerSet1(X, PowerSet) :-
+    resolve(X, X1),
+    mppcg_powerSet1_(X1, PowerSet).
+mppcg_powerSet1_(Set, set(Sorted)) :-
     findall(set(Subset), (mppcg_subset(Sub, Set), sort(Sub, Subset), Subset \= []), Powerset),
     sort(Powerset, Sorted),
     !.
 
-mppcg_max(set(Set), Max) :-
-    mppcg_max(Set, Max),
+mppcg_max(X, Max) :-
+    resolve(X, X1),
+    mppcg_max_(X1, unset, Max),
     !.
-mppcg_max(Set, Max) :-
-    mppcg_max(Set, unset, Max),
+mppcg_max_([], unset, unset) :- fail, !.
+mppcg_max_([Head | Tail], unset, Max) :-
+    mppcg_max_(Tail, Head, Max),
     !.
-mppcg_max([], unset, unset) :- fail, !.
-mppcg_max([Head | Tail], unset, Max) :-
-    mppcg_max(Tail, Head, Max),
-    !.
-mppcg_max([], Acc, Acc) :- !.
-mppcg_max([Head | Tail], Acc, Max) :-
+mppcg_max_([], Acc, Acc) :- !.
+mppcg_max_([Head | Tail], Acc, Max) :-
     Head > Acc,
-    mppcg_max(Tail, Head, Max),
+    mppcg_max_(Tail, Head, Max),
     !.
-mppcg_max([_ | Tail], Acc, Max) :-
-    mppcg_max(Tail, Acc, Max),
+mppcg_max_([_ | Tail], Acc, Max) :-
+    mppcg_max_(Tail, Acc, Max),
     !.
 
-mppcg_min(set(Set), Min) :-
-    mppcg_min(Set, Min),
+mppcg_min(X, Min) :-
+    resolve(X, X1),
+    mppcg_min_(X1, unset, Min),
     !.
-mppcg_min(Set, Min) :-
-    mppcg_min(Set, unset, Min),
+mppcg_min_([], unset, unset) :- fail, !.
+mppcg_min_([Head | Tail], unset, Min) :-
+    mppcg_min_(Tail, Head, Min),
     !.
-mppcg_min([], unset, unset) :- fail, !.
-mppcg_min([Head | Tail], unset, Min) :-
-    mppcg_min(Tail, Head, Min),
-    !.
-mppcg_min([], Acc, Acc) :- !.
-mppcg_min([Head | Tail], Acc, Min) :-
+mppcg_min_([], Acc, Acc) :- !.
+mppcg_min_([Head | Tail], Acc, Min) :-
     Head < Acc,
-    mppcg_min(Tail, Head, Min),
+    mppcg_min_(Tail, Head, Min),
     !.
-mppcg_min([_ | Tail], Acc, Min) :-
-    mppcg_min(Tail, Acc, Min),
+mppcg_min_([_ | Tail], Acc, Min) :-
+    mppcg_min_(Tail, Acc, Min),
     !.
 
-mppcg_card((A, B), Length) :-
-    Length is (B - A)+1.
-mppcg_card(set(List),  Length) :-
-    length(List, Length),
-    !.
-mppcg_card(List, Length) :-
+mppcg_card(X, Card) :-
+    resolve(X, X1),
+    mppcg_card_(X1, Card).
+mppcg_card_(List, Length) :-
     is_list(List),
     length(List, Length),
     !.
@@ -371,43 +356,28 @@ mppcg_mult(Interval1, Interval2, Result) :-
         Result
     ).
 
-mppcg_equal(X, X) :- !.
-mppcg_equal(X, Y) :- number(X), number(Y), !, X =< Y, X >= Y. % e.g. X = 1.0, Y = 1
-mppcg_equal(set(Set), Other) :-
-    findall(X, (mppcg_member(X, Set), \+ mppcg_member(X, Other)), []), !,
-    findall(X, (mppcg_member(X, Other), \+ mppcg_member(X, Set)), []), !.
-mppcg_equal(Other, set(Set)) :-
-    findall(X, (mppcg_member(X, Set), \+ mppcg_member(X, Other)), []), !,
-    findall(X, (mppcg_member(X, Other), \+ mppcg_member(X, Set)), []), !.
-mppcg_equal('NAT', Other) :-
-    maxInt(Max),
-    mppcg_equal((0, Max), Other), !.
-mppcg_equal('NAT1', Other) :-
-    maxInt(Max),
-    mppcg_equal((1, Max), Other), !.
-mppcg_equal('INT', Other) :-
-    maxInt(Max),
-    minInt(Min),
-    mppcg_equal((Min, Max), Other), !.
-mppcg_equal(Other, 'NAT') :-
-    maxInt(Max),
-    mppcg_equal((0, Max), Other), !.
-mppcg_equal(Other, 'NAT1') :-
-    maxInt(Max),
-    mppcg_equal((1, Max), Other), !.
-mppcg_equal(Other, 'INT') :-
-    maxInt(Max),
-    minInt(Min),
-    mppcg_equal((Min, Max), Other), !.
+mppcg_equal(X, Y) :-
+    resolve(X, X1),
+    resolve(Y, Y1),
+    mppcg_equal_(X1, Y1), !.
+mppcg_equal_(X, X) :- !.
+mppcg_equal_(X, Y) :- number(X), number(Y), !, X =< Y, X >= Y. % e.g. X = 1.0, Y = 1
+mppcg_equal_(List1, List2) :-
+    is_list(List1),
+    is_list(List2),
+    findall(X, (mppcg_member(X, List1), \+ mppcg_member(X, List2)), []), !,
+    findall(X, (mppcg_member(X, List2), \+ mppcg_member(X, List1)), []), !.
 
-
-mppcg_notEqual(X, X) :- !, fail.
-mppcg_notEqual(X, Y) :- number(X), number(Y), !, (X < Y; X > Y).
-mppcg_notEqual(X, Y) :- X \= Y, !.
-mppcg_notEqual(set(Set), Other) :-
-    (mppcg_member(X, Set), \+ mppcg_member(X, Other));
-    (mppcg_member(X, Other), \+ mppcg_member(X, Set)), !.
-% TODO: fix not equal
+mppcg_notEqual(X, Y) :-
+    resolve(X, X1),
+    resolve(Y, Y1),
+    mppcg_notEqual_(X1, Y1), !.
+mppcg_notEqual_(X, X) :- !, fail.
+mppcg_notEqual_(X, Y) :- number(X), number(Y), !, (X < Y; X > Y).
+mppcg_notEqual_(X, Y) :- X \= Y, !.
+mppcg_notEqual_(SetOrInterval1, SetOrInterval2) :-
+    (mppcg_member(X, SetOrInterval1), \+ mppcg_member(X, SetOrInterval2));
+    (mppcg_member(X, SetOrInterval2), \+ mppcg_member(X, SetOrInterval1)), !.
 
 mppcg_pow(X, Y, PowInt) :-
     mppcg_pow_1(X, Y, 1, Pow),
@@ -458,3 +428,24 @@ mppcg_listProduct([], Acc, Acc).
 mppcg_listProduct([Head | Tail], Acc, Prod) :-
     Acc1 is Acc * Head,
     mppcg_listProduct(Tail, Acc1, Prod).
+
+mppcg_minus(X, Y, Result) :-
+    resolve(X, X1),
+    resolve(Y, Y1),
+    mppcg_minus_(X1, Y1, Result).
+mppcg_minus_(List1, List2, Result) :-
+    findall(X, (mppcg_member(X, List1), \+ mppcg_member(X, List2)), Result).
+
+resolve(X, X) :- var(X).
+resolve('NAT', List) :- maxInt(Max), resolve_interval((0, Max), List), !.
+resolve('NAT1', List) :- maxInt(Max), resolve_interval((1, Max), List), !.
+resolve('INT', List) :- minInt(Min), maxInt(Max), resolve_interval((Min, Max), List), !.
+resolve('BOOL', [true, false]) :- !.
+resolve(set(List), List) :- !.
+resolve((A, B), List) :- resolve_interval((A, B), List), !.
+resolve(X, X).
+resolve_interval((A, B), List) :-
+    nonvar(A),
+    nonvar(B),
+    !,
+    findall(X, between(A, B, X), List).
