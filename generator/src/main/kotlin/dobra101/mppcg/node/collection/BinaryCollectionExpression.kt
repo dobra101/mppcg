@@ -57,17 +57,17 @@ private fun getType(left: Expression, right: Expression, operator: BinaryCollect
 }
 
 private fun commonType(left: Type, right: Type): Type {
-    if (left is TypeInteger) {
+    if (left is TypeInt) {
         return left
     }
 
-    if (left is TypeNatural1) {
+    if (left is TypeNat1) {
         return right
     }
 
-    if (left is TypeNatural) {
+    if (left is TypeNat) {
         return when (right) {
-            is TypeInteger -> right
+            is TypeInt -> right
             else -> left
         }
     }

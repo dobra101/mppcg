@@ -29,7 +29,9 @@ class GenerationTest : ExpectSpec({
                     transitions = fields[2].trim().toLong(),
                     walltime = fields[3].trim().toLong(),
                     withDeadlock = fields[4].trim() == "true",
-                    withInvariantViolation = fields[5].trim() == "true"
+                    withInvariantViolation = fields[5].trim() == "true",
+                    minInt = if (fields.size == 8) fields[6].trim().toLong() else -10,
+                    maxInt = if (fields.size == 8) fields[7].trim().toLong() else 10,
                 )
             }
         }.toList()
@@ -64,11 +66,15 @@ class GenerationTest : ExpectSpec({
                                 file = machineFile,
                                 parser = Parser.SableCC,
                                 optimize = optimize,
-                                benchmark = false
+                                benchmark = false,
+                                minInt = expectation!!.minInt,
+                                maxInt = expectation.maxInt
                             )
                         }
 
-                        if (expectation!!.withDeadlock || expectation.withInvariantViolation) {
+                        println("Running ProB for max ${(1000 + expectation!!.walltime * 2)/1000} seconds")
+
+                        if (expectation.withDeadlock || expectation.withInvariantViolation) {
                             // model check also without deadlock check
                             val result = Launcher.benchmarkProlog(
                                 file!!,
@@ -120,5 +126,7 @@ private data class Expectation(
     val transitions: Long,
     val walltime: Long,
     val withDeadlock: Boolean,
-    val withInvariantViolation: Boolean
+    val withInvariantViolation: Boolean,
+    val minInt: Long,
+    val maxInt: Long
 )

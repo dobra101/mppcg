@@ -759,9 +759,6 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             renderTemplate(map)
         }
 
-        println(predicates[15])
-        println(checkInvs[15])
-
         val renderedCheckInvs = renderTemplate("invariants", mapOf("list" to checkInvs))
 
         val map = mapOf(
@@ -1045,9 +1042,11 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
 
     override fun type2String(type: Type?): String {
         return when (type) {
-            is TypeNatural1 -> "'NAT1'"
-            is TypeNatural -> "'NAT'"
-            is TypeInteger -> "'INT'"
+            is TypeNat1 -> "'NAT1'"
+            is TypeNat -> "'NAT'"
+            is TypeInt -> "'INT'"
+            is TypeInteger -> "'INTEGER'"
+            is TypeNatural -> "'NATURAL'"
             is TypeSet -> type2String(type.type)
             is TypeBoolean -> "'BOOL'"
             else -> TODO("Infinite Set not implemented (${type!!::class.simpleName})")

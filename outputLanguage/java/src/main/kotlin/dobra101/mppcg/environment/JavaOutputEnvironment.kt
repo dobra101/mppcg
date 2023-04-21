@@ -594,8 +594,8 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             is TypeAnonymousCollection -> "anonymous type"
             is TypeBoolean -> "Boolean"
             is TypeCollection -> if (type.type == CollectionType.Enum) type.name.capitalize() else type.name
-            is TypeInteger -> "Integer"
-            is TypeNatural -> "Integer"
+            is TypeInt -> "Integer"
+            is TypeNat -> "Integer"
             is TypeReal -> "Double"
             is TypeString -> "String"
             is TypeVoid -> "void"
@@ -625,8 +625,8 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     private fun nullableType2String(type: Type): String {
         return when (type) {
             is TypeBoolean -> "Boolean"
-            is TypeInteger -> "Integer"
-            is TypeNatural -> "Integer"
+            is TypeInt -> "Integer"
+            is TypeNat -> "Integer"
             is TypeReal -> "Double"
             is TypeString -> "String"
             is TypeFunction -> {

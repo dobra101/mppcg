@@ -74,15 +74,27 @@ object Launcher {
         checkInvariant: Boolean = true,
         timeout: Long? = null
     ): ProBResult {
+        fun copyFile(name: String, inputPath: String, outputPath: String) {
+            val inputFile = File("$inputPath/$name")
+            val outputFile = File("$outputPath/$name")
+            if (outputFile.exists()) outputFile.delete()
+            inputFile.copyTo(outputFile)
+        }
+
         val prologResourcesPath = "outputLanguage/prolog/src/main/resources"
         val probPath = "$prologResourcesPath/ProB_Signed/probcli.sh"
         val probArgs =
             "--model-check ${if (checkDeadlock) "" else "-nodead"} ${if (checkInvariant) "" else "-noinv"} ${if (timeout != null) "--timeout $timeout" else "-disable-time-out"} -p OPERATION_REUSE full -pref_group model_check unlimited -p COMPRESSION TRUE -noass -memory"
 
         val probFile = File("$prologResourcesPath/${file.nameWithoutExtension}.P")
-
         if (probFile.exists()) probFile.delete()
         file.copyTo(probFile)
+
+
+        val inputResourcePath = "inputLanguage/B/prolog/src/main/resources"
+        copyFile("avl.pl", inputResourcePath, prologResourcesPath)
+        copyFile("btypes.pl", inputResourcePath, prologResourcesPath)
+        copyFile("runCfg.pl", "generator/build/generated", prologResourcesPath)
 
         val cmd = "$probPath $probArgs ${probFile.absolutePath}"
         val process: Process = Runtime.getRuntime().exec(cmd)
@@ -151,5 +163,4 @@ private fun generateRunCfg(path: String) {
     )
 
     file.writeText(rendered)
-    println(file.path)
 }

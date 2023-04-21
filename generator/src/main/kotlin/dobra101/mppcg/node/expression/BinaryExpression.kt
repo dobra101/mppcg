@@ -34,7 +34,7 @@ private fun getType(left: Expression, right: Expression, operator: BinaryExpress
         return TypeFunction(type = FunctionType.TOTAL, from = leftType, to = rightType)
     }
 
-    if (operator == BinaryExpressionOperator.MINUS && right.type is TypeNatural) {
+    if (operator == BinaryExpressionOperator.MINUS && right.type is TypeNat) {
         return left.type
     }
 
@@ -56,7 +56,7 @@ private fun getType(left: Expression, right: Expression, operator: BinaryExpress
 
     // TODO: refactor
     if (left.type != right.type) {
-        if (left.type is TypeNatural) {
+        if (left.type is TypeNat) {
             return if (right.canBeNatural()) left.type else right.type
         }
 
@@ -66,7 +66,7 @@ private fun getType(left: Expression, right: Expression, operator: BinaryExpress
 }
 
 private fun Expression.canBeNatural(): Boolean {
-    if (type !is TypeInteger) return false
+    if (type !is TypeInt) return false
     if (this !is ValueExpression) return false
     if (value.toIntOrNull() == null) return false
     return value.toInt() >= 0

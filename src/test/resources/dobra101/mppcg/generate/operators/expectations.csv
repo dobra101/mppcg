@@ -9,7 +9,7 @@ Doors.mch, 4, 17, 100, false, false
 EqualityLaws.mch, 1, 2, 100, false, false
 ExplicitChecks.mch, 1001, 2002, 1500, false, false
 Fin1Test.mch, 1, 1, 100, true, false
-NatRangeLaws.mch, 30, 361, 200, false, false
+NatRangeLaws.mch, 30, 361, 200, false, false, -1, 4
 SetLaws.mch, 512, 3841, 4500, false, false
 SetLawsNat.mch, 4096, 98305, 31300, false, false
 SetLawsPow.mch, 4096, 63865, 32800, false, false

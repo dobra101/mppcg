@@ -8,17 +8,21 @@ interface Type
 
 interface TypeNumber : Type
 
+class TypeInteger : TypeNumber
+
+class TypeNatural : TypeNumber
+
 class TypeReal : TypeNumber
 
 class TypeFloat : TypeNumber
 
-open class TypeNatural : TypeNumber
+open class TypeNat : TypeNumber
 
-class TypeNatural1 : TypeNatural()
+class TypeNat1 : TypeNat()
 
-class TypeInteger : TypeNumber {
+class TypeInt : TypeNumber {
     override fun equals(other: Any?): Boolean {
-        return other is TypeInteger
+        return other is TypeInt
     }
 
     override fun hashCode(): Int {

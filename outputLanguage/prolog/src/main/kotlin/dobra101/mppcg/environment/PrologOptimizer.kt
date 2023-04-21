@@ -4,7 +4,7 @@ import dobra101.mppcg.RenderResult
 import dobra101.mppcg.environment.PrologOutputEnvironment.Companion.EXPRESSION_SEPARATOR
 import dobra101.mppcg.node.MPPCGNode
 import dobra101.mppcg.node.TypeBoolean
-import dobra101.mppcg.node.TypeInteger
+import dobra101.mppcg.node.TypeInt
 import dobra101.mppcg.node.collection.CollectionEntry
 import dobra101.mppcg.node.collection.SetEntry
 import dobra101.mppcg.node.expression.IdentifierExpression
@@ -77,7 +77,7 @@ class PrologOptimizer(private val environment: PrologOutputEnvironment) {
     private fun ValueExpression.rendered(): String {
         return when (type) {
             is TypeBoolean -> render().rendered
-            is TypeInteger -> render().rendered
+            is TypeInt -> render().rendered
             else -> ""
         }
     }

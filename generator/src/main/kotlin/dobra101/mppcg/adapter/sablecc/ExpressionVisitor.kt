@@ -44,7 +44,7 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseTIntegerLiteral(node: TIntegerLiteral) {
-        result = ValueExpression(node.text, type = TypeInteger())
+        result = ValueExpression(node.text, type = TypeInt())
     }
 
     override fun caseTStringLiteral(node: TStringLiteral) {
@@ -183,7 +183,7 @@ class ExpressionVisitor : AbstractVisitor() {
     override fun caseAIntegerSetExpression(node: AIntegerSetExpression) {
         if (node.parent() is AMemberPredicate && AbstractVisitor.result is Expression) {
             // is type info
-            (AbstractVisitor.result as Expression).type = TypeInteger()
+            (AbstractVisitor.result as Expression).type = TypeInt()
         }
         result = InfiniteSet(TypeInteger())
     }
@@ -191,7 +191,7 @@ class ExpressionVisitor : AbstractVisitor() {
     override fun caseANaturalSetExpression(node: ANaturalSetExpression) {
         if (node.parent() is AMemberPredicate && AbstractVisitor.result is Expression) {
             // is type info
-            (AbstractVisitor.result as Expression).type = TypeNatural()
+            (AbstractVisitor.result as Expression).type = TypeNat()
         }
         result = InfiniteSet(TypeNatural())
     }
@@ -256,11 +256,11 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseAMaxIntExpression(node: AMaxIntExpression) {
-        result = ValueExpression(value = (RuntimeConfig.config as BEnvironmentConfig).maxInteger.toString(), type = TypeInteger())
+        result = ValueExpression(value = (RuntimeConfig.config as BEnvironmentConfig).maxInteger.toString(), type = TypeInt())
     }
 
     override fun caseAMinIntExpression(node: AMinIntExpression) {
-        result = ValueExpression(value = (RuntimeConfig.config as BEnvironmentConfig).minInteger.toString(), type = TypeInteger())
+        result = ValueExpression(value = (RuntimeConfig.config as BEnvironmentConfig).minInteger.toString(), type = TypeInt())
     }
 
     override fun caseARealSetExpression(node: ARealSetExpression) {
@@ -274,23 +274,23 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseANatural1SetExpression(node: ANatural1SetExpression) {
-        trySetPreviousResultType(node, TypeNatural1())
-        result = InfiniteSet(TypeNatural1())
+        trySetPreviousResultType(node, TypeNat1())
+        result = InfiniteSet(TypeNat1())
     }
 
     override fun caseANatSetExpression(node: ANatSetExpression) {
-        trySetPreviousResultType(node, TypeNatural())
-        result = InfiniteSet(TypeNatural())
+        trySetPreviousResultType(node, TypeNat())
+        result = InfiniteSet(TypeNat())
     }
 
     override fun caseANat1SetExpression(node: ANat1SetExpression) {
-        trySetPreviousResultType(node, TypeNatural1())
-        result = InfiniteSet(TypeNatural1())
+        trySetPreviousResultType(node, TypeNat1())
+        result = InfiniteSet(TypeNat1())
     }
 
     override fun caseAIntSetExpression(node: AIntSetExpression) {
-        trySetPreviousResultType(node, TypeInteger())
-        result = InfiniteSet(TypeInteger())
+        trySetPreviousResultType(node, TypeInt())
+        result = InfiniteSet(TypeInt())
     }
 
     override fun caseABoolSetExpression(node: ABoolSetExpression) {
