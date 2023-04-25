@@ -457,6 +457,8 @@ class ExpressionVisitor : AbstractVisitor() {
         if (node.parent() is AMemberPredicate && resultBefore is Expression) {
             val type = (collection as? InfiniteSet)?.setType ?: (collection as? EnumCollectionNode)?.type
             // is type info
+            println("Case Pow Subset: $result")
+            println("Case Pow Subset Collection: $collection")
             resultBefore.type = if (type != null) TypeSet(type) else TypeFunction(
                 FunctionType.PARTIAL,
                 (collection.type as TypeCouple).from,

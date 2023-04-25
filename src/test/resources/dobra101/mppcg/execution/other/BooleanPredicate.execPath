@@ -1,3 +1,2 @@
-Inc(10)
 *** Expected Result:
-getRes=11
+Inc(10)=11

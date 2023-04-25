@@ -485,7 +485,6 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         stateCount = 0
         exprCount = 0
 
-
         val whileDefinitionMap = getDefinitionMap()
 
         stateCount = stateCountBefore
@@ -496,7 +495,8 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             "stateCount" to stateCount++,
             "resultStateCount" to stateCount
         )
-        whileDefinitions.add(renderTemplate("whileDefinition", whileDefinitionMap))
+        val renderedDefinition = renderTemplate("whileDefinition", whileDefinitionMap)
+        if (!whileDefinitions.contains(renderedDefinition)) whileDefinitions.add(renderedDefinition)
         whileCount++
 
         return RenderResult(renderTemplate(map))
@@ -524,6 +524,13 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         if (optimize) optimizer.loadIfEvaluated(this)?.let { return it }
 
         val expanded = ExpandedBinary.of(left, right)
+
+        println(this)
+        println()
+        println(expanded)
+        println()
+
+
 
         val map = mapOf(
             "lhs" to expanded.lhs,
@@ -712,7 +719,18 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         // TODO: optimize minus
         if (optimize) optimizer.loadIfEvaluated(this)?.let { return it }
 
-        val renderedValue = if (optimize && optimizer.evaluated.contains(value)) null else value.render()
+        val evaluated = if (optimize) optimizer.getCopyOfEvaluated() else hashMapOf()
+
+        var before = ""
+        val renderedValue = if (optimize && optimizer.evaluated.contains(value)) {
+            null
+        } else if (value is Expression) {
+            val expanded = ExpandedExpression.of(value as Expression)
+            before = expanded.before
+            expanded.expression
+        } else {
+            value.render()
+        }
         val resultAt =
             if (optimize && optimizer.evaluated.contains(value)) optimizer.evaluated[value] else expr(exprCount - 1)
 
@@ -727,7 +745,11 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         )
         val rendered = renderTemplate(map)
 
-        return RenderResult(rendered, exprToInfo(this))
+        if (operator == UnaryExpressionOperator.CONVERT_BOOLEAN) {
+            optimizer.evaluated = evaluated
+        }
+
+        return RenderResult("$before$rendered", exprToInfo(this))
     }
 
     override fun UnaryFunctionExpression.renderSelf(): RenderResult {
@@ -960,7 +982,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             BinaryCollectionOperator.INTERSECTION -> "mppcg_setIntersection"
             BinaryCollectionOperator.SUBTRACTION -> "mppcg_setSubtraction"
             BinaryCollectionOperator.UNION -> "mppcg_setUnion"
-            BinaryCollectionOperator.CONCAT -> "mppcg_concat"
+            BinaryCollectionOperator.CONCAT -> "mppcg_generalConcat"
             BinaryCollectionOperator.PRJ1 -> "mppcg_prj1"
             BinaryCollectionOperator.PRJ2 -> "mppcg_prj2"
         }
@@ -990,7 +1012,17 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             BinarySequenceExpressionOperator.RESTRICT_TAIL -> "mppcg_sequenceRestrictTail"
             BinarySequenceExpressionOperator.APPEND -> "append"
             BinarySequenceExpressionOperator.PREPEND -> "prepend"
-            BinarySequenceExpressionOperator.CONCAT -> "concat"
+            BinarySequenceExpressionOperator.CONCAT -> "append"
+        }
+    }
+
+    override fun operator2String(operator: UnarySequenceExpressionOperator): String {
+        return when (operator) {
+            UnarySequenceExpressionOperator.FRONT -> "mppcg_sequenceFront"
+            UnarySequenceExpressionOperator.TAIL -> "mppcg_sequenceTail"
+            UnarySequenceExpressionOperator.FIRST -> "mppcg_sequenceFirst"
+            UnarySequenceExpressionOperator.LAST -> "mppcg_sequenceLast"
+            UnarySequenceExpressionOperator.REVERSE -> "mppcg_sequenceReverse"
         }
     }
 
@@ -1011,6 +1043,15 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             BinaryExpressionOperator.DIV -> "//"
             BinaryExpressionOperator.POW -> "mppcg_pow"
             else -> super.operator2String(operator)
+        }
+    }
+
+    override fun operator2String(operator: UnaryExpressionOperator): String {
+        return when (operator) {
+            UnaryExpressionOperator.CONVERT_BOOLEAN -> ""
+            UnaryExpressionOperator.PRED -> "mppcg_pred"
+            UnaryExpressionOperator.SUCC -> "mppcg_succ"
+            UnaryExpressionOperator.MINUS -> "-"
         }
     }
 

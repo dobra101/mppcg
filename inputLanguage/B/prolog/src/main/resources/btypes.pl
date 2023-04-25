@@ -41,7 +41,11 @@
     mppcg_callFunction/3,
     mppcg_listSum/2,
     mppcg_listProduct/2,
-    mppcg_minus/3
+    mppcg_minus/3,
+    mppcg_succ/2,
+    mppcg_pred/2,
+    mppcg_generalConcat/3,
+    mppcg_inverse/2
     ]).
 
 :- use_module(library(avl)).
@@ -187,7 +191,7 @@ mppcg_domainRestriction(Domain, set(Set), set(Result)) :-
     !.
 mppcg_domainRestriction(_, [], []) :- !.
 mppcg_domainRestriction(Domain, [(X/Y) | Tail], [(X/Y) | NewTail]) :-
-     member(X, Domain), % TODO: use mppcg_member here?
+     mppcg_member(X, Domain),
      mppcg_domainRestriction(Domain, Tail, NewTail),
      !.
 mppcg_domainRestriction(Domain, [_ | Tail], NewTail) :-
@@ -199,7 +203,7 @@ mppcg_domainSubtraction(Domain, set(Set), set(Result)) :-
     !.
 mppcg_domainSubtraction(_, [], []) :- !.
 mppcg_domainSubtraction(Domain, [(X/Y) | Tail], [(X/Y) | NewTail]) :-
-    \+ member(X, Domain), % TODO: use mppcg_member here?
+    \+ mppcg_member(X, Domain),
     mppcg_domainSubtraction(Domain, Tail, NewTail),
     !.
 mppcg_domainSubtraction(Domain, [_ | Tail], NewTail) :-
@@ -237,7 +241,7 @@ mppcg_rangeRestriction(set(Relation), set(Set), set(Result)) :-
     !.
 mppcg_rangeRestriction([], _, []) :- !.
 mppcg_rangeRestriction([(X/Y) | Tail], Range, [(X/Y) | NewTail]) :-
-    member(Y, Range), % TODO: use mppcg_member here?
+    mppcg_member(Y, Range),
     mppcg_rangeRestriction(Tail, Range, NewTail),
     !.
 mppcg_rangeRestriction([_ | Tail], Range, NewTail) :-
@@ -249,7 +253,7 @@ mppcg_rangeSubtraction(Relation, set(Set), set(Result)) :-
     !.
 mppcg_rangeSubtraction([], _, []) :- !.
 mppcg_rangeSubtraction([(X/Y) | Tail], Range, [(X/Y) | NewTail]) :-
-    \+ member(Y, Range), % TODO: use mppcg_member here?
+    \+ mppcg_member(Y, Range),
     mppcg_rangeSubtraction(Tail, Range, NewTail),
     !.
 mppcg_rangeSubtraction([_ | Tail], Range, NewTail) :-
@@ -449,3 +453,23 @@ resolve_interval((A, B), List) :-
     nonvar(B),
     !,
     findall(X, between(A, B, X), List).
+
+mppcg_pred(X, Pred) :- Pred is X - 1.
+mppcg_succ(X, Succ) :- Succ is X + 1.
+
+mppcg_generalConcat(First, Set, Concat) :-
+    findall(M, mppcg_member(M, Set), List),
+    append([First], List, All),
+    sort(All, Sorted),
+    mppcg_generalConcat(Sorted, Concat).
+mppcg_generalConcat([], []).
+mppcg_generalConcat([(_/X) | Tail], Concat) :-
+    mppcg_generalConcat(Tail, Rest),
+    append(X, Rest, Concat).
+
+mppcg_inverse(Set, Result) :-
+    resolve(Set, S), !,
+    mppcg_inverse_(S, Result).
+mppcg_inverse_([], []).
+mppcg_inverse_([(X/Y) | Tail], [(Y/X) | NewTail]) :-
+    mppcg_inverse_(Tail, NewTail).

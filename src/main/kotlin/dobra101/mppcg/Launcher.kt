@@ -21,9 +21,16 @@ object Launcher {
         optimize: Boolean = false,
         benchmark: Boolean = false,
         outputPath: String = "generator/build/generated/",
-        minInt: Long = -10,
-        maxInt: Long = 10
+        minInt: Long = -1,
+        maxInt: Long = 4
     ): File {
+        fun copyFile(name: String, inputPath: String) {
+            val inputFile = File("$inputPath/$name")
+            val outputFile = File("$outputPath/$name")
+            if (outputFile.exists()) outputFile.delete()
+            inputFile.copyTo(outputFile)
+        }
+
         if (!File(outputPath).exists()) File(outputPath).mkdir()
 
         val start = when (parser) {
@@ -37,6 +44,9 @@ object Launcher {
         val generated = Generator().generate(start, outputPath)
         if (lang == Language.PROLOG) {
             generateRunCfg("${outputPath}runCfg.pl")
+            val inputResourcePath = "inputLanguage/B/prolog/src/main/resources"
+            copyFile("avl.pl", inputResourcePath)
+            copyFile("btypes.pl", inputResourcePath)
         }
 
         if (benchmark) {
@@ -55,8 +65,8 @@ object Launcher {
         optimize: Boolean = false,
         benchmark: Boolean = false,
         outputPath: String = "generator/build/generated/",
-        minInt: Long = -10,
-        maxInt: Long = 10
+        minInt: Long = -1,
+        maxInt: Long = 4
     ): File {
         val filename = if (file.endsWith(".mch")) file else "$file.mch"
 

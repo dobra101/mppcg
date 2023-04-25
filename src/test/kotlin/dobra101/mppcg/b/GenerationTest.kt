@@ -20,7 +20,7 @@ class GenerationTest : ExpectSpec({
 
         return readLines().mapNotNull {
             val fields = it.split(",")
-            if (fields.size != 6) {
+            if (fields.size < 6) {
                 null
             } else {
                 Expectation(

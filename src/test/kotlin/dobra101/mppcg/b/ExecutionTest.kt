@@ -169,8 +169,8 @@ abstract class ExecutionTest(
                             val resultString = runSetup(dir, file, setupFile)
                             val resultMap = string2ResultMap(resultString)
                             for ((key, value) in execution.result) {
-                                withClue("Expect ${key.joinToString { it.method }} = $value") {
-                                    resultMap[key.map { it.method }] shouldBeEqualIgnoringCase value
+                                withClue("Expect ${key.joinToString { it.methodName }} = $value") {
+                                    resultMap[key.map { it.methodName }] shouldBeEqualIgnoringCase value
                                 }
                             }
                         }
@@ -195,13 +195,12 @@ private fun createSetupFile(
         val methodChain =
             setup.getInstanceOf("methodChain") ?: throw EnvironmentException("Template 'methodChain' not found")
         methodChain.add("chain", it)
-        methodChain.render()
+        ResultCall(methodChain.render(), it[0].methodName) // TODO: breaks chains
     }.toList()
 
     val st = setup.getInstanceOf("setup") ?: throw EnvironmentException("Template 'setup' not found")
     st.add("name", mchName)
     st.add("execution", execution.operations)
-    println(execution)
     st.add("result", methodChains)
 
     val directory = File("${outputDir.path}/$dir")
@@ -210,6 +209,8 @@ private fun createSetupFile(
     setupFile.writeText(st.render())
     return setupFile
 }
+
+data class ResultCall(val call: String, val name: String)
 
 private fun string2ResultMap(string: String): Map<List<String>, String> {
     return string.split("\n")
@@ -263,4 +264,6 @@ data class Execution(val operations: List<ExecOperation>, val result: Map<List<E
 
 data class ExecOperation(val method: String, val propertyAccess: Boolean = false) {
     val parameterized: Boolean = method.endsWith(")") // needed in .stg
+    val parameter: String? = if (parameterized) method.split("(")[1].split(")")[0] else null
+    val methodName: String = if (parameterized) method.split("(")[0] else method
 }

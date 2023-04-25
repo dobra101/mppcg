@@ -48,7 +48,7 @@ callFunctionAccess(expression, parameters) ::= <<
 >>
 
 callFunction(expression, parameters, exprCount) ::= <<
-callFunction(<expression>, <parameters>, Expr_<exprCount>)
+mppcg_callFunction(<expression>, <parameters>, Expr_<exprCount>)
 >>
 
 concreteIdentifierDeclaration(name, before, value, inline, exprCount, interval) ::= <<
