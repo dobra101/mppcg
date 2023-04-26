@@ -176,7 +176,11 @@ class ExpressionVisitor : AbstractVisitor() {
         val resultBefore = AbstractVisitor.result
         result = IntervalExpression(node.leftBorder.convert()!!, node.rightBorder.convert()!!)
         if (resultBefore is Expression && resultBefore.type == null) {
-            resultBefore.type = result!!.type
+            if (node.parent() is AMemberPredicate) {
+                resultBefore.type = result!!.type
+            } else {
+                resultBefore.type = TypeInterval(result!!.type as TypeNumber)
+            }
         }
     }
 
