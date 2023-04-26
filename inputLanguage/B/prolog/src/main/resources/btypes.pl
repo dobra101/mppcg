@@ -248,16 +248,20 @@ mppcg_rangeRestriction([_ | Tail], Range, NewTail) :-
     mppcg_rangeRestriction(Tail, Range, NewTail),
     !.
 
-mppcg_rangeSubtraction(Relation, set(Set), set(Result)) :-
-    mppcg_rangeSubtraction(Relation, Set, Result),
+mppcg_rangeSubtraction(Relation, Set, set(Result)) :-
+    resolve(Relation, R),
+    resolve(Set, S),
+    mppcg_rangeSubtraction_(R, S, Result).
+mppcg_rangeSubtraction_(Relation, set(Set), set(Result)) :-
+    mppcg_rangeSubtraction_(Relation, Set, Result),
     !.
-mppcg_rangeSubtraction([], _, []) :- !.
-mppcg_rangeSubtraction([(X/Y) | Tail], Range, [(X/Y) | NewTail]) :-
+mppcg_rangeSubtraction_([], _, []) :- !.
+mppcg_rangeSubtraction_([(X/Y) | Tail], Range, [(X/Y) | NewTail]) :-
     \+ mppcg_member(Y, Range),
-    mppcg_rangeSubtraction(Tail, Range, NewTail),
+    mppcg_rangeSubtraction_(Tail, Range, NewTail),
     !.
-mppcg_rangeSubtraction([_ | Tail], Range, NewTail) :-
-    mppcg_rangeSubtraction(Tail, Range, NewTail),
+mppcg_rangeSubtraction_([_ | Tail], Range, NewTail) :-
+    mppcg_rangeSubtraction_(Tail, Range, NewTail),
     !.
 
 mppcg_powerSet(X, PowerSet) :-
@@ -336,12 +340,10 @@ mppcg_sequenceRestrictFront([Head | Tail], N, [Head | NewTail]) :-
     N1 is N - 1,
     mppcg_sequenceRestrictFront(Tail, N1, NewTail).
 
-mppcg_sequenceRestrictTail(Sequence, N, Sequence) :-
-    length(Sequence, L),
-    L =< N,
-    !.
-mppcg_sequenceRestrictTail([_ | Tail], N, Result) :-
-    mppcg_sequenceRestrictTail(Tail, N, Result).
+mppcg_sequenceRestrictTail(Sequence, 0, Sequence) :- !.
+mppcg_sequenceRestrictTail([_ | Tail], N, Restricted) :-
+    N1 is N - 1,
+    mppcg_sequenceRestrictTail(Tail, N1, Restricted).
 
 mppcg_sequenceReverse([], []).
 mppcg_sequenceReverse([Head | Tail], Reversed) :-
