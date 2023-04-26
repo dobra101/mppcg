@@ -525,13 +525,6 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
 
         val expanded = ExpandedBinary.of(left, right)
 
-        println(this)
-        println()
-        println(expanded)
-        println()
-
-
-
         val map = mapOf(
             "lhs" to expanded.lhs,
             "rhs" to expanded.rhs,
@@ -616,9 +609,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             stateCount = 0
             exprCount = 0
             temporaryVariables = hashSetOf()
-        }
 
-        if (declarationStep) {
             val renderedValue = value.render()
             val before = if (renderedValue.containsKey("before")) renderedValue["before"].info else ""
             val map = mapOf(
@@ -626,7 +617,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
                 "before" to before.removeSuffix(EXPRESSION_SEPARATOR),
                 "value" to renderedValue.rendered,
                 "interval" to (value is IntervalExpression),
-                "inline" to (!renderedValue.rendered.contains(EXPRESSION_SEPARATOR) && value !is ComprehensionSet && value !is LambdaExpression), // TODO: type checks needed?
+                "inline" to (!renderedValue.rendered.contains(EXPRESSION_SEPARATOR) && value !is ComprehensionSet && value !is LambdaExpression && before.isNotBlank()), // TODO: type checks needed?
                 "exprCount" to exprCount - 1 // last assigned expression
             )
             return RenderResult(renderTemplate("concreteIdentifierDeclaration", map))
@@ -724,7 +715,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         var before = ""
         val renderedValue = if (optimize && optimizer.evaluated.contains(value)) {
             null
-        } else if (value is Expression) {
+        } else if (value is Expression && operator != UnaryExpressionOperator.MINUS) {
             val expanded = ExpandedExpression.of(value as Expression)
             before = expanded.before
             expanded.expression
@@ -885,6 +876,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         this@PrologOutputEnvironment.variables = variables
 
         val concreteConstantsRendered = concreteConstants.render()
+
         declarationStep = false
 
         val map = mapOf(

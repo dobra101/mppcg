@@ -52,8 +52,8 @@ mppcg_callFunction(<expression>, <parameters>, Expr_<exprCount>)
 >>
 
 concreteIdentifierDeclaration(name, before, value, inline, exprCount, interval) ::= <<
-<if(interval)><name>(<value>) :- <before>.<else>
 <if(inline)><name>(<value>).<else>
+<if(interval)><name>(<value>) :- <before>.<else>
 <name>(Expr_<exprCount>) :-
     <value>.<endif><endif>
 >>
