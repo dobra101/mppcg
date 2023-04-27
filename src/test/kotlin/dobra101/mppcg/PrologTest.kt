@@ -5,7 +5,6 @@ import dobra101.mppcg.prob.ProBResult
 import dobra101.mppcg.prob.ProBResultAnalyser
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.ExpectSpec
-import io.kotest.engine.test.logging.warn
 import io.kotest.inspectors.forAll
 import io.kotest.matchers.longs.shouldBeExactly
 import io.kotest.matchers.shouldBe
@@ -33,22 +32,25 @@ class PrologTest : ExpectSpec({
     }
 
     val include: List<String> = listOf(
-//        "CAN_BUS_tlc.mch",
-//        "Cruise_finite1_deterministic_MC.mch",
-//        "Lift.mch",
-//        "scheduler_deterministic_MC.mch",
-//        "sort_m2_data1000.mch",
-//        "TrafficLight_MC"
-        "LandingGear_R6.mch"
+        "Lift.mch",
+        "TrafficLight_MC.mch",
+        "scheduler_deterministic_MC.mch",
+        "QueensWithEvents_4.mch",
+        "QueensWithEvents_8.mch",
+        "sort_m2_data1000.mch",
+        "CAN_BUS_tlc.mch",
+        "Cruise_finite1_deterministic_MC.mch",
+//        "LandingGear_R6.mch"
     )
 
     val exclude: List<String> = listOf(
-        "Train_1_beebook_deterministic_MC.mch"
+        //"Train_1_beebook_deterministic_MC.mch",
+//        "QueensWithEvents_4.mch"
     )
     val machines = File("src/main/resources/machines/").walk()
         .filter { it.isFile && it.name.endsWith(".mch") }
         .filter { if (include.isNotEmpty()) include.contains(it.name) else true }
-        .filter { if (exclude.isNotEmpty()) !exclude.contains(it.name) else true }
+//        .filter { if (exclude.isNotEmpty()) !exclude.contains(it.name) else true }
         .toList()
 
     val expectedModelCheckingResults: Map<File, ProBResult> =
@@ -78,6 +80,7 @@ class PrologTest : ExpectSpec({
             if (mchResult == null) {
                 println("No result specified. Running ProB...")
                 mchResult = runProB(machineFile)
+                println(mchResult)
             }
             listOf(true, false).forAll { optimize ->
                 val expectName = if (optimize) "optimized" else "regular"
@@ -89,7 +92,7 @@ class PrologTest : ExpectSpec({
                         optimize = optimize,
                         benchmark = false
                     )
-                    val result = Launcher.benchmarkProlog(file)
+                    val result = Launcher.benchmarkProlog(file, timeout = 1000 + (mchResult!!.modelCheckingTime * 2))
                     println(result)
 
                     withClue("States do not match") {

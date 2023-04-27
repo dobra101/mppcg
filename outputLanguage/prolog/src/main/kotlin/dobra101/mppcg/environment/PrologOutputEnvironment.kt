@@ -123,8 +123,18 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun IdentifierExpression.renderSelf(): RenderResult {
+        fun renderNamed(exprName: String): RenderResult {
+            val map = mapOf(
+                "name" to name,
+                "stateCount" to stateCount,
+                "exprCount" to exprName
+            )
+            val rendered = renderTemplate(map)
+            if (optimize) optimizer.evaluated[this] = expr(exprName)
+            return RenderResult(rendered, mapOf("resultExpr" to IndividualInfo(expr(exprName))))
+        }
+
         if (optimize) optimizer.loadIfEvaluated(this)?.let { return it }
-        // TODO: not hardcoded and not always
         if (operationParameters.contains(this)
             || comprehensionSetIdentifier.contains(this)
             || lambdaExpressionIdentifier.contains(this)
@@ -133,18 +143,17 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             return RenderResult(expr(name))
         }
 
-        // TODO: not hardcoded and not always
+        // TODO: not hardcoded
         if (temporaryVariables.contains(this)) {
-            if (optimize) optimizer.evaluated[this] = expr("tmp_$name")
-            return RenderResult(expr("tmp_$name"))
+            return renderNamed("tmp_$name")
         }
 
+        // TODO: not hardcoded
         if (ctrlStructIdentifier.contains(this)) {
-            if (optimize) optimizer.evaluated[this] = expr("q_$name")
-            return RenderResult(expr("q_$name"))
+            return renderNamed("q_$name")
         }
 
-        // TODO: not hardcoded and not always
+        // TODO: not hardcoded
         val rendered =
             if (isConstant(this)) {
                 // use constant prefix
@@ -329,7 +338,9 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             "identifier" to identifier,
             "rhs" to expandedRhs.expression,
             "stateCount" to stateCount,
-            "resultStateCount" to ++stateCount
+            "resultStateCount" to ++stateCount,
+            "needTmpVar" to temporaryVariables.contains(left),
+            "tmpVar" to "tmp_${identifier.removeSurrounding("'")}"
         )
         val rendered = renderTemplate(map)
 
@@ -428,7 +439,13 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         val stateCountBefore = stateCount
         val exprCountBefore = exprCount
 
+        val evaluated = if (optimize) optimizer.getCopyOfEvaluated() else hashMapOf()
+        if (optimize) optimizer.evaluated = hashMapOf()
+
         val thenRendered = then.render()
+
+        if (optimize) optimizer.evaluated = evaluated
+
 
         if (elseSubstitution == null) {
             addStateAndExprCountFixingElseBranch(stateCountBefore, exprCountBefore, map, thenRendered)
@@ -438,7 +455,12 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             stateCount = stateCountBefore
             exprCount = exprCountBefore
 
+            val evaluatedInner = if (optimize) optimizer.getCopyOfEvaluated() else hashMapOf()
+            if (optimize) optimizer.evaluated = hashMapOf()
+
             val elseRendered = elseSubstitution!!.render()
+
+            if (optimize) optimizer.evaluated = evaluatedInner
 
             fixStateAndExprCountInBranches(
                 thenRendered = thenRendered,
@@ -588,7 +610,6 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         return RenderResult("$before$rendered", exprToInfo(this))
     }
 
-    // TODO: optimizer.getCopyOfEvaluated
     override fun ComprehensionSet.renderSelf(): RenderResult {
         val evaluated = if (optimize) optimizer.getCopyOfEvaluated() else hashMapOf()
         comprehensionSetIdentifier = comprehensionSetIdentifier + identifiers.filterIsInstance<IdentifierExpression>()
@@ -617,15 +638,20 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
                 "before" to before.removeSuffix(EXPRESSION_SEPARATOR),
                 "value" to renderedValue.rendered,
                 "interval" to (value is IntervalExpression),
-                "inline" to (!renderedValue.rendered.contains(EXPRESSION_SEPARATOR) && value !is ComprehensionSet && value !is LambdaExpression && before.isNotBlank()), // TODO: type checks needed?
+                "inline" to (!renderedValue.rendered.contains(EXPRESSION_SEPARATOR) && value !is ComprehensionSet && value !is LambdaExpression && before.isBlank()), // TODO: type checks needed?
                 "exprCount" to exprCount - 1 // last assigned expression
             )
             return RenderResult(renderTemplate("concreteIdentifierDeclaration", map))
         }
+
+        if (optimize) optimizer.loadIfEvaluated(this)?.let { return it }
+
         val map = mapOf(
             "name" to name,
             "exprCount" to exprCount
         )
+
+        if (optimize) optimizer.evaluated[this] = expr(exprCount)
         return RenderResult(renderTemplate(map), exprToInfo(this))
     }
 
@@ -807,7 +833,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun ParallelSubstitution.renderSelf(): RenderResult {
-        temporaryVariables = needTempVar
+        temporaryVariables = temporaryVariables + needTempVar
 
         // remove temporary variables from previous evaluated to use temp vars
         if (optimize) temporaryVariables.forEach { optimizer.evaluated.remove(it) }
@@ -837,6 +863,8 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             "tempVars" to tempVars,
             "substitutions" to substitutions.render()
         )
+
+        temporaryVariables = temporaryVariables - needTempVar
 
         return RenderResult(renderTemplate(map))
     }

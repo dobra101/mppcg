@@ -82,6 +82,7 @@ updateFunction([K/V | Tail], Parameter, Value, [K/V | NewTail]) :-
 % Operators
 % TODO: function: check if e.g. only one solution is found
 mppcg_member(X, Y) :-
+    nonvar(Y),
     resolve(X, X1),
     resolve(Y, Y1),
     !,
@@ -146,20 +147,34 @@ mppcg_subset_(NewTail, [_ | Tail]) :-
     mppcg_subset_(NewTail, Tail).
 
 mppcg_subsetStrict(A, B) :-
+    nonvar(A),
+    nonvar(B),
     resolve(A, A1),
     resolve(B, B1),
     A1 \= B1,
     mppcg_subset(A1, B1).
 
-mppcg_setSubtraction(set(Left), set(Right), set(Result)) :-
-    findall(X, (mppcg_member(X, Left), \+ mppcg_member(X, Right)), Res),
+mppcg_setSubtraction(Left, Right, set(Result)) :-
+    nonvar(Left),
+    nonvar(Right),
+    resolve(Left, L),
+    resolve(Right, R),
+    !,
+    findall(X, (mppcg_member(X, L), \+ mppcg_member(X, R)), Res),
     sort(Res, Result).
 
-mppcg_setIntersection(set(Left), set(Right), set(Intersection)) :-
-    findall(X, (mppcg_member(X, Left), mppcg_member(X, Right)), Inter),
+mppcg_setIntersection(Left, Right, set(Intersection)) :-
+    nonvar(Left),
+    nonvar(Right),
+    resolve(Left, L),
+    resolve(Right, R),
+    !,
+    findall(X, (mppcg_member(X, L), mppcg_member(X, R)), Inter),
     sort(Inter, Intersection).
 
 mppcg_setUnion(Left, Right, set(Union)) :-
+    nonvar(Left),
+    nonvar(Right),
     resolve(Left, Left1),
     resolve(Right, Right1),
     append(Left1, Right1, Appended),
@@ -170,15 +185,17 @@ mppcg_domain(set(Relation), set(Sorted)) :-
     mppcg_domain(Relation, Domain),
     sort(Domain, Sorted).
 mppcg_domain([], []) :- !.
-mppcg_domain([(X/_) | Tail], [X | NewTail]) :-
-    mppcg_domain(Tail, NewTail).
+mppcg_domain([(X/_) | Tail], Sorted) :-
+    mppcg_domain(Tail, NewTail),
+    sort([X | NewTail], Sorted).
 
 mppcg_range(set(Relation), set(Sorted)) :-
     mppcg_range(Relation, Range),
     sort(Range, Sorted).
 mppcg_range([], []) :- !.
-mppcg_range([(_/Y) | Tail], [Y | NewTail]) :-
-    mppcg_range(Tail, NewTail).
+mppcg_range([(_/Y) | Tail], Sorted) :-
+    mppcg_range(Tail, NewTail),
+    sort([Y | NewTail], Sorted).
 
 mppcg_reverse(set(L), set(L1)) :- mppcg_reverse(L, L1), !.
 mppcg_reverse([], []) :- !.
@@ -229,9 +246,11 @@ mppcg_image(Relation, (A, B), Result) :-
     !.
 
 mppcg_override(Overridden, Set, Result) :-
-    mppcg_domain(Set, Domain),
-    mppcg_domainSubtraction(Domain, Overridden, Tail),
-    ((Tail = set(T), Set = set(S)) -> append(S, T, Result); append(Set, Tail, Result)).
+    resolve(Overridden, O),
+    resolve(Set, S),
+    mppcg_domain(S, Domain),
+    mppcg_domainSubtraction(Domain, O, Tail),
+    append(S, Tail, Result).
 
 mppcg_rangeRestriction(Relation, set(Set), set(Result)) :-
     mppcg_rangeRestriction(Relation, Set, Result),

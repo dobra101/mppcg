@@ -30,17 +30,12 @@ class ExpressionVisitor : AbstractVisitor() {
             return
         }
 
-        result = machineVisitor.variables.findByName(node.text)
-        result?.let { return }
-
-        result = machineVisitor.concreteConstants.findByName(node.text)
-        result?.let { return }
-
-        result = machineVisitor.constants.findByName(node.text)
-        result?.let { return }
+        result = machineVisitor.knownIdentifier().toList().findByName(node.text)
+        result?.let { machineVisitor.recognize(result!!); return }
 
         result = machineVisitor.sets.findByName(node.text)?.copy() ?: machineVisitor.sets.findEntryByName(node.text)
                 ?: IdentifierExpression(name = node.text)
+        machineVisitor.recognize(result!!)
     }
 
     override fun caseTIntegerLiteral(node: TIntegerLiteral) {
@@ -260,11 +255,17 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseAMaxIntExpression(node: AMaxIntExpression) {
-        result = ValueExpression(value = (RuntimeConfig.config as BEnvironmentConfig).maxInteger.toString(), type = TypeInt())
+        result = ValueExpression(
+            value = (RuntimeConfig.config as BEnvironmentConfig).maxInteger.toString(),
+            type = TypeInt()
+        )
     }
 
     override fun caseAMinIntExpression(node: AMinIntExpression) {
-        result = ValueExpression(value = (RuntimeConfig.config as BEnvironmentConfig).minInteger.toString(), type = TypeInt())
+        result = ValueExpression(
+            value = (RuntimeConfig.config as BEnvironmentConfig).minInteger.toString(),
+            type = TypeInt()
+        )
     }
 
     override fun caseARealSetExpression(node: ARealSetExpression) {

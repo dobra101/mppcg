@@ -32,7 +32,10 @@ class PredicateVisitor : AbstractVisitor() {
     }
 
     override fun caseAEqualPredicate(node: AEqualPredicate) {
-        result = BinaryPredicate(node.left.convert()!!, node.right.convert()!!, BinaryPredicateOperator.EQUAL)
+        val left = node.left.convert()!!
+        val right = node.right.convert()!!
+        if (left.type == null) left.type = right.type
+        result = BinaryPredicate(left, right, BinaryPredicateOperator.EQUAL)
     }
 
     override fun caseANotEqualPredicate(node: ANotEqualPredicate) {

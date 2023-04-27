@@ -35,6 +35,7 @@ class PrologOptimizer(private val environment: PrologOutputEnvironment) {
             if (node.left !is IdentifierExpression) return null
             if (environment.ctrlStructIdentifier.contains(node.left)) return null
             if (environment.temporaryVariables.contains(node.left)) return null
+            if (environment.operationParameters.contains(node.left)) return null
 
             var before = ""
             val rhs = when (node.right) {
@@ -57,7 +58,7 @@ class PrologOptimizer(private val environment: PrologOutputEnvironment) {
                 else -> "" // when is exhaustive
             }
 
-            val lhs = evaluated[node.left] ?: (node.left as IdentifierExpression).name
+            val lhs = (node.left as IdentifierExpression).name
 
             val map = mapOf(
                 "lhs" to lhs,

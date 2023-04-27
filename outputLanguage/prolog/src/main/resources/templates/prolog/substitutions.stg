@@ -1,4 +1,5 @@
-assignSubstitution(identifier, rhs, stateCount, resultStateCount) ::= <<
+assignSubstitution(identifier, rhs, stateCount, resultStateCount, needTmpVar, tmpVar) ::= <<
+<if(needTmpVar)>get(State_<stateCount>, <identifier>, Expr_<tmpVar>),<endif>
 update(<identifier>, <rhs>, State_<stateCount>, State_<resultStateCount>)
 >>
 

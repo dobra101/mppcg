@@ -48,6 +48,7 @@ class SubstitutionVisitor : AbstractVisitor() {
                     assign.left.type is TypeSet && rightType is TypeCollection -> {}
                     assign.right.type is TypeAnonymousCollection -> {}
                     rightType is TypeSequence -> {} // TODO: fix
+                    rightType is TypeCollection -> {}
                     else -> {
                         println(assign)
                         throw InvalidTypeException("Types ${assign.left.type} and $rightType do not match.")
@@ -75,7 +76,9 @@ class SubstitutionVisitor : AbstractVisitor() {
 
     override fun caseAPreconditionSubstitution(node: APreconditionSubstitution) {
         machineVisitor.currentScope = Scope(machineVisitor.currentScope)
-        result = Precondition(node.substitution.convert(), node.predicate.convert()!!)
+        val predicate = node.predicate.convert()!!
+        val substitution = node.substitution.convert()!!
+        result = Precondition(substitution, predicate)
         machineVisitor.currentScope = machineVisitor.currentScope.parent!!
     }
 
