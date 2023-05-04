@@ -85,18 +85,18 @@ quantifier(identifier, predicate, quantification, universalQuantifier) ::= <<
 % universal quantifier
 findall(
     _,
-   (
-    <predicate>,
-    \+ (
-        <quantification>
-        )
+    (
+        <predicate>,
+        \+ (
+                <quantification>
+            )
     ),
     []
 )<else>
 findall(
     _,
-   (
-    <predicate>
+    (
+        <predicate>
     ),
     []
 )<endif><else>

@@ -123,10 +123,10 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun IdentifierExpression.renderSelf(): RenderResult {
-        fun renderNamed(exprName: String): RenderResult {
+        fun renderNamed(exprName: String, state: Int = stateCount): RenderResult {
             val map = mapOf(
                 "name" to name,
-                "stateCount" to stateCount,
+                "stateCount" to state,
                 "exprCount" to exprName
             )
             val rendered = renderTemplate(map)
@@ -145,7 +145,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
 
         // TODO: not hardcoded
         if (temporaryVariables.contains(this)) {
-            return renderNamed("tmp_$name")
+            return renderNamed("tmp_$name", 0)
         }
 
         // TODO: not hardcoded
@@ -334,18 +334,23 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         }
 
         val expandedRhs = ExpandedExpression.of(right)
+        val needTempVar = (temporaryVariables.contains(left) && !optimizer.evaluated.contains(left)) && false
         val map = mapOf(
             "identifier" to identifier,
             "rhs" to expandedRhs.expression,
             "stateCount" to stateCount,
             "resultStateCount" to ++stateCount,
-            "needTmpVar" to temporaryVariables.contains(left),
+            "needTmpVar" to needTempVar,
             "tmpVar" to "tmp_${identifier.removeSurrounding("'")}"
         )
         val rendered = renderTemplate(map)
 
-        if (optimize && !temporaryVariables.contains(left)) {
-            optimizer.evaluated[left] = expandedRhs.expression
+        if (optimize) {
+            if (needTempVar) {
+                optimizer.evaluated[left] = expr("tmp_${identifier.removeSurrounding("'")}")
+            } else if (!temporaryVariables.contains(left)) {
+                optimizer.evaluated[left] = expandedRhs.expression
+            }
         }
         return RenderResult("${expandedRhs.before}$rendered")
     }

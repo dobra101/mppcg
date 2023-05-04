@@ -89,19 +89,44 @@ mppcg_member(X, Y) :-
     mppcg_member_(X1, Y1).
 
 mppcg_member_(X, 'INTEGER') :-
-    gen_int_between(-infinite, infinite, X).
+    var(X) -> gen_int_between(-infinite, infinite, X); number(X).
 mppcg_member_(X, 'NATURAL') :-
-    gen_int_between(0, infinite, X).
+    var(X) -> gen_int_between(0, infinite, X); between(0, infinite, X).
 mppcg_member_(Set, function(From, To)) :-
     nonvar(From),
     nonvar(To),
-    findall(_, (mppcg_member(E, Set), \+ mppcg_member_(E, function(From, To))), []).
-mppcg_member_((X/Y), function(From, To)) :-
+    mppcg_member_function(Set, From, To).
+mppcg_member_(Element, [Head | Tail]) :-
+    (Element = (X/Y), Head = (_/_)) ->
+    (sort([Head | Tail], Sorted),
+    mppcg_member_relation(X, Y, Sorted));
+    mppcg_member_list(Element, [Head | Tail]).
+
+mppcg_member_relation(_, _, []) :- fail.
+mppcg_member_relation(X, Y, [(X/Y) | _]).
+mppcg_member_relation(X, Y, [(A/_) | Tail]) :-
+    number(X),
+    number(A),
+    A =< X,
+    mppcg_member_relation(X, Y, Tail), !.
+mppcg_member_relation(X, Y, [_ | Tail]) :-
+    mppcg_member_relation(X, Y, Tail).
+
+mppcg_member_function((X/Y), From, To) :-
     mppcg_member_(X, From),
     mppcg_member_(Y, To).
-mppcg_member_(Element, List) :-
-    is_list(List),
-    mppcg_member_list(Element, List).
+mppcg_member_function(Set, From, To) :-
+    nonvar(Set),
+    mppcg_relation_split_xy(Set, Xs, Ys),
+    sort(Xs, XSorted),
+    sort(Ys, YSorted),
+    mppcg_subset(XSorted, From),
+    mppcg_subset(YSorted, To),
+    !.
+
+mppcg_relation_split_xy([], [], []).
+mppcg_relation_split_xy([(X/Y) | Tail], [X | NewX], [Y | NewY]) :-
+    mppcg_relation_split_xy(Tail, NewX, NewY).
 
 mppcg_member_list(_, []) :- fail.
 mppcg_member_list(X, [Head | _]) :-
@@ -136,10 +161,24 @@ gen_int_between(Start, End, Int) :-
     Start1 is Start + 1,
     gen_int_between(Start1, End, Int).
 
+mppcg_sortIfList(X, S) :-
+    nonvar(X),
+    is_list(X),
+    !,
+    sort(X, S).
+mppcg_sortIfList(X, X).
+
 mppcg_subset(X, Y) :-
     resolve(X, X1),
     resolve(Y, Y1),
-    mppcg_subset_(X1, Y1).
+    mppcg_sortIfList(X1, X2),
+    mppcg_sortIfList(Y1, Y2),
+    (is_list(Y2) -> mppcg_subset_(X2, Y2); mppcg_subset_infiniteSet(Y2, X2)).
+
+mppcg_subset_infiniteSet(_, []).
+mppcg_subset_infiniteSet(InfiniteSet, [Head | Tail]) :-
+    mppcg_member_(Head, InfiniteSet),
+    mppcg_subset_infiniteSet(InfiniteSet, Tail).
 mppcg_subset_([], []).
 mppcg_subset_([Head | NewTail], [Head | Tail]) :-
     mppcg_subset_(NewTail, Tail).
@@ -227,30 +266,37 @@ mppcg_domainSubtraction(Domain, [_ | Tail], NewTail) :-
     mppcg_domainSubtraction(Domain, Tail, NewTail),
     !.
 
-mppcg_image(Relation, set(Set), set(Image)) :-
-    mppcg_image(Relation, Set, Image),
+mppcg_image(Relation, Set, set(Sorted)) :-
+    resolve(Set, S),
+    mppcg_image_(Relation, S, Image),
+    sort(Image, Sorted),
     !.
-mppcg_image(_, [], []) :- !.
+mppcg_image_(_, [], []) :- !.
 % image of set
-mppcg_image(Relation, [X | Rest], Image) :-
-    findall(Y, mppcg_member((X/Y), Relation), Ys),
-    mppcg_image(Relation, Rest, OtherTail),
+mppcg_image_(Relation, [X | Rest], Image) :-
+    mppcg_image_X(Relation, X, Ys),
+    mppcg_image_(Relation, Rest, OtherTail),
     append(Ys, OtherTail, Image),
     !.
-mppcg_image(Relation, [_ | Rest], NewTail) :-
-    mppcg_image(Relation, Rest, NewTail).
-% image of interval
-mppcg_image(Relation, (A, B), Result) :-
-    findall(Element, mppcg_member(Element, (A, B)), Set),
-    mppcg_image(Relation, Set, Result),
-    !.
+mppcg_image_(Relation, [_ | Rest], NewTail) :-
+    mppcg_image_(Relation, Rest, NewTail).
+
+
+mppcg_image_X([], _, []).
+mppcg_image_X([(X/Y) | Tail], X, [Y | NewTail]) :-
+    !,
+    mppcg_image_X(Tail, X, NewTail).
+mppcg_image_X([_ | Tail], X, NewTail) :-
+    mppcg_image_X(Tail, X, NewTail).
+
 
 mppcg_override(Overridden, Set, Result) :-
     resolve(Overridden, O),
     resolve(Set, S),
     mppcg_domain(S, Domain),
     mppcg_domainSubtraction(Domain, O, Tail),
-    append(S, Tail, Result).
+    append(S, Tail, R),
+    sort(R, Result).
 
 mppcg_rangeRestriction(Relation, set(Set), set(Result)) :-
     mppcg_rangeRestriction(Relation, Set, Result),
@@ -390,8 +436,8 @@ mppcg_equal_(X, Y) :- number(X), number(Y), !, X =< Y, X >= Y. % e.g. X = 1.0, Y
 mppcg_equal_(List1, List2) :-
     is_list(List1),
     is_list(List2),
-    findall(X, (mppcg_member(X, List1), \+ mppcg_member(X, List2)), []), !,
-    findall(X, (mppcg_member(X, List2), \+ mppcg_member(X, List1)), []), !.
+    sort(List1, S1),
+    sort(List2, S1).
 
 mppcg_notEqual(X, Y) :-
     resolve(X, X1),
@@ -417,17 +463,34 @@ mppcg_pow_1(X, Y, Acc, Result) :-
     mppcg_pow_1(X, Y1, NewAcc, Result).
 
 mppcg_callFunction(Expression, Parameters, Result) :-
-    is_list(Parameters),
-    findall(Y, (mppcg_member(X, Parameters), mppcg_member((X/Y), Expression)), Res),
+    (is_list(Parameters) ->
+    mppcg_callFunction_multiParameter(Parameters, Expression, Res);
+    mppcg_callFunction_singleParameter(Parameters, Expression, Res)),
     flatten(Res, Flat),
-    (Flat = [Result]; Result = Flat),
-    !.
-mppcg_callFunction(Expression, X, Result) :-
-    \+ is_list(X),
-    findall(Y, mppcg_member((X/Y), Expression), Res),
-    flatten(Res, Flat),
-    (Flat = [Result]; Result = Flat),
-    !.
+    !,
+    (length(Flat, 1) -> Flat = [Result]; Result = Flat).
+
+mppcg_callFunction_parameter([], _) :- fail.
+mppcg_callFunction_parameter([X | _], X) :- !.
+mppcg_callFunction_parameter([_ | Tail], X) :-
+    mppcg_callFunction_parameter(Tail, X).
+
+mppcg_callFunction_multiParameter(_, [], []).
+mppcg_callFunction_multiParameter(Parameters, [(X/Y) | Tail], [Y | YTail]) :-
+    !,
+    mppcg_callFunction_parameter(Parameters, X),
+    mppcg_callFunction_multiParameter(Parameters, Tail, YTail).
+mppcg_callFunction_multiParameter(Parameters, [_ | Tail], YTail) :-
+    mppcg_callFunction_multiParameter(Parameters, Tail, YTail).
+
+mppcg_callFunction_singleParameter(_, [], []).
+mppcg_callFunction_singleParameter(X, [(X/Y) | Tail], [Y | YTail]) :-
+    !,
+    mppcg_callFunction_singleParameter(X, Tail, YTail).
+mppcg_callFunction_singleParameter(X, [_ | Tail], YTail) :-
+    mppcg_callFunction_singleParameter(X, Tail, YTail).
+
+
 
 flatten(L, Res) :-
     flatten(L, [], Flat),
@@ -468,6 +531,9 @@ resolve('INT', List) :- minInt(Min), maxInt(Max), resolve_interval((Min, Max), L
 resolve('BOOL', [true, false]) :- !.
 resolve(set(List), List) :- !.
 resolve((A, B), List) :- resolve_interval((A, B), List), !.
+resolve(function(From, To), function(F, T)) :-
+    resolve(From, F),
+    resolve(To, T).
 resolve(X, X).
 resolve_interval((A, B), List) :-
     nonvar(A),
