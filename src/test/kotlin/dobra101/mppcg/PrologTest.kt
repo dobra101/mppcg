@@ -32,15 +32,15 @@ class PrologTest : ExpectSpec({
     }
 
     val include: List<String> = listOf(
-        "Lift.mch",
-        "TrafficLight_MC.mch",
-        "scheduler_deterministic_MC.mch",
-        "QueensWithEvents_4.mch",
-        "QueensWithEvents_8.mch",
-        "sort_m2_data1000.mch",
+         "Lift.mch",
+         "TrafficLight_MC.mch",
+         "scheduler_deterministic_MC.mch",
+         "QueensWithEvents_4.mch",
+         "QueensWithEvents_8.mch",
+         "sort_m2_data1000.mch",
         "CAN_BUS_tlc.mch",
-        "Cruise_finite1_deterministic_MC.mch",
-//        "LandingGear_R6.mch"
+         "Cruise_finite1_deterministic_MC.mch",
+         "LandingGear_R6.mch"
     )
 
     val exclude: List<String> = listOf(
@@ -82,7 +82,7 @@ class PrologTest : ExpectSpec({
                 mchResult = runProB(machineFile)
                 println(mchResult)
             }
-            listOf(true, false).forAll { optimize ->
+            listOf(true).forAll { optimize ->
                 val expectName = if (optimize) "optimized" else "regular"
                 expect(expectName) {
                     val file = Launcher.launch(

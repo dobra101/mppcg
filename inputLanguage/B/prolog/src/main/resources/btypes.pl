@@ -463,9 +463,10 @@ mppcg_pow_1(X, Y, Acc, Result) :-
     mppcg_pow_1(X, Y1, NewAcc, Result).
 
 mppcg_callFunction(Expression, Parameters, Result) :-
+    resolve(Expression, Expr),
     (is_list(Parameters) ->
-    mppcg_callFunction_multiParameter(Parameters, Expression, Res);
-    mppcg_callFunction_singleParameter(Parameters, Expression, Res)),
+    mppcg_callFunction_multiParameter(Parameters, Expr, Res);
+    mppcg_callFunction_singleParameter(Parameters, Expr, Res)),
     flatten(Res, Flat),
     !,
     (length(Flat, 1) -> Flat = [Result]; Result = Flat).

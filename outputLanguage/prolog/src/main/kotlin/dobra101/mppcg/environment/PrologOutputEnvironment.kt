@@ -15,102 +15,107 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     override val templateDir = "templates/prolog"
     override val fileExtension = "pl"
 
-    internal val optimizer = PrologOptimizer(this)
+    var evaluatedExpressions = EvaluatedExpressions()
 
     companion object {
         const val EXPRESSION_SEPARATOR = ",\n"
     }
 
-    var exprCount = 0
-    var stateCount = 0
-    var operationParameters: List<IdentifierExpression> = emptyList() // HINT: only for B
-    var comprehensionSetIdentifier: List<IdentifierExpression> = emptyList() // HINT: only for B
-    var lambdaExpressionIdentifier: List<IdentifierExpression> = emptyList() // HINT: only for B
-    var temporaryVariables: Set<IdentifierExpression> = hashSetOf() // HINT: only for B
-    var concreteConstants: List<Expression> = emptyList() // HINT: only for B
-    var constants: List<Expression> = emptyList() // HINT: only for B
-    var concreteVariables: List<Expression> = emptyList() // HINT: only for B
-    var variables: ClassVariables = ClassVariables() // HINT: only for B
-    val whileDefinitions: MutableList<String> = mutableListOf() // HINT: only for B
-    var whileCount = 0 // HINT: only for B
-    var currentOperation: String = "" // HINT: only for B
-    var declarationStep: Boolean = true // HINT: only for B
-    var ignoreOutput: Boolean = false // HINT: only for B
-    var returnValues: List<Expression> = listOf() // HINT: only for B
-    var ctrlStructIdentifier: List<IdentifierExpression> = listOf() // HINT: only for B
+    private var exprCount = 0
+    private var stateCount = 0
+    private var operationParameters: List<IdentifierExpression> = emptyList() // HINT: only for B
+    private var comprehensionSetIdentifier: List<IdentifierExpression> = emptyList() // HINT: only for B
+    private var lambdaExpressionIdentifier: List<IdentifierExpression> = emptyList() // HINT: only for B
+    private var temporaryVariables: Set<IdentifierExpression> = hashSetOf() // HINT: only for B
+    private var concreteConstants: List<Expression> = emptyList() // HINT: only for B
+    private var constants: List<Expression> = emptyList() // HINT: only for B
+    private var concreteVariables: List<Expression> = emptyList() // HINT: only for B
+    private var variables: ClassVariables = ClassVariables() // HINT: only for B
+    private val whileDefinitions: MutableList<String> = mutableListOf() // HINT: only for B
+    private var whileCount = 0 // HINT: only for B
+    private var quantifierCount = 0 // HINT: only for B
+    private val quantifierDefinitions: MutableMap<QuantifierPredicate, String> = hashMapOf() // HINT: only for B
+    private var currentOperation: String = "" // HINT: only for B
+    private var declarationStep: Boolean = true // HINT: only for B
+    private var ignoreOutput: Boolean = false // HINT: only for B
+    private var returnValues: List<Expression> = listOf() // HINT: only for B
+    private var ctrlStructIdentifier: List<IdentifierExpression> = listOf() // HINT: only for B
 
     private fun expr(name: Any): String = "Expr_$name"
 
+    /**
+     * Returns the evaluated expression or evaluates the node.
+     */
+    private fun loadOrEvaluate(node: MPPCGNode, evaluation: EvaluatedExpressions.() -> RenderResult): RenderResult {
+        if (evaluatedExpressions.containsKey(node)) return RenderResult(evaluatedExpressions[node]!!)
+        return evaluation(evaluatedExpressions)
+    }
+
     /* ---------- EXPRESSIONS ---------- */
     override fun AnonymousSetCollectionNode.renderSelf(): RenderResult {
-        if (optimize) optimizer.loadIfEvaluated(this)?.let { return it }
+        return loadOrEvaluate(this) {
+            val expanded = ExpandedExpressionList.of(elements)
+            if (expanded.before.isBlank()) {
+                return@loadOrEvaluate RenderResult(renderTemplate(mapOf("elements" to expanded.expressions)))
+            }
 
-        if (elements.isEmpty()) {
-            return RenderResult(
-                renderTemplate(templateName, mapOf("elements" to emptyList<String>()))
+            val map = mapOf("elements" to expanded.expressions)
+            val rendered = renderTemplate(map)
+
+            add(node, rendered)
+            return@loadOrEvaluate RenderResult(
+                expanded.before.removeSuffix(EXPRESSION_SEPARATOR), // TODO: don't remove by hand
+                mapOf("resultExpr" to IndividualInfo(rendered))
             )
         }
-
-        val expanded = ExpandedExpressionList.of(elements)
-        if (expanded.before.isBlank()) {
-            return RenderResult(
-                renderTemplate(templateName, mapOf("elements" to expanded.expressions))
-            )
-        }
-
-        val map = mapOf("elements" to expanded.expressions)
-        val rendered = renderTemplate(map)
-
-        if (optimize) optimizer.evaluated[this] = rendered
-        // TODO: don't remove by hand
-        return RenderResult(
-            expanded.before.removeSuffix(EXPRESSION_SEPARATOR),
-            mapOf("resultExpr" to IndividualInfo(rendered))
-        )
     }
 
     override fun BinaryExpression.renderSelf(): RenderResult {
-        if (optimize) optimizer.loadIfEvaluated(this)?.let { return it }
-        val expanded = ExpandedBinary.of(left, right)
+        return loadOrEvaluate(this) {
 
-        val infiniteSet = operator == BinaryExpressionOperator.POW || (
-                (left is InfiniteSet) || (right is InfiniteSet)
-                        || (left is IntervalExpression) || (right is IntervalExpression)
-                        || (left.type is TypeInterval) || (right.type is TypeInterval)
-                        || (left is CollectionNode) || (right is CollectionNode)
-                        || (left is AnonymousSetCollectionNode) || (right is AnonymousSetCollectionNode)
-                )
-        val map = mapOf(
-            "lhs" to expanded.lhs,
-            "rhs" to expanded.rhs,
-            "operator" to operator2String(operator, infiniteSet),
-            "exprCount" to exprCount,
-            "math" to isMathOperator(operator),
-            "infiniteSet" to infiniteSet
-        )
+            val expanded = ExpandedBinary.of(left, right)
 
-        val rendered = renderTemplate(map)
-        return RenderResult("${expanded.before}$rendered", exprToInfo(this))
+            val infiniteSet = operator == BinaryExpressionOperator.POW || (
+                    (left is InfiniteSet) || (right is InfiniteSet)
+                            || (left is IntervalExpression) || (right is IntervalExpression)
+                            || (left.type is TypeInterval) || (right.type is TypeInterval)
+                            || (left is CollectionNode) || (right is CollectionNode)
+                            || (left is AnonymousSetCollectionNode) || (right is AnonymousSetCollectionNode)
+                    )
+            val map = mapOf(
+                "lhs" to expanded.lhs,
+                "rhs" to expanded.rhs,
+                "operator" to operator2String(operator, infiniteSet),
+                "exprCount" to exprCount,
+                "math" to isMathOperator(operator),
+                "infiniteSet" to infiniteSet
+            )
+
+            // TODO: add to evaluated?
+            val rendered = renderTemplate(map)
+            return@loadOrEvaluate RenderResult("${expanded.before}$rendered", exprToInfo(node))
+        }
     }
 
     override fun EnumCollectionNode.renderSelf(): RenderResult {
-        if (optimize) optimizer.loadIfEvaluated(this)?.let { return it }
-        val map = mapOf(
-            "name" to name,
-            "elements" to elements.render(),
-            "isParameter" to isParameter,
-            "exprCount" to exprCount
-        )
+        return loadOrEvaluate(this) {
+            val map = mapOf(
+                "name" to name,
+                "elements" to elements.render(),
+                "isParameter" to isParameter,
+                "exprCount" to exprCount
+            )
 
-        if (optimize) optimizer.evaluated[this] = expr(exprCount)
-        val rendered = renderTemplate(map)
-        if (isParameter) {
-            val info = mapOf("resultExpr" to IndividualInfo(expr(exprCount)))
-            // expr is now assigned -> increase
-            exprCount++
-            return RenderResult(rendered, info)
+            add(node, expr(exprCount))
+
+            if (isParameter) {
+                val info = mapOf("resultExpr" to IndividualInfo(expr(exprCount)))
+                // expr is now assigned -> increase
+                exprCount++
+                return@loadOrEvaluate RenderResult(renderTemplate(map), info)
+            }
+            return@loadOrEvaluate RenderResult(renderTemplate(map))
         }
-        return RenderResult(rendered)
     }
 
     // HINT: same as SetEntry
@@ -130,44 +135,47 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
                 "exprCount" to exprName
             )
             val rendered = renderTemplate(map)
-            if (optimize) optimizer.evaluated[this] = expr(exprName)
+            if (optimize) evaluatedExpressions[this] = expr(exprName)
             return RenderResult(rendered, mapOf("resultExpr" to IndividualInfo(expr(exprName))))
         }
 
-        if (optimize) optimizer.loadIfEvaluated(this)?.let { return it }
-        if (operationParameters.contains(this)
-            || comprehensionSetIdentifier.contains(this)
-            || lambdaExpressionIdentifier.contains(this)
-        ) {
-            if (optimize) optimizer.evaluated[this] = expr(name)
-            return RenderResult(expr(name))
-        }
-
-        // TODO: not hardcoded
-        if (temporaryVariables.contains(this)) {
-            return renderNamed("tmp_$name", 0)
-        }
-
-        // TODO: not hardcoded
-        if (ctrlStructIdentifier.contains(this)) {
-            return renderNamed("q_$name")
-        }
-
-        // TODO: not hardcoded
-        val rendered =
-            if (isConstant(this)) {
-                // use constant prefix
-                val cc = ConcreteIdentifierExpression(name, ValueExpression(), type)
-                "${cc.name}(${expr(exprCount)})"
-            } else {
-                val map = mapOf(
-                    "name" to name,
-                    "stateCount" to stateCount,
-                    "exprCount" to exprCount
-                )
-                renderTemplate(map)
+        return loadOrEvaluate(this) {
+            if (operationParameters.contains(node)
+                || comprehensionSetIdentifier.contains(node)
+                || lambdaExpressionIdentifier.contains(node)
+            ) {
+                add(node, expr(name))
+                return@loadOrEvaluate RenderResult(expr(name))
             }
-        return RenderResult(rendered, exprToInfo(this))
+
+            // TODO: not hardcoded
+            if (ctrlStructIdentifier.contains(node)) {
+                add(node, expr("q_$name"))
+                return@loadOrEvaluate RenderResult(expr("q_$name"))
+            }
+
+            // TODO: not hardcoded
+            if (temporaryVariables.contains(node)) {
+                add(node, "tmp_$name")
+                return@loadOrEvaluate renderNamed("tmp_$name", 0)
+            }
+
+            // TODO: not hardcoded
+            val rendered =
+                if (isConstant(node as IdentifierExpression)) {
+                    // use constant prefix
+                    val cc = ConcreteIdentifierExpression(name, ValueExpression(), type)
+                    "${cc.name}(${expr(exprCount)})"
+                } else {
+                    val map = mapOf(
+                        "name" to name,
+                        "stateCount" to stateCount,
+                        "exprCount" to exprCount
+                    )
+                    renderTemplate(map)
+                }
+            return@loadOrEvaluate RenderResult(rendered, exprToInfo(node))
+        }
     }
 
     override fun IntervalExpression.renderSelf(): RenderResult {
@@ -207,7 +215,62 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     /* ---------- PREDICATES ---------- */
     // HINT: SAME AS LOGIC PREDICATE (except optimization)
     override fun BinaryPredicate.renderSelf(): RenderResult {
-        if (optimize) optimizer.renderOptimized(this)?.let { return it }
+        fun optimizable(): Boolean {
+            if (operator != BinaryPredicateOperator.EQUAL && operator != BinaryPredicateOperator.NOT_EQUAL) return false
+            if (right !is IdentifierExpression && right !is CollectionEntry && right !is ValueExpression) return false
+            if (left !is IdentifierExpression) return false
+            if (ctrlStructIdentifier.contains(left)) return false
+            if (temporaryVariables.contains(left)) return false
+            return !operationParameters.contains(left)
+        }
+
+        fun ValueExpression.rendered(): String {
+            return when (type) {
+                is TypeBoolean -> render().rendered
+                is TypeInt -> render().rendered
+                else -> ""
+            }
+        }
+
+        // optimize
+        //
+        // Example:
+        // "get(State_0, 'x', Expr_0), Expr_0 = 2" will be rewritten to "get(State_0, 'x', 2)"
+        if (optimizable()) {
+            var before = ""
+            val rhs = when (right) {
+                is IdentifierExpression -> {
+                    if (isConstant((right as IdentifierExpression)) || isVariable((right as IdentifierExpression))) {
+                        evaluatedExpressions[right] ?: run {
+                            before = right.render().rendered
+                            before += EXPRESSION_SEPARATOR
+                            evaluatedExpressions[right]
+                        }
+                    } else {
+                        "'${(right as IdentifierExpression).name}'"
+                    }
+                    evaluatedExpressions[right] ?: "'${(right as IdentifierExpression).name}'"
+                }
+
+                is SetEntry -> "'${(right as SetEntry).name}'"
+                is CollectionEntry -> "'${(right as CollectionEntry).name}'"
+                is ValueExpression -> (right as ValueExpression).rendered()
+                else -> "" // when is exhaustive
+            }
+
+            val lhs = (left as IdentifierExpression).name
+
+            val map = mapOf(
+                "lhs" to lhs,
+                "rhs" to rhs,
+                "stateCount" to stateCount,
+                "negate" to (operator == BinaryPredicateOperator.NOT_EQUAL),
+                "useGet" to !ctrlStructIdentifier.contains(left)
+            )
+            val rendered = renderTemplate("optimizedBinaryPredicateEqual", map)
+            return RenderResult("$before$rendered")
+        }
+
 
         val differentBranches = operator == BinaryPredicateOperator.EQUAL
                 && (
@@ -287,20 +350,13 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
 
     override fun UnaryLogicPredicate.renderSelf(): RenderResult {
         // evaluated needs reset because of scoping
-        if (optimize) {
-            val evaluated = optimizer.getCopyOfEvaluated()
-            val map = mapOf(
+        var map: Map<String, Any> = mapOf()
+        evaluatedExpressions.withReset {
+            map = mapOf(
                 "predicate" to predicate.render(),
                 "operator" to operator2String(operator)
             )
-            optimizer.evaluated = evaluated
-            return RenderResult(renderTemplate(map))
         }
-
-        val map = mapOf(
-            "predicate" to predicate.render(),
-            "operator" to operator2String(operator)
-        )
         return RenderResult(renderTemplate(map))
     }
 
@@ -334,7 +390,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         }
 
         val expandedRhs = ExpandedExpression.of(right)
-        val needTempVar = (temporaryVariables.contains(left) && !optimizer.evaluated.contains(left)) && false
+        val needTempVar = (temporaryVariables.contains(left) && !evaluatedExpressions.contains(left)) && false
         val map = mapOf(
             "identifier" to identifier,
             "rhs" to expandedRhs.expression,
@@ -347,9 +403,9 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
 
         if (optimize) {
             if (needTempVar) {
-                optimizer.evaluated[left] = expr("tmp_${identifier.removeSurrounding("'")}")
+                evaluatedExpressions[left] = expr("tmp_${identifier.removeSurrounding("'")}")
             } else if (!temporaryVariables.contains(left)) {
-                optimizer.evaluated[left] = expandedRhs.expression
+                evaluatedExpressions[left] = expandedRhs.expression
             }
         }
         return RenderResult("${expandedRhs.before}$rendered")
@@ -444,12 +500,9 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         val stateCountBefore = stateCount
         val exprCountBefore = exprCount
 
-        val evaluated = if (optimize) optimizer.getCopyOfEvaluated() else hashMapOf()
-        if (optimize) optimizer.evaluated = hashMapOf()
-
-        val thenRendered = then.render()
-
-        if (optimize) optimizer.evaluated = evaluated
+        val thenRendered = evaluatedExpressions.returnWithReset(true) {
+            then.render()
+        }
 
 
         if (elseSubstitution == null) {
@@ -460,12 +513,9 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             stateCount = stateCountBefore
             exprCount = exprCountBefore
 
-            val evaluatedInner = if (optimize) optimizer.getCopyOfEvaluated() else hashMapOf()
-            if (optimize) optimizer.evaluated = hashMapOf()
-
-            val elseRendered = elseSubstitution!!.render()
-
-            if (optimize) optimizer.evaluated = evaluatedInner
+            val elseRendered = evaluatedExpressions.returnWithReset(true) {
+                elseSubstitution!!.render()
+            }
 
             fixStateAndExprCountInBranches(
                 thenRendered = thenRendered,
@@ -492,19 +542,13 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
 
     override fun WhileSubstitution.renderSelf(): RenderResult {
         fun getDefinitionMap(): Map<String, Any> {
-            val evaluated = if (optimize) optimizer.getCopyOfEvaluated() else hashMapOf()
-            optimizer.evaluated = hashMapOf()
-            val conditionRendered = condition.render()
-            optimizer.evaluated = hashMapOf()
-            val map = mapOf(
+            return mapOf(
                 "name" to currentOperation,
                 "count" to whileCount,
-                "condition" to conditionRendered,
-                "body" to body.render(),
+                "condition" to evaluatedExpressions.withReset(true) { condition.render() },
+                "body" to evaluatedExpressions.withReset(true) { body.render() },
                 "lastState" to stateCount
             )
-            optimizer.evaluated = evaluated
-            return map
         }
 
         val stateCountBefore = stateCount
@@ -548,90 +592,89 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun BinaryCollectionExpression.renderSelf(): RenderResult {
-        if (optimize) optimizer.loadIfEvaluated(this)?.let { return it }
+        return loadOrEvaluate(this) {
+            val expanded = ExpandedBinary.of(left, right)
 
-        val expanded = ExpandedBinary.of(left, right)
+            val map = mapOf(
+                "lhs" to expanded.lhs,
+                "rhs" to expanded.rhs,
+                "operator" to operator2String(operator),
+                "exprCount" to exprCount
+            )
+            val rendered = renderTemplate(map)
 
-        val map = mapOf(
-            "lhs" to expanded.lhs,
-            "rhs" to expanded.rhs,
-            "operator" to operator2String(operator),
-            "exprCount" to exprCount
-        )
-        val rendered = renderTemplate(map)
-
-        return RenderResult("${expanded.before}$rendered", exprToInfo(this))
+            return@loadOrEvaluate RenderResult("${expanded.before}$rendered", exprToInfo(node))
+        }
     }
 
     // TODO: reuse BinaryExpression?
     override fun BinaryFunctionExpression.renderSelf(): RenderResult {
-        if (optimize) optimizer.loadIfEvaluated(this)?.let { return it }
+        return loadOrEvaluate(this) {
+            val expanded = ExpandedBinary.of(left, right)
 
-        val expanded = ExpandedBinary.of(left, right)
+            val map = mapOf(
+                "lhs" to expanded.lhs,
+                "rhs" to expanded.rhs,
+                "operator" to operator2String(operator),
+                "exprCount" to exprCount
+            )
+            val rendered = renderTemplate(map)
 
-        val map = mapOf(
-            "lhs" to expanded.lhs,
-            "rhs" to expanded.rhs,
-            "operator" to operator2String(operator),
-            "exprCount" to exprCount
-        )
-        val rendered = renderTemplate(map)
-
-        return RenderResult("${expanded.before}$rendered", exprToInfo(this))
+            return@loadOrEvaluate RenderResult("${expanded.before}$rendered", exprToInfo(node))
+        }
     }
 
     override fun BinarySequenceExpression.renderSelf(): RenderResult {
-        if (optimize) optimizer.loadIfEvaluated(this)?.let { return it }
+        return loadOrEvaluate(this) {
+            val expanded = ExpandedBinary.of(left, right)
 
-        val expanded = ExpandedBinary.of(left, right)
+            // TODO: refactor append/prepend
+            val map = mapOf(
+                "lhs" to expanded.lhs,
+                "rhs" to if (operator == BinarySequenceExpressionOperator.APPEND) "[${expanded.rhs}]" else expanded.rhs,
+                "operator" to operator2String(operator),
+                "exprCount" to exprCount
+            )
+            val rendered = renderTemplate(map)
 
-        // TODO: refactor append/prepend
-        val map = mapOf(
-            "lhs" to expanded.lhs,
-            "rhs" to if (operator == BinarySequenceExpressionOperator.APPEND) "[${expanded.rhs}]" else expanded.rhs,
-            "operator" to operator2String(operator),
-            "exprCount" to exprCount
-        )
-        val rendered = renderTemplate(map)
-
-        return RenderResult("${expanded.before}$rendered", exprToInfo(this))
+            return@loadOrEvaluate RenderResult("${expanded.before}$rendered", exprToInfo(node))
+        }
     }
 
     override fun CallFunctionExpression.renderSelf(): RenderResult {
-        if (optimize) optimizer.loadIfEvaluated(this)?.let { return it }
+        return loadOrEvaluate(this) {
+            val before1 = ExpandedExpression.of(expression)
+            val before2 = ExpandedExpressionList.of(parameters)
 
-        val before1 = ExpandedExpression.of(expression)
-        val before2 = ExpandedExpressionList.of(parameters)
+            val map = mapOf(
+                "expression" to before1.expression,
+                "parameters" to before2.expressions,
+                "exprCount" to exprCount
+            )
 
-        val map = mapOf(
-            "expression" to before1.expression,
-            "parameters" to before2.expressions,
-            "exprCount" to exprCount
-        )
+            val before = "${before1.before}${before2.before}"
+            val rendered = renderTemplate(map)
 
-        val before = "${before1.before}${before2.before}"
-        val rendered = renderTemplate(map)
-
-        return RenderResult("$before$rendered", exprToInfo(this))
+            return@loadOrEvaluate RenderResult("$before$rendered", exprToInfo(node))
+        }
     }
 
     override fun ComprehensionSet.renderSelf(): RenderResult {
-        val evaluated = if (optimize) optimizer.getCopyOfEvaluated() else hashMapOf()
-        comprehensionSetIdentifier = comprehensionSetIdentifier + identifiers.filterIsInstance<IdentifierExpression>()
-        val map = mapOf(
-            "identifiers" to identifiers.render(),
-            "predicates" to predicates.render(),
-            "exprCount" to exprCount
-        )
-        comprehensionSetIdentifier =
-            comprehensionSetIdentifier - identifiers.filterIsInstance<IdentifierExpression>().toSet()
-        if (optimize) optimizer.evaluated = evaluated
+        comprehensionSetIdentifier += identifiers.filterIsInstance<IdentifierExpression>()
+        val map = evaluatedExpressions.returnWithReset<Map<String, Any>> {
+            mapOf(
+                "identifiers" to identifiers.render(),
+                "predicates" to predicates.render(),
+                "exprCount" to exprCount
+            )
+        }
+        comprehensionSetIdentifier -= identifiers.filterIsInstance<IdentifierExpression>().toSet()
         return RenderResult(renderTemplate(map), exprToInfo(this))
     }
 
     override fun ConcreteIdentifierExpression.renderSelf(): RenderResult {
         if (declarationStep) {
-            if (optimize) optimizer.evaluated = hashMapOf()
+            evaluatedExpressions.clear()
             stateCount = 0
             exprCount = 0
             temporaryVariables = hashSetOf()
@@ -649,15 +692,15 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             return RenderResult(renderTemplate("concreteIdentifierDeclaration", map))
         }
 
-        if (optimize) optimizer.loadIfEvaluated(this)?.let { return it }
+        return loadOrEvaluate(this) {
+            val map = mapOf(
+                "name" to name,
+                "exprCount" to exprCount
+            )
 
-        val map = mapOf(
-            "name" to name,
-            "exprCount" to exprCount
-        )
-
-        if (optimize) optimizer.evaluated[this] = expr(exprCount)
-        return RenderResult(renderTemplate(map), exprToInfo(this))
+            add(node, expr(exprCount))
+            return@loadOrEvaluate RenderResult(renderTemplate(map), exprToInfo(node))
+        }
     }
 
     override fun Couple.renderSelf(): RenderResult {
@@ -671,19 +714,19 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun GeneralSumOrProductExpression.renderSelf(): RenderResult {
-        val evaluated = if (optimize) optimizer.getCopyOfEvaluated() else hashMapOf()
-        ctrlStructIdentifier = ctrlStructIdentifier + identifiers
+        ctrlStructIdentifier += identifiers
 
-        val map = mapOf(
-            "identifiers" to identifiers.render(),
-            "predicate" to predicate.render(),
-            "expression" to if (expression !is IdentifierExpression) expression.render() else null,
-            "isSum" to (operation == SumOrProductOperation.SUM),
-            "exprCount" to exprCount
-        )
+        val map = evaluatedExpressions.returnWithReset<Map<String, Any?>> {
+            mapOf(
+                "identifiers" to identifiers.render(),
+                "predicate" to predicate.render(),
+                "expression" to if (expression !is IdentifierExpression) expression.render() else null,
+                "isSum" to (operation == SumOrProductOperation.SUM),
+                "exprCount" to exprCount
+            )
+        }
 
-        ctrlStructIdentifier = ctrlStructIdentifier - identifiers.toSet()
-        if (optimize) optimizer.evaluated = evaluated
+        ctrlStructIdentifier -= identifiers
 
         return RenderResult(renderTemplate(map), exprToInfo(this))
     }
@@ -725,75 +768,73 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun UnaryCollectionExpression.renderSelf(): RenderResult {
-        if (optimize) optimizer.loadIfEvaluated(this)?.let { return it }
-        val expanded = ExpandedExpression.of(collection)
+        return loadOrEvaluate(this) {
+            val expanded = ExpandedExpression.of(collection)
 
-        val map = mutableMapOf(
-            "collection" to expanded.expression,
-            "operator" to operator2String(operator),
-            "exprCount" to exprCount
-        )
+            val map = mutableMapOf(
+                "collection" to expanded.expression,
+                "operator" to operator2String(operator),
+                "exprCount" to exprCount
+            )
 
-        return RenderResult("${expanded.before}${renderTemplate(map)}", exprToInfo(this))
+            return@loadOrEvaluate RenderResult("${expanded.before}${renderTemplate(map)}", exprToInfo(node))
+        }
     }
 
     override fun UnaryExpression.renderSelf(): RenderResult {
         // TODO: optimize minus
-        if (optimize) optimizer.loadIfEvaluated(this)?.let { return it }
+        return loadOrEvaluate(this) {
+            var before = ""
+            var rendered = ""
+            evaluatedExpressions.withReset(operator == UnaryExpressionOperator.CONVERT_BOOLEAN) {
+                val renderedValue = if (evaluatedExpressions.contains(value)) {
+                    null
+                } else if (value is Expression && operator != UnaryExpressionOperator.MINUS) {
+                    val expanded = ExpandedExpression.of(value as Expression)
+                    before = expanded.before
+                    expanded.expression
+                } else {
+                    value.render()
+                }
+                val resultAt =
+                    if (evaluatedExpressions.contains(value)) evaluatedExpressions[value] else expr(exprCount - 1)
 
-        val evaluated = if (optimize) optimizer.getCopyOfEvaluated() else hashMapOf()
+                val map = mapOf(
+                    "value" to renderedValue,
+                    "operator" to operator2String(operator),
+                    "convertBoolean" to (operator == UnaryExpressionOperator.CONVERT_BOOLEAN),
+                    "isMinus" to (operator == UnaryExpressionOperator.MINUS),
+                    "isMinusInline" to (value is ValueExpression || value is ConcreteIdentifierExpression),
+                    "resultAt" to resultAt,
+                    "exprCount" to exprCount
+                )
+                rendered = renderTemplate(map)
+            }
 
-        var before = ""
-        val renderedValue = if (optimize && optimizer.evaluated.contains(value)) {
-            null
-        } else if (value is Expression && operator != UnaryExpressionOperator.MINUS) {
-            val expanded = ExpandedExpression.of(value as Expression)
-            before = expanded.before
-            expanded.expression
-        } else {
-            value.render()
+            return@loadOrEvaluate RenderResult("$before$rendered", exprToInfo(node))
         }
-        val resultAt =
-            if (optimize && optimizer.evaluated.contains(value)) optimizer.evaluated[value] else expr(exprCount - 1)
-
-        val map = mapOf(
-            "value" to renderedValue,
-            "operator" to operator2String(operator),
-            "convertBoolean" to (operator == UnaryExpressionOperator.CONVERT_BOOLEAN),
-            "isMinus" to (operator == UnaryExpressionOperator.MINUS),
-            "isMinusInline" to (value is ValueExpression || value is ConcreteIdentifierExpression),
-            "resultAt" to resultAt,
-            "exprCount" to exprCount
-        )
-        val rendered = renderTemplate(map)
-
-        if (operator == UnaryExpressionOperator.CONVERT_BOOLEAN) {
-            optimizer.evaluated = evaluated
-        }
-
-        return RenderResult("$before$rendered", exprToInfo(this))
     }
 
     override fun UnaryFunctionExpression.renderSelf(): RenderResult {
-        if (optimize) optimizer.loadIfEvaluated(this)?.let { return it }
+        return loadOrEvaluate(this) {
+            val expanded = ExpandedExpression.of(expression)
 
-        val expanded = ExpandedExpression.of(expression)
+            val map = mapOf(
+                "expression" to expanded.expression,
+                "operator" to operator2String(operator),
+                "exprCount" to exprCount
+            )
 
-        val map = mapOf(
-            "expression" to expanded.expression,
-            "operator" to operator2String(operator),
-            "exprCount" to exprCount
-        )
+            val rendered = renderTemplate(map)
 
-        val rendered = renderTemplate(map)
-
-        return RenderResult("${expanded.before}$rendered", exprToInfo(this))
+            return@loadOrEvaluate RenderResult("${expanded.before}$rendered", exprToInfo(node))
+        }
     }
 
     // HINT: SAME FOR JAVA AND PROLOG
     override fun Invariant.renderSelf(): RenderResult {
         val checkInvs = List(predicates.size) { idx ->
-            if (optimize) optimizer.evaluated = hashMapOf()
+            evaluatedExpressions.clear()
             exprCount = 0
             stateCount = 0
             val map = mapOf(
@@ -814,21 +855,53 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun QuantifierPredicate.renderSelf(): RenderResult {
-        val evaluated = if (optimize) optimizer.getCopyOfEvaluated() else hashMapOf()
+        fun getDefinitionMap(thisQuantifierCount: Int): Map<String, Any?> {
+            return evaluatedExpressions.returnWithReset(true) {
+                mapOf(
+                    "name" to currentOperation,
+                    "count" to thisQuantifierCount,
+                    "predicate" to predicate.render(),
+                    "quantification" to quantification?.render(),
+                    "parameters" to (operationParameters + temporaryVariables + ctrlStructIdentifier - identifier.toSet()).map { it.render().rendered }
+                )
+            }
+        }
+
+        val thisQuantifierCount = quantifierCount
+        quantifierCount++
+        val stateCountBefore = stateCount
+        val exprCountBefore = exprCount
+        stateCount = 0
+        exprCount = 0
+
         ctrlStructIdentifier = ctrlStructIdentifier + identifier
-        val map = mapOf(
-            "identifier" to identifier.render(),
-            "predicate" to predicate.render(),
-            "quantification" to quantification?.render(),
-            "universalQuantifier" to (type == QuantifierType.FORALL)
-        )
+        val definitionMap = getDefinitionMap(thisQuantifierCount)
+
+        stateCount = stateCountBefore
+        exprCount = exprCountBefore
+
+        val map = evaluatedExpressions.returnWithReset<Map<String, Any?>> {
+            mapOf(
+                "name" to currentOperation,
+                "count" to thisQuantifierCount,
+                "parameters" to definitionMap["parameters"],
+                "stateCount" to stateCount,
+                "predicate" to predicate.render(),
+                "quantification" to quantification?.render(),
+                "universalQuantifier" to (type == QuantifierType.FORALL)
+            )
+        }
         ctrlStructIdentifier = ctrlStructIdentifier - identifier.toSet()
-        if (optimize) optimizer.evaluated = evaluated
+
+        val renderedDefinition = renderTemplate("quantifierDefinition", definitionMap)
+        if (!quantifierDefinitions.contains(this)) quantifierDefinitions[this] = renderedDefinition
+
         return RenderResult(renderTemplate(map))
     }
 
     override fun Initialization.renderSelf(): RenderResult {
-        if (optimize) optimizer.evaluated = hashMapOf()
+        evaluatedExpressions.clear()
+
         val map = mapOf(
             "body" to substitutions.render(),
             "resultStateCount" to stateCount
@@ -841,7 +914,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         temporaryVariables = temporaryVariables + needTempVar
 
         // remove temporary variables from previous evaluated to use temp vars
-        if (optimize) temporaryVariables.forEach { optimizer.evaluated.remove(it) }
+        if (optimize) temporaryVariables.forEach { evaluatedExpressions.remove(it) }
 
         val neededTempVars = substitutions
             .filterIsInstance<AssignSubstitution>()
@@ -876,7 +949,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
 
     // HINT: SAME FOR JAVA AND PROLOG
     override fun Precondition.renderSelf(): RenderResult {
-        if (optimize) optimizer.evaluated = hashMapOf()
+        evaluatedExpressions.clear()
 
         val map = mapOf(
             "predicate" to predicate.render().rendered,
@@ -897,14 +970,14 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun Machine.renderSelf(): RenderResult {
-        if (optimize) optimizer.evaluated = hashMapOf()
         declarationStep = true
         this@PrologOutputEnvironment.concreteConstants = concreteConstants
         this@PrologOutputEnvironment.constants = constants
+        evaluatedExpressions.clear()
         stateCount = 0
         exprCount = 0
-        operationParameters = parameters.map { it as IdentifierExpression }
         temporaryVariables = hashSetOf()
+        operationParameters = parameters.map { it as IdentifierExpression }
         this@PrologOutputEnvironment.concreteVariables = concreteVariables
         this@PrologOutputEnvironment.variables = variables
 
@@ -927,33 +1000,36 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             "invariant" to invariant.render(),
             "assertions" to assertions.render(),
             "operations" to operations.render(),
-            "whileDefinitions" to whileDefinitions
+            "whileDefinitions" to whileDefinitions,
+            "quantifierDefinitions" to quantifierDefinitions.values
         )
 
         return RenderResult(renderTemplate(map))
     }
 
     override fun Operation.renderSelf(): RenderResult {
-        if (optimize) optimizer.evaluated = hashMapOf()
+        evaluatedExpressions.clear()
         stateCount = 0
         exprCount = 0
-        operationParameters = parameters.map { it as IdentifierExpression }
         temporaryVariables = hashSetOf()
+        operationParameters = parameters.map { it as IdentifierExpression }
         currentOperation = name
         whileCount = 0
+        quantifierCount = 0
 
         ignoreOutput = true
         this@PrologOutputEnvironment.returnValues = returnValues
         val bodyNoOutput = body?.render()
         val stateCountNoOutput = stateCount
         ignoreOutput = false
-        if (optimize) optimizer.evaluated = hashMapOf()
+        evaluatedExpressions.clear()
         stateCount = 0
         exprCount = 0
-        operationParameters = parameters.map { it as IdentifierExpression }
         temporaryVariables = hashSetOf()
+        operationParameters = parameters.map { it as IdentifierExpression }
         currentOperation = name
         whileCount = 0
+        quantifierCount = 0
         val bodyWithOutput = body?.render()
 
         val map = mapOf(
@@ -1120,7 +1196,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     private fun exprToInfo(node: MPPCGNode): Map<String, IndividualInfo> {
-        if (optimize) optimizer.evaluated[node] = expr(exprCount)
+        if (optimize) evaluatedExpressions[node] = expr(exprCount)
         val info = mapOf("resultExpr" to IndividualInfo(expr(exprCount)))
         // expr is now assigned -> increase
         exprCount++
@@ -1160,51 +1236,45 @@ private data class ExpandedBinary(val before: String = "", val lhs: String = "",
         fun of(
             left: MPPCGNode, right: MPPCGNode
         ): ExpandedBinary {
-            return of(left, right, false, null)
+            val lhsRendered = left.render()
+            val rhsRendered = right.render()
+            val before = StringBuilder()
+            val lhs = createSideString(lhsRendered, before)
+            val rhs = createSideString(rhsRendered, before)
+            return ExpandedBinary(before.toString(), lhs, rhs)
         }
 
         fun of(
             left: MPPCGNode,
             right: MPPCGNode,
             differentBranches: Boolean,
-            environment: PrologOutputEnvironment?
+            environment: PrologOutputEnvironment
         ): ExpandedBinary {
-            // true copy of map
-            val evaluated =
-                if (environment?.optimize == true) environment.optimizer.getCopyOfEvaluated() else hashMapOf()
+            val lhsRendered =
+                environment.evaluatedExpressions.returnWithConditionedReset(differentBranches) { left.render() }
+            val rhsRendered =
+                environment.evaluatedExpressions.returnWithConditionedReset(differentBranches) { right.render() }
 
-            val lhsRendered = left.render()
-            if (differentBranches && environment != null) environment.optimizer.evaluated = evaluated
-            val rhsRendered = right.render()
-            if (differentBranches && environment != null) environment.optimizer.evaluated = evaluated
+            val before = StringBuilder()
+            val lhs = createSideString(lhsRendered, before)
+            val rhs = createSideString(rhsRendered, before)
+            return ExpandedBinary(before.toString(), lhs, rhs)
+        }
 
-            var before = ""
-            val lhs: String
-            val rhs: String
-            if (lhsRendered.containsKey("resultExpr")) { // TODO: replace result expr by variable to avoid misspelling
-                lhs = lhsRendered["resultExpr"].info
-                if (lhsRendered.rendered.isNotBlank()) {
-                    before += "${lhsRendered.rendered}${PrologOutputEnvironment.EXPRESSION_SEPARATOR}"
+        fun createSideString(rendered: RenderResult, before: StringBuilder): String {
+            // TODO: replace result expr by variable to avoid misspelling
+            val result = if (rendered.containsKey("resultExpr")) {
+                if (rendered.rendered.isNotBlank()) {
+                    before.append("${rendered.rendered}${PrologOutputEnvironment.EXPRESSION_SEPARATOR}")
                 }
+                rendered["resultExpr"].info
             } else {
-                lhs = lhsRendered.rendered
+                rendered.rendered
             }
-            if (lhsRendered.containsKey("before")) {
-                before += lhsRendered["before"].info
+            if (rendered.containsKey("before")) {
+                before.append(rendered["before"].info)
             }
-
-            if (rhsRendered.containsKey("resultExpr")) {
-                rhs = rhsRendered["resultExpr"].info
-                if (rhsRendered.rendered.isNotBlank()) {
-                    before += "${rhsRendered.rendered}${PrologOutputEnvironment.EXPRESSION_SEPARATOR}"
-                }
-            } else {
-                rhs = rhsRendered.rendered
-            }
-            if (rhsRendered.containsKey("before")) {
-                before += rhsRendered["before"].info
-            }
-            return ExpandedBinary(before, lhs, rhs)
+            return result
         }
     }
 }

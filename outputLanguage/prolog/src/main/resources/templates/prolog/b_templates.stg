@@ -1,5 +1,5 @@
 // TODO: use remaining variables
-machine(name, parameters, constraints, sets, constants, concrete_constants, properties, definitions, variables, concrete_variables, invariant, assertions, initialization, operations, whileDefinitions) ::= <<
+machine(name, parameters, constraints, sets, constants, concrete_constants, properties, definitions, variables, concrete_variables, invariant, assertions, initialization, operations, whileDefinitions, quantifierDefinitions) ::= <<
 :- use_module(btypes).
 
 <if(sets)>
@@ -20,6 +20,10 @@ machine(name, parameters, constraints, sets, constants, concrete_constants, prop
 <if(whileDefinitions)>
 % While definitions
 <whileDefinitions; separator="\n\n"><endif>
+
+<if(quantifierDefinitions)>
+% Quantifier
+<quantifierDefinitions; separator="\n\n"><endif>
 >>
 
 // TODO: improve return values
@@ -80,29 +84,19 @@ invariants(list) ::= <<
 <list; separator="\n\n">
 >>
 
-quantifier(identifier, predicate, quantification, universalQuantifier) ::= <<
-<if(universalQuantifier)><if(quantification)>
-% universal quantifier
-findall(
-    _,
-    (
-        <predicate>,
-        \+ (
-                <quantification>
-            )
-    ),
-    []
-)<else>
-findall(
-    _,
-    (
-        <predicate>
-    ),
-    []
-)<endif><else>
+quantifier(name, count, parameters, predicate, quantification, universalQuantifier, stateCount) ::= <<
+<if(universalQuantifier)>\+ universal_quantifier_<name>_<count>(State_<stateCount><if(parameters)>, <parameters; separator=", "><endif>)<else>
 % exist quantifier
 <predicate><if(quantification)>,
 <quantification><endif><endif>
+>>
+
+quantifierDefinition(name, count, parameters, predicate, quantification) ::= <<
+universal_quantifier_<name>_<count>(State_0<if(parameters)>, <parameters; separator=", "><endif>) :-
+    <predicate><if(quantification)>,
+    \+ (
+            <quantification>
+        )<endif>.
 >>
 
 lambdaExpression(identifier, predicate, expression, value, exprCount) ::= <<
