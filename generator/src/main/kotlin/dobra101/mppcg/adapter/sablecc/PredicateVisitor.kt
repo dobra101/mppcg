@@ -1,14 +1,7 @@
 package dobra101.mppcg.adapter.sablecc
 
 import de.be4.classicalb.core.parser.node.*
-import dobra101.mppcg.node.BooleanValue
-import dobra101.mppcg.node.Type
-import dobra101.mppcg.node.TypeBoolean
-import dobra101.mppcg.node.TypeInterval
-import dobra101.mppcg.node.collection.BinaryCollectionExpression
-import dobra101.mppcg.node.expression.Expression
 import dobra101.mppcg.node.expression.IdentifierExpression
-import dobra101.mppcg.node.expression.IntervalExpression
 import dobra101.mppcg.node.predicate.*
 
 class PredicateVisitor : AbstractVisitor() {
@@ -43,32 +36,11 @@ class PredicateVisitor : AbstractVisitor() {
     }
 
     override fun caseAMemberPredicate(node: AMemberPredicate) {
-        fun typeByMember(expr: Expression): Type {
-            return when (expr) {
-                is IntervalExpression -> (expr.type as TypeInterval).type
-                is IdentifierExpression -> expr.type!!
-                is BinaryCollectionExpression -> expr.type!!
-                else -> TODO("Not implemented typeByMember $expr")
-            }
-        }
-
         val predicate = BinaryPredicate(
             node.left.convert()!!.setParameterIfCollection(),
             node.right.convert()!!.setParameterIfCollection(),
             BinaryPredicateOperator.MEMBER
         )
-
-        if ((node.parent() is APreconditionSubstitution || node.parent() is ASelectSubstitution) && AbstractVisitor.result is Expression) {
-            val left = predicate.left
-            val idx = OperationVisitor.parameters.indexOf(left)
-            // is type info
-            if (left is IdentifierExpression && left.type == null && idx >= 0) {
-                val type = typeByMember(predicate.right)
-                predicate.left.type = type
-                OperationVisitor.parameters[idx].type = type
-            }
-        }
-
         result = predicate
     }
 
@@ -176,11 +148,11 @@ class PredicateVisitor : AbstractVisitor() {
         result = UnaryLogicPredicate(pred, LogicPredicateOperator.NOT)    }
 
     override fun caseATruthPredicate(node: ATruthPredicate) {
-        result = ValuePredicate("", type = TypeBoolean(BooleanValue.TRUE))
+        result = ValuePredicate("true")
     }
 
     override fun caseAFalsityPredicate(node: AFalsityPredicate) {
-        result = ValuePredicate("", type = TypeBoolean(BooleanValue.FALSE))
+        result = ValuePredicate("false")
     }
 
     override fun caseAFinitePredicate(node: AFinitePredicate) {

@@ -23,8 +23,8 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     private var inInvariant: Boolean = false // HINT: only for B
 
     /* ---------- EXPRESSIONS ---------- */
-    override fun AnonymousSetCollectionNode.renderSelf(): RenderResult {
-        fun renderAnonymousSetAsRelation(set: AnonymousSetCollectionNode): RenderResult {
+    override fun AnonymousCollectionNode.renderSelf(): RenderResult {
+        fun renderAnonymousSetAsRelation(set: AnonymousCollectionNode): RenderResult {
             val map = mutableMapOf(
                 "elements" to set.elements.render()
             )
@@ -99,12 +99,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
 
     // HINT: Same for Java and Prolog
     override fun ValueExpression.renderSelf(): RenderResult {
-        val map = if (type is TypeBoolean && (type as TypeBoolean).value != null) {
-            mapOf("value" to ((type as TypeBoolean).value == BooleanValue.TRUE).toString())
-        } else {
-            mapOf("value" to value)
-        }
-
+        val map = mapOf("value" to value)
         return RenderResult(renderTemplate(map))
     }
 
@@ -133,9 +128,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             return RenderResult(renderTemplate(map))
         }
 
-        if (right is AnonymousSetCollectionNode || right is IntervalExpression ||
-            (right is IdentifierExpression && right.type is TypeSet)
-        ) {
+        if (right.type is TypeSet) {
             val map = mapOf(
                 "entry" to left.render(),
                 "set" to right.render()
@@ -180,14 +173,14 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
 
     override fun ValuePredicate.renderSelf(): RenderResult {
         val map = mapOf(
-            "value" to if (type is TypeBoolean) ((type as TypeBoolean).value == BooleanValue.TRUE).toString() else value
+            "value" to value
         )
         return RenderResult(renderTemplate(map))
     }
 
     /* ---------- SUBSTITUTIONS ---------- */
     override fun AssignSubstitution.renderSelf(): RenderResult {
-        fun renderAnonymousSetAsRelation(set: AnonymousSetCollectionNode): RenderResult {
+        fun renderAnonymousSetAsRelation(set: AnonymousCollectionNode): RenderResult {
             val map = mutableMapOf(
                 "elements" to set.elements.render()
             )
@@ -211,8 +204,9 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
 
         if (optimize) optimizer.renderOptimized(this)?.let { return it }
 
-        val rhs = if (right is AnonymousSetCollectionNode && left.type is TypeFunction) {
-            renderAnonymousSetAsRelation(right as AnonymousSetCollectionNode)
+        // TODO: fix type
+        val rhs = if (right is AnonymousCollectionNode/* && left.type is TypeFunction*/) {
+            renderAnonymousSetAsRelation(right as AnonymousCollectionNode)
         } else {
             right.render()
         }
@@ -228,7 +222,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     override fun DeclarationSubstitution.renderSelf(): RenderResult {
         // TODO: optimize?
         val map = mapOf(
-            "type" to type2String(type),
+            "type" to type2String(type!!),
             "lhs" to assignment.left.render(),
             "rhs" to assignment.right.render()
         )
@@ -272,7 +266,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         val declarations = variables.filterIsInstance<IdentifierExpression>()
             .map {
                 val map = mapOf(
-                    "type" to type2String(it.type),
+                    "type" to type2String(it.type!!),
                     "lhs" to it.name,
                     "classVar" to true
                 )
@@ -296,10 +290,10 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun BinaryCollectionExpression.renderSelf(): RenderResult {
-        val map = if (operator == BinaryCollectionOperator.CONCAT && right is AnonymousSetCollectionNode) {
+        val map = if (operator == BinaryCollectionOperator.CONCAT && right is AnonymousCollectionNode) {
             mapOf(
                 "lhs" to left.render(),
-                "rhs" to (right as AnonymousSetCollectionNode).elements.render(),
+                "rhs" to (right as AnonymousCollectionNode).elements.render(),
                 "operator" to operator2String(operator),
                 "rhsIsList" to true
             )
@@ -385,7 +379,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         val map = mapOf(
             "name" to name,
             "value" to value.render(),
-            "type" to type2String(type),
+            "type" to type2String(type!!),
             "declare" to (currentOperation == null)
         )
         return RenderResult(renderTemplate(map))
@@ -405,7 +399,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
 
     override fun InfiniteSet.renderSelf(): RenderResult {
         // HINT: n : INTEGER -> n.type = INTEGER
-        return RenderResult(type2String(type)) // TODO: refactor?
+        return RenderResult(type2String(type!!)) // TODO: refactor?
     }
 
     override fun LambdaExpression.renderSelf(): RenderResult {
@@ -550,7 +544,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
                     "parameterExpression",
                     mapOf(
                         "name" to it.name,
-                        "type" to type2String(it.type)
+                        "type" to type2String(it.type!!)
                     )
                 )
             }
@@ -574,7 +568,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
                     "parameterExpression",
                     mapOf(
                         "name" to it.name,
-                        "type" to type2String(it.type)
+                        "type" to type2String(it.type!!)
                     )
                 )
             }
@@ -588,68 +582,68 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         return RenderResult(renderTemplate(map))
     }
 
-    override fun type2String(type: Type?): String {
-        if (type == null) throw InvalidTypeException("Null as type found")
+    override fun type2String(type: Type): String {
         return when (type) {
-            is TypeAnonymousCollection -> "anonymous type"
-            is TypeBoolean -> "Boolean"
-            is TypeCollection -> if (type.type == CollectionType.Enum) type.name.capitalize() else type.name
-            is TypeInt -> "Integer"
-            is TypeNat -> "Integer"
-            is TypeReal -> "Double"
-            is TypeString -> "String"
-            is TypeVoid -> "void"
-            is TypeFunction -> {
-                if (type.from == null || type.to == null) {
-                    "BRelation<>"
-                } else {
-                    "BRelation<${nullableType2String(type.from!!)}, ${nullableType2String(type.to!!)}>"
-                }
-            }
+//            is TypeAnonymousCollection -> "anonymous type"
+            MPPCG_Boolean -> "Boolean"
+//            is TypeCollection -> if (type.type == CollectionType.Enum) type.name.capitalize() else type.name
+            MPPCG_Nat1, MPPCG_Nat, MPPCG_Natural,
+            MPPCG_Integer, MPPCG_Int -> "Integer"
 
-            is TypeSet -> "BSet<${nullableType2String(type.type)}>"
-            is TypeSequence -> "BSequence<${nullableType2String(type.type!!)}>"
-            is TypeCouple -> {
-                if (type.from == null || type.to == null) {
-                    "BCouple<>"
-                } else {
-                    "BCouple<${nullableType2String(type.from!!)}, ${nullableType2String(type.to!!)}>"
-                }
-            }
+            MPPCG_Real, MPPCG_Float -> "Double"
+            MPPCG_String -> "String"
+            MPPCG_Void -> "void"
+//            is TypeRelation -> {
+//                if (type.from == null || type.to == null) {
+//                    "BRelation<>"
+//                } else {
+//                    "BRelation<${nullableType2String(type.from!!)}, ${nullableType2String(type.to!!)}>"
+//                }
+//            }
 
-            else -> throw UnknownTypeException(type::class.simpleName!!)
+//            is new_TypeSet -> "BSet<${nullableType2String(type.type)}>"
+//            is TypeSequence -> "BSequence<${nullableType2String(type.type!!)}>"
+//            is TypeOperator -> {
+//                if (type.from == null || type.to == null) {
+//                    "BCouple<>"
+//                } else {
+//                    "BCouple<${nullableType2String(type.from!!)}, ${nullableType2String(type.to!!)}>"
+//                }
+//            }
+
+            else -> throw TypeException(type::class.simpleName!!)
         }
     }
 
-    // TODO: still needed?
-    private fun nullableType2String(type: Type): String {
-        return when (type) {
-            is TypeBoolean -> "Boolean"
-            is TypeInt -> "Integer"
-            is TypeNat -> "Integer"
-            is TypeReal -> "Double"
-            is TypeString -> "String"
-            is TypeFunction -> {
-                if (type.from == null || type.to == null) {
-                    "BRelation<>"
-                } else {
-                    "BRelation<${nullableType2String(type.from!!)}, ${nullableType2String(type.to!!)}>"
-                }
-            }
-
-            is TypeSet -> "BSet<${nullableType2String(type.type)}>"
-            is TypeSequence -> "BSequence<${nullableType2String(type.type!!)}>"
-            is TypeCouple -> {
-                if (type.from == null || type.to == null) {
-                    "BCouple<>"
-                } else {
-                    "BCouple<${nullableType2String(type.from!!)}, ${nullableType2String(type.to!!)}>"
-                }
-            }
-
-            else -> throw UnknownTypeException(type::class.simpleName!!)
-        }
-    }
+//    // TODO: still needed?
+//    private fun nullableType2String(type: Type): String {
+//        return when (type) {
+//            is TypeBoolean -> "Boolean"
+//            is TypeInt -> "Integer"
+//            is TypeNat -> "Integer"
+//            is TypeReal -> "Double"
+//            is TypeString -> "String"
+//            is TypeFunction -> {
+//                if (type.from == null || type.to == null) {
+//                    "BRelation<>"
+//                } else {
+//                    "BRelation<${nullableType2String(type.from!!)}, ${nullableType2String(type.to!!)}>"
+//                }
+//            }
+//
+//            is TypeSet -> "BSet<${nullableType2String(type.type)}>"
+//            is TypeSequence -> "BSequence<${nullableType2String(type.type!!)}>"
+//            is TypeCouple -> {
+//                if (type.from == null || type.to == null) {
+//                    "BCouple<>"
+//                } else {
+//                    "BCouple<${nullableType2String(type.from!!)}, ${nullableType2String(type.to!!)}>"
+//                }
+//            }
+//
+//            else -> throw TypeException(type::class.simpleName!!)
+//        }
+//    }
 
     override fun operator2String(operator: BinaryPredicateOperator): String {
         return when (operator) {

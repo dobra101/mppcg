@@ -268,26 +268,32 @@ mppcg_domainSubtraction(Domain, [_ | Tail], NewTail) :-
 
 mppcg_image(Relation, Set, set(Sorted)) :-
     resolve(Set, S),
-    mppcg_image_(Relation, S, Image),
+    mppcg_max(S, Max),
+    sort(Relation, R),
+    mppcg_image_max(R, S, Max, Image),
     sort(Image, Sorted),
     !.
-mppcg_image_(_, [], []) :- !.
-% image of set
-mppcg_image_(Relation, [X | Rest], Image) :-
-    mppcg_image_X(Relation, X, Ys),
-    mppcg_image_(Relation, Rest, OtherTail),
-    append(Ys, OtherTail, Image),
+mppcg_image(Relation, Set, set(Sorted)) :-
+    resolve(Set, S),
+    sort(Relation, R),
+    mppcg_image_(R, S, Image),
+    sort(Image, Sorted),
     !.
-mppcg_image_(Relation, [_ | Rest], NewTail) :-
-    mppcg_image_(Relation, Rest, NewTail).
 
+mppcg_image_([], _, []) :- !.
+mppcg_image_([(X/Y) | Rest], Set, [Y | NewTail]) :-
+    member(X, Set),
+    mppcg_image_(Rest, Set, NewTail).
+mppcg_image_([_ | Rest], Set, NewTail) :-
+    mppcg_image_(Rest, Set, NewTail).
 
-mppcg_image_X([], _, []).
-mppcg_image_X([(X/Y) | Tail], X, [Y | NewTail]) :-
-    !,
-    mppcg_image_X(Tail, X, NewTail).
-mppcg_image_X([_ | Tail], X, NewTail) :-
-    mppcg_image_X(Tail, X, NewTail).
+mppcg_image_max([], _, _, []) :- !.
+mppcg_image_max([(X/_) | _], _, Max, []) :- number(X), number(Max), X > Max.
+mppcg_image_max([(X/Y) | Rest], Set, Max, [Y | NewTail]) :-
+    member(X, Set),
+    mppcg_image_max(Rest, Set, Max, NewTail).
+mppcg_image_max([_ | Rest], Set, Max, NewTail) :-
+    mppcg_image_max(Rest, Set, Max, NewTail).
 
 
 mppcg_override(Overridden, Set, Result) :-
@@ -351,10 +357,12 @@ mppcg_max(X, Max) :-
     !.
 mppcg_max_([], unset, unset) :- fail, !.
 mppcg_max_([Head | Tail], unset, Max) :-
+    number(Head),
     mppcg_max_(Tail, Head, Max),
     !.
-mppcg_max_([], Acc, Acc) :- !.
+mppcg_max_([], Acc, Acc) :- Acc \= unset.
 mppcg_max_([Head | Tail], Acc, Max) :-
+    number(Head),
     Head > Acc,
     mppcg_max_(Tail, Head, Max),
     !.
@@ -497,10 +505,10 @@ flatten(L, Res) :-
     flatten(L, [], Flat),
     (L = [set(_) | _] -> (sort(Flat, R), Res = set(R)); Res = Flat).
 flatten([], Acc, Acc) :- !.
-flatten([Head | Tail], Acc, Flat) :-
+flatten([set(Head) | Tail], Acc, Flat) :-
     (is_list(Head) -> append(Head, Acc, NewAcc); append([Head], Acc, NewAcc)),
     flatten(Tail, NewAcc, Flat).
-flatten([set(Head) | Tail], Acc, Flat) :-
+flatten([Head | Tail], Acc, Flat) :-
     (is_list(Head) -> append(Head, Acc, NewAcc); append([Head], Acc, NewAcc)),
     flatten(Tail, NewAcc, Flat).
 
@@ -518,7 +526,7 @@ mppcg_listProduct([Head | Tail], Acc, Prod) :-
     Acc1 is Acc * Head,
     mppcg_listProduct(Tail, Acc1, Prod).
 
-mppcg_minus(X, Y, Result) :-
+mppcg_minus(X, Y, set(Result)) :-
     resolve(X, X1),
     resolve(Y, Y1),
     mppcg_minus_(X1, Y1, Result).

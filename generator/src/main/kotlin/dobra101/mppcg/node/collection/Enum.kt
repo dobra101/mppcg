@@ -1,7 +1,5 @@
 package dobra101.mppcg.node.collection
 
-import dobra101.mppcg.node.TypeCollection
-
 data class EnumCollectionNode(
     override var name: String,
     override val elements: List<EnumEntry>
@@ -11,7 +9,8 @@ data class EnumCollectionNode(
     }
 }
 
+// TODO: enum: String required?
 data class EnumEntry(
     override var name: String,
     val enum: String
-) : CollectionEntry(name, enum, type = TypeCollection(CollectionType.Enum, enum), "enumEntryExpression")
+) : CollectionEntry(name, enum, "enumEntryExpression")

@@ -19,17 +19,6 @@ class ExpressionVisitor : AbstractVisitor() {
         }
 
     override fun caseTIdentifierLiteral(node: TIdentifierLiteral) {
-        val parent = node.parent().parent() // first "parent" is AIdentifierExpression
-
-        if (parent is AEnumeratedSetSet) {
-            // TODO: when more than one identifier?
-
-            // a, b, c = 1, 2, 3
-            val enumName = parent.identifier[0].text
-            result = IdentifierExpression(name = node.text, type = TypeCollection(CollectionType.Enum, enumName))
-            return
-        }
-
         result = machineVisitor.knownIdentifier().toList().findByName(node.text)
         result?.let { machineVisitor.recognize(result!!); return }
 
@@ -39,15 +28,15 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseTIntegerLiteral(node: TIntegerLiteral) {
-        result = ValueExpression(node.text, type = TypeInt())
+        result = ValueExpression(node.text, type = MPPCG_Int)
     }
 
     override fun caseTStringLiteral(node: TStringLiteral) {
-        result = ValueExpression(node.text, type = TypeString())
+        result = ValueExpression(node.text, type = MPPCG_String)
     }
 
     override fun caseTRealLiteral(node: TRealLiteral) {
-        result = ValueExpression(node.text, type = TypeReal())
+        result = ValueExpression(node.text, type = MPPCG_Real)
     }
 
     override fun caseAAddExpression(node: AAddExpression) {
@@ -63,7 +52,7 @@ class ExpressionVisitor : AbstractVisitor() {
         val right = node.right.convert()!!.setParameterIfCollection()
         result =
                 // TODO: refactor classes
-            if (left is CollectionNode || right is CollectionNode || left is AnonymousCollectionNode || right is AnonymousSetCollectionNode) {
+            if (left is CollectionNode || right is CollectionNode || left is AnonymousCollectionNode) {
                 BinaryCollectionExpression(left, right, BinaryCollectionOperator.SUBTRACTION)
             } else {
                 BinaryExpression(left, right, BinaryExpressionOperator.MINUS)
@@ -71,137 +60,96 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseATotalInjectionExpression(node: ATotalInjectionExpression) {
-        setTypeOfPrevious(node) {
-            result = Function(
-                left = node.left.convert()!!.setParameterIfCollection(),
-                right = node.right.convert()!!.setParameterIfCollection(),
-                functionType = FunctionType.TOTAL,
-                mapType = FunctionMapType.INJECTION
-            )
-        }
+        result = Function(
+            left = node.left.convert()!!.setParameterIfCollection(),
+            right = node.right.convert()!!.setParameterIfCollection(),
+            functionType = FunctionType.TOTAL,
+            mapType = FunctionMapType.INJECTION
+        )
     }
 
     override fun caseAPartialInjectionExpression(node: APartialInjectionExpression) {
-        setTypeOfPrevious(node) {
-            result = Function(
-                left = node.left.convert()!!.setParameterIfCollection(),
-                right = node.right.convert()!!.setParameterIfCollection(),
-                functionType = FunctionType.PARTIAL,
-                mapType = FunctionMapType.INJECTION
-            )
-        }
+        result = Function(
+            left = node.left.convert()!!.setParameterIfCollection(),
+            right = node.right.convert()!!.setParameterIfCollection(),
+            functionType = FunctionType.PARTIAL,
+            mapType = FunctionMapType.INJECTION
+        )
     }
 
     override fun caseATotalBijectionExpression(node: ATotalBijectionExpression) {
-        setTypeOfPrevious(node) {
-            result = Function(
-                left = node.left.convert()!!.setParameterIfCollection(),
-                right = node.right.convert()!!.setParameterIfCollection(),
-                functionType = FunctionType.TOTAL,
-                mapType = FunctionMapType.BIJECTION
-            )
-        }
+        result = Function(
+            left = node.left.convert()!!.setParameterIfCollection(),
+            right = node.right.convert()!!.setParameterIfCollection(),
+            functionType = FunctionType.TOTAL,
+            mapType = FunctionMapType.BIJECTION
+        )
     }
 
     override fun caseAPartialBijectionExpression(node: APartialBijectionExpression) {
-        setTypeOfPrevious(node) {
-            result = Function(
-                left = node.left.convert()!!.setParameterIfCollection(),
-                right = node.right.convert()!!.setParameterIfCollection(),
-                functionType = FunctionType.PARTIAL,
-                mapType = FunctionMapType.BIJECTION
-            )
-        }
+        result = Function(
+            left = node.left.convert()!!.setParameterIfCollection(),
+            right = node.right.convert()!!.setParameterIfCollection(),
+            functionType = FunctionType.PARTIAL,
+            mapType = FunctionMapType.BIJECTION
+        )
     }
 
     override fun caseATotalSurjectionExpression(node: ATotalSurjectionExpression) {
-        setTypeOfPrevious(node) {
-            result = Function(
-                left = node.left.convert()!!.setParameterIfCollection(),
-                right = node.right.convert()!!.setParameterIfCollection(),
-                functionType = FunctionType.TOTAL,
-                mapType = FunctionMapType.SURJECTION
-            )
-        }
+        result = Function(
+            left = node.left.convert()!!.setParameterIfCollection(),
+            right = node.right.convert()!!.setParameterIfCollection(),
+            functionType = FunctionType.TOTAL,
+            mapType = FunctionMapType.SURJECTION
+        )
     }
 
     override fun caseAPartialSurjectionExpression(node: APartialSurjectionExpression) {
-        setTypeOfPrevious(node) {
-            result = Function(
-                left = node.left.convert()!!.setParameterIfCollection(),
-                right = node.right.convert()!!.setParameterIfCollection(),
-                functionType = FunctionType.PARTIAL,
-                mapType = FunctionMapType.SURJECTION
-            )
-        }
+        result = Function(
+            left = node.left.convert()!!.setParameterIfCollection(),
+            right = node.right.convert()!!.setParameterIfCollection(),
+            functionType = FunctionType.PARTIAL,
+            mapType = FunctionMapType.SURJECTION
+        )
     }
 
     override fun caseATotalFunctionExpression(node: ATotalFunctionExpression) {
-        setTypeOfPrevious(node) {
-            result = Function(
-                left = node.left.convert()!!.setParameterIfCollection(),
-                right = node.right.convert()!!.setParameterIfCollection(),
-                functionType = FunctionType.TOTAL,
-                mapType = FunctionMapType.FUNCTION
-            )
-        }
+        result = Function(
+            left = node.left.convert()!!.setParameterIfCollection(),
+            right = node.right.convert()!!.setParameterIfCollection(),
+            functionType = FunctionType.TOTAL,
+            mapType = FunctionMapType.FUNCTION
+        )
     }
 
     override fun caseAPartialFunctionExpression(node: APartialFunctionExpression) {
-        setTypeOfPrevious(node) {
-            result = Function(
-                left = node.left.convert()!!.setParameterIfCollection(),
-                right = node.right.convert()!!.setParameterIfCollection(),
-                functionType = FunctionType.PARTIAL,
-                mapType = FunctionMapType.FUNCTION
-            )
-        }
-    }
-
-    private fun setTypeOfPrevious(node: Node, block: () -> Unit) {
-        val resultBefore = AbstractVisitor.result
-        block()
-        if (node.parent() is AMemberPredicate && resultBefore is Expression) {
-            // is type info
-            resultBefore.type = result!!.type
-        }
+        result = Function(
+            left = node.left.convert()!!.setParameterIfCollection(),
+            right = node.right.convert()!!.setParameterIfCollection(),
+            functionType = FunctionType.PARTIAL,
+            mapType = FunctionMapType.FUNCTION
+        )
     }
 
     override fun caseAIntervalExpression(node: AIntervalExpression) {
-        val resultBefore = AbstractVisitor.result
         result = IntervalExpression(node.leftBorder.convert()!!, node.rightBorder.convert()!!)
-        if (resultBefore is Expression && resultBefore.type == null) {
-            if (node.parent() is AMemberPredicate) {
-                resultBefore.type = result!!.type
-            } else {
-                resultBefore.type = TypeInterval(result!!.type as TypeNumber)
-            }
-        }
     }
 
     override fun caseAIntegerSetExpression(node: AIntegerSetExpression) {
-        if (node.parent() is AMemberPredicate && AbstractVisitor.result is Expression) {
-            // is type info
-            (AbstractVisitor.result as Expression).type = TypeInt()
-        }
-        result = InfiniteSet(TypeInteger())
+        result = InfiniteSet(MPPCG_Integer)
     }
 
     override fun caseANaturalSetExpression(node: ANaturalSetExpression) {
-        if (node.parent() is AMemberPredicate && AbstractVisitor.result is Expression) {
-            // is type info
-            (AbstractVisitor.result as Expression).type = TypeNat()
-        }
-        result = InfiniteSet(TypeNatural())
+        result = InfiniteSet(MPPCG_Natural)
     }
 
     override fun caseASetExtensionExpression(node: ASetExtensionExpression) {
         val expressions = node.expressions.convert()
-        result = AnonymousSetCollectionNode(expressions)
+        result = AnonymousCollectionNode(expressions)
     }
 
     override fun caseAEmptySetExpression(node: AEmptySetExpression) {
-        result = AnonymousSetCollectionNode()
+        result = AnonymousCollectionNode()
     }
 
     override fun caseAReverseExpression(node: AReverseExpression) {
@@ -234,11 +182,11 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseABooleanTrueExpression(node: ABooleanTrueExpression) {
-        result = ValueExpression("", type = TypeBoolean(BooleanValue.TRUE))
+        result = ValueExpression("true", type = MPPCG_Boolean)
     }
 
     override fun caseABooleanFalseExpression(node: ABooleanFalseExpression) {
-        result = ValueExpression("", type = TypeBoolean(BooleanValue.FALSE))
+        result = ValueExpression("false", type = MPPCG_Boolean)
     }
 
     override fun caseAIntegerExpression(node: AIntegerExpression) {
@@ -257,50 +205,43 @@ class ExpressionVisitor : AbstractVisitor() {
     override fun caseAMaxIntExpression(node: AMaxIntExpression) {
         result = ValueExpression(
             value = (RuntimeConfig.config as BEnvironmentConfig).maxInteger.toString(),
-            type = TypeInt()
+            type = MPPCG_Int
         )
     }
 
     override fun caseAMinIntExpression(node: AMinIntExpression) {
         result = ValueExpression(
             value = (RuntimeConfig.config as BEnvironmentConfig).minInteger.toString(),
-            type = TypeInt()
+            type = MPPCG_Int
         )
     }
 
     override fun caseARealSetExpression(node: ARealSetExpression) {
-        trySetPreviousResultType(node, TypeReal())
-        result = InfiniteSet(TypeReal())
+        result = InfiniteSet(MPPCG_Real)
     }
 
     override fun caseAFloatSetExpression(node: AFloatSetExpression) {
-        trySetPreviousResultType(node, TypeFloat())
-        result = InfiniteSet(TypeFloat())
+        result = InfiniteSet(MPPCG_Float)
     }
 
     override fun caseANatural1SetExpression(node: ANatural1SetExpression) {
-        trySetPreviousResultType(node, TypeNat1())
-        result = InfiniteSet(TypeNat1())
+        result = InfiniteSet(MPPCG_Natural1)
     }
 
     override fun caseANatSetExpression(node: ANatSetExpression) {
-        trySetPreviousResultType(node, TypeNat())
-        result = InfiniteSet(TypeNat())
+        result = InfiniteSet(MPPCG_Nat)
     }
 
     override fun caseANat1SetExpression(node: ANat1SetExpression) {
-        trySetPreviousResultType(node, TypeNat1())
-        result = InfiniteSet(TypeNat1())
+        result = InfiniteSet(MPPCG_Nat1)
     }
 
     override fun caseAIntSetExpression(node: AIntSetExpression) {
-        trySetPreviousResultType(node, TypeInt())
-        result = InfiniteSet(TypeInt())
+        result = InfiniteSet(MPPCG_Int)
     }
 
     override fun caseABoolSetExpression(node: ABoolSetExpression) {
-        trySetPreviousResultType(node, TypeBoolean())
-        result = InfiniteSet(TypeBoolean())
+        result = InfiniteSet(MPPCG_Boolean)
     }
 
     override fun caseAStringSetExpression(node: AStringSetExpression) {
@@ -325,16 +266,9 @@ class ExpressionVisitor : AbstractVisitor() {
 
     override fun caseAMultOrCartExpression(node: AMultOrCartExpression) {
         // TODO: implement cart
-        val prevResult = AbstractVisitor.result
         val left = node.left.convert()!!.setParameterIfCollection()
         val right = node.right.convert()!!.setParameterIfCollection()
         result = BinaryExpression(left, right, BinaryExpressionOperator.MULT)
-
-        if (prevResult !is Expression) return
-
-        if ((prevResult.type == null || prevResult.type is TypeAnonymousCollection)) {
-            prevResult.type = result!!.type
-        }
     }
 
     override fun caseADivExpression(node: ADivExpression) {
@@ -451,25 +385,10 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseAPowSubsetExpression(node: APowSubsetExpression) {
-        val resultBefore = AbstractVisitor.result
-
         result = UnaryCollectionExpression(
             node.expression.convert()!!.setParameterIfCollection(),
             UnaryCollectionOperator.POW
         )
-
-        val collection = (result as UnaryCollectionExpression).collection
-        if (node.parent() is AMemberPredicate && resultBefore is Expression) {
-            val type = (collection as? InfiniteSet)?.setType ?: (collection as? EnumCollectionNode)?.type
-            // is type info
-            println("Case Pow Subset: $result")
-            println("Case Pow Subset Collection: $collection")
-            resultBefore.type = if (type != null) TypeSet(type) else TypeFunction(
-                FunctionType.PARTIAL,
-                (collection.type as TypeCouple).from,
-                (collection.type as TypeCouple).to
-            )
-        }
     }
 
     override fun caseAPow1SubsetExpression(node: APow1SubsetExpression) {
@@ -477,7 +396,6 @@ class ExpressionVisitor : AbstractVisitor() {
             node.expression.convert()!!.setParameterIfCollection(),
             UnaryCollectionOperator.POW1
         )
-        println("POW1: ${result!!.type}")
     }
 
     override fun caseAFinSubsetExpression(node: AFinSubsetExpression) {
@@ -690,16 +608,7 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseASeqExpression(node: ASeqExpression) {
-        val previousResult = AbstractVisitor.result
-        var type = node.expression.convert()!!.type
-        if (type is TypeSet) {
-            type = type.type
-        }
-        result = Sequence(sequenceType = type)
-        if (node.parent() is AMemberPredicate && previousResult is Expression) {
-            // is type info
-            previousResult.type = TypeSequence(type)
-        }
+        result = Sequence()
     }
 
     override fun caseASeq1Expression(node: ASeq1Expression) {
@@ -792,13 +701,13 @@ class ExpressionVisitor : AbstractVisitor() {
 
     override fun caseAGeneralConcatExpression(node: AGeneralConcatExpression) {
         val anonymousSet = node.expression.convert()!!
-        if (anonymousSet !is AnonymousSetCollectionNode) {
+        if (anonymousSet !is AnonymousCollectionNode) {
             throw VisitorException("Unknown set ${anonymousSet::class} for general concat.")
         }
 
         result = BinaryCollectionExpression(
             anonymousSet.elements[0],
-            AnonymousSetCollectionNode(anonymousSet.elements.subList(1, anonymousSet.elements.size)),
+            AnonymousCollectionNode(anonymousSet.elements.subList(1, anonymousSet.elements.size)),
             BinaryCollectionOperator.CONCAT
         )
     }
@@ -937,16 +846,6 @@ class ExpressionVisitor : AbstractVisitor() {
         return find {
             (it as? IdentifierExpression)?.name == name
                     || (it as? ConcreteIdentifierExpression)?.name == "c_$name" // TODO: prefix not hardcoded
-        }
-    }
-
-    private fun trySetPreviousResultType(node: Node, type: Type) {
-        if (AbstractVisitor.result !is Expression) return
-        if (node.parent() !is AMemberPredicate) return
-
-        val expr = AbstractVisitor.result as Expression
-        if ((expr.type == null || expr.type == type || expr.type is TypeAnonymousCollection)) {
-            (AbstractVisitor.result as Expression).type = type
         }
     }
 }

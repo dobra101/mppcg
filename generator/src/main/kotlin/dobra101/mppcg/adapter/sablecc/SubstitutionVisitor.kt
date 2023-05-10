@@ -1,7 +1,6 @@
 package dobra101.mppcg.adapter.sablecc
 
 import de.be4.classicalb.core.parser.node.*
-import dobra101.mppcg.node.*
 import dobra101.mppcg.node.b.CallFunctionExpression
 import dobra101.mppcg.node.b.CallFunctionOperator
 import dobra101.mppcg.node.b.Precondition
@@ -39,31 +38,8 @@ class SubstitutionVisitor : AbstractVisitor() {
             }
 
             // TODO: refactor
-            if (assign.left.type!!::class != rightType::class) {
-                when {
-                    assign.left.type is TypeNumber && rightType is TypeInt -> {}
-                    assign.left.type is TypeNumber && rightType is TypeNat -> {}
-                    assign.left.type is TypeNumber && rightType is TypeNat1 -> {}
-                    assign.left.type is TypeAnonymousCollection && rightType is TypeCollection && assign.left.type == rightType -> {}
-                    assign.left.type is TypeSet && rightType is TypeCollection -> {}
-                    assign.right.type is TypeAnonymousCollection -> {}
-                    rightType is TypeSequence -> {} // TODO: fix
-                    rightType is TypeCollection -> {}
-                    else -> {
-                        println(assign)
-                        throw InvalidTypeException("Types ${assign.left.type} and $rightType do not match.")
-                    }
-                }
-            }
-
-            // set return value
-            if (OperationVisitor.returnValues.contains(assign.left)) {
-                OperationVisitor.operationType = assign.left.type!!
-            }
-
-            // TODO: refactor
             if (left[i] is IdentifierExpression && !machineVisitor.knownIdentifier().contains(left[i])) {
-                assignments.add(DeclarationSubstitution(assign.left.type!!, assign))
+                assignments.add(DeclarationSubstitution(assign, assign.left.type!!))
             } else {
                 assignments.add(assign)
             }

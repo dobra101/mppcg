@@ -1,7 +1,7 @@
 package dobra101.mppcg.node.substitution
 
 import dobra101.mppcg.node.b.*
-import dobra101.mppcg.node.collection.AnonymousSetCollectionNode
+import dobra101.mppcg.node.collection.AnonymousCollectionNode
 import dobra101.mppcg.node.collection.BinaryCollectionExpression
 import dobra101.mppcg.node.collection.EnumCollectionNode
 import dobra101.mppcg.node.collection.EnumEntry
@@ -80,7 +80,7 @@ data class ParallelSubstitution(
             is ValueExpression -> listOf()
             is EnumEntry -> listOf()
             is Couple -> from.getIdentifiers() + to.getIdentifiers()
-            is AnonymousSetCollectionNode -> elements.flatMap { it.getIdentifiers() }
+            is AnonymousCollectionNode -> elements.flatMap { it.getIdentifiers() }
             is BinaryExpression -> left.getIdentifiers() + right.getIdentifiers()
             is BinaryFunctionExpression -> left.getIdentifiers() + right.getIdentifiers()
             is CallFunctionExpression -> expression.getIdentifiers() + parameters.flatMap { it.getIdentifiers() }

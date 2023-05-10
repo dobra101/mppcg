@@ -25,6 +25,8 @@ class Generator {
     fun generate(start: Start, outputPath: String): File {
         val program: Program = start.convert()
 
+        TypeInference().infereTypes(program)
+
         program.handleKeywords()
 
         val result = program.render()
@@ -87,7 +89,7 @@ class Generator {
 
     private fun Expression.getIdentifiersFromExpression() {
         when (this) {
-            is AnonymousSetCollectionNode -> elements.forEach { it.getAllIdentifiers() }
+            is AnonymousCollectionNode -> elements.forEach { it.getAllIdentifiers() }
             is BinaryExpression -> {
                 left.getAllIdentifiers()
                 right.getAllIdentifiers()

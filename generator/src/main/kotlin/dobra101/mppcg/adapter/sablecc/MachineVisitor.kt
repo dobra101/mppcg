@@ -2,7 +2,6 @@ package dobra101.mppcg.adapter.sablecc
 
 import de.be4.classicalb.core.parser.node.*
 import dobra101.mppcg.node.ClassVariables
-import dobra101.mppcg.node.Type
 import dobra101.mppcg.node.b.*
 import dobra101.mppcg.node.collection.CollectionNode
 import dobra101.mppcg.node.expression.Expression
@@ -38,13 +37,6 @@ class MachineVisitor : AbstractVisitor() {
 
     fun recognize(expr: List<Expression>) {
         currentScope.known.addAll(expr)
-    }
-
-    fun setTypeIfKnown(expr: Expression, type: Type?) {
-        val idx = currentScope.known.indexOf(expr)
-        if (idx < 0) return
-        expr.type = type
-        currentScope.known[idx].type = type
     }
 
     // TODO: not as function?

@@ -1,8 +1,8 @@
 package dobra101.mppcg.adapter.sablecc
 
 import de.be4.classicalb.core.parser.node.AOperation
-import dobra101.mppcg.node.Type
-import dobra101.mppcg.node.TypeVoid
+//import dobra101.mppcg.node.Type
+//import dobra101.mppcg.node.TypeVoid
 import dobra101.mppcg.node.b.Operation
 import dobra101.mppcg.node.expression.Expression
 
@@ -13,7 +13,6 @@ class OperationVisitor : AbstractVisitor() {
     companion object {
         var returnValues: List<Expression> = emptyList()
         var parameters: List<Expression> = emptyList()
-        var operationType: Type = TypeVoid()
     }
 
     override fun caseAOperation(node: AOperation) {
@@ -22,15 +21,13 @@ class OperationVisitor : AbstractVisitor() {
         returnValues = node.returnValues.convert()
         parameters = node.parameters.convert()
         machineVisitor.recognize(parameters)
-        operationType = TypeVoid()
 
         // TODO: when more than one name?
         result = Operation(
             name = node.opName[0].text,
             parameters = parameters,
             returnValues = returnValues,
-            body = node.operationBody.convert(),
-            type = operationType
+            body = node.operationBody.convert()
         )
         machineVisitor.currentScope = machineVisitor.currentScope.parent!!
     }

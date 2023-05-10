@@ -43,7 +43,7 @@ abstract class OutputLanguageEnvironment : EnvironmentUtils(), BEnvironment {
     }
 
     /* Expression */
-    abstract fun AnonymousSetCollectionNode.renderSelf(): RenderResult
+    abstract fun AnonymousCollectionNode.renderSelf(): RenderResult
     abstract fun BinaryExpression.renderSelf(): RenderResult
     abstract fun EnumCollectionNode.renderSelf(): RenderResult
     abstract fun EnumEntry.renderSelf(): RenderResult
@@ -87,7 +87,7 @@ abstract class OutputLanguageEnvironment : EnvironmentUtils(), BEnvironment {
 
     private fun callExpression(node: Expression): RenderResult {
         return when (node) {
-            is AnonymousSetCollectionNode -> node.renderSelf()
+            is AnonymousCollectionNode -> node.renderSelf()
             is BinaryExpression -> node.renderSelf()
             is EnumCollectionNode -> node.renderSelf()
             is EnumEntry -> node.renderSelf()

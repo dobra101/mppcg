@@ -1,17 +1,13 @@
 package dobra101.mppcg.node.b
 
-import dobra101.mppcg.node.Type
-import dobra101.mppcg.node.TypeCollection
-import dobra101.mppcg.node.TypeFunction
-import dobra101.mppcg.node.collection.CollectionType
 import dobra101.mppcg.node.expression.Expression
 
-// TODO: fix expression types
+// TODO: split into multiple files
 data class CallFunctionExpression(
     val expression: Expression,
     val parameters: List<Expression>,
     var operator: CallFunctionOperator = CallFunctionOperator.GET
-) : Expression(null, "callFunction")
+) : Expression("callFunction", null)
 
 enum class CallFunctionOperator : BMethod {
     GET,
@@ -21,13 +17,13 @@ enum class CallFunctionOperator : BMethod {
 data class UnaryFunctionExpression(
     val expression: Expression,
     val operator: UnaryFunctionOperator
-) : Expression(getType(expression, operator), "unaryFunctionExpression")
+) : Expression("unaryFunctionExpression")
 
 data class BinaryFunctionExpression(
     val left: Expression,
     val right: Expression,
     val operator: BinaryFunctionOperator
-) : Expression(getType(left, right, operator), "binaryFunctionExpression")
+) : Expression("binaryFunctionExpression")
 
 enum class UnaryFunctionOperator : BMethod {
     DOMAIN,
@@ -35,32 +31,6 @@ enum class UnaryFunctionOperator : BMethod {
     REVERSE
 }
 
-private fun getType(left: Expression, right: Expression, operator: BinaryFunctionOperator): Type? {
-    return when (operator) {
-        BinaryFunctionOperator.DOMAIN_RESTRICTION,
-        BinaryFunctionOperator.DOMAIN_SUBTRACTION -> right.type
-
-        BinaryFunctionOperator.IMAGE -> {
-            if (right is Function) {
-                (right.type as TypeFunction).to
-            } else {
-                right.type
-            }
-        }
-
-        BinaryFunctionOperator.OVERWRITE,
-        BinaryFunctionOperator.RANGE_RESTRICTION,
-        BinaryFunctionOperator.RANGE_SUBTRACTION -> left.type
-
-        BinaryFunctionOperator.FORWARD_COMPOSITION -> {
-            left as Function
-            right as Function
-            TypeFunction(left.functionType, (left.type as TypeFunction).from, (right.type as TypeFunction).to)
-        }
-
-        BinaryFunctionOperator.ITERATE -> TODO()
-    }
-}
 
 enum class BinaryFunctionOperator : BMethod {
     DOMAIN_RESTRICTION,
@@ -71,14 +41,4 @@ enum class BinaryFunctionOperator : BMethod {
     RANGE_SUBTRACTION,
     FORWARD_COMPOSITION,
     ITERATE
-}
-
-// TODO: duplicate
-private fun getType(expression: Expression, operator: UnaryFunctionOperator): Type? {
-    // TODO: fix types
-    return when (operator) {
-        UnaryFunctionOperator.DOMAIN -> TypeCollection(CollectionType.Set)
-        UnaryFunctionOperator.RANGE -> TypeCollection(CollectionType.Set)
-        UnaryFunctionOperator.REVERSE -> expression.type
-    }
 }

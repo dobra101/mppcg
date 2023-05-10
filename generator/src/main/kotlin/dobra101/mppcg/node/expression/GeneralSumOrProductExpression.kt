@@ -7,7 +7,7 @@ data class GeneralSumOrProductExpression(
     val predicate: Predicate,
     val expression: Expression,
     val operation: SumOrProductOperation
-) : Expression(expression.type, "generalSumOrProductExpression")
+) : Expression("generalSumOrProductExpression", expression.type)
 
 enum class SumOrProductOperation {
     SUM,

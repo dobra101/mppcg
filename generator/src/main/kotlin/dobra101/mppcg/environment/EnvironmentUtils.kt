@@ -1,6 +1,6 @@
 package dobra101.mppcg.environment
 
-import dobra101.mppcg.node.Type
+//import dobra101.mppcg.node.Type
 import dobra101.mppcg.node.b.*
 import dobra101.mppcg.node.collection.BinaryCollectionOperator
 import dobra101.mppcg.node.collection.CollectionNode
@@ -9,6 +9,7 @@ import dobra101.mppcg.node.expression.BinaryExpressionOperator
 import dobra101.mppcg.node.expression.Expression
 import dobra101.mppcg.node.expression.IdentifierExpression
 import dobra101.mppcg.node.expression.UnaryExpressionOperator
+import dobra101.mppcg.node.Type
 import dobra101.mppcg.node.predicate.BinaryPredicateOperator
 import dobra101.mppcg.node.predicate.LogicPredicateOperator
 import dobra101.mppcg.node.predicate.Predicate
@@ -131,7 +132,7 @@ abstract class EnvironmentUtils {
         }
     }
 
-    open fun type2String(type: Type?): String = ""
+    open fun type2String(type: Type): String = ""
 
     @JvmName("renderExpressionList")
     fun List<Expression>.render(): List<String> {

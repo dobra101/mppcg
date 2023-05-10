@@ -52,7 +52,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     /* ---------- EXPRESSIONS ---------- */
-    override fun AnonymousSetCollectionNode.renderSelf(): RenderResult {
+    override fun AnonymousCollectionNode.renderSelf(): RenderResult {
         return loadOrEvaluate(this) {
             val expanded = ExpandedExpressionList.of(elements)
             if (expanded.before.isBlank()) {
@@ -72,23 +72,16 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
 
     override fun BinaryExpression.renderSelf(): RenderResult {
         return loadOrEvaluate(this) {
-
             val expanded = ExpandedBinary.of(left, right)
+            val isInfiniteSet = operator == BinaryExpressionOperator.POW || left.type is TypeSet || right.type is TypeSet
 
-            val infiniteSet = operator == BinaryExpressionOperator.POW || (
-                    (left is InfiniteSet) || (right is InfiniteSet)
-                            || (left is IntervalExpression) || (right is IntervalExpression)
-                            || (left.type is TypeInterval) || (right.type is TypeInterval)
-                            || (left is CollectionNode) || (right is CollectionNode)
-                            || (left is AnonymousSetCollectionNode) || (right is AnonymousSetCollectionNode)
-                    )
             val map = mapOf(
                 "lhs" to expanded.lhs,
                 "rhs" to expanded.rhs,
-                "operator" to operator2String(operator, infiniteSet),
+                "operator" to operator2String(operator, isInfiniteSet),
                 "exprCount" to exprCount,
                 "math" to isMathOperator(operator),
-                "infiniteSet" to infiniteSet
+                "infiniteSet" to isInfiniteSet
             )
 
             // TODO: add to evaluated?
@@ -148,6 +141,11 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
                 return@loadOrEvaluate RenderResult(expr(name))
             }
 
+            if (node.type is TypeEnumValue) {
+                add(node, "'$name'")
+                return@loadOrEvaluate RenderResult("'$name'")
+            }
+
             // TODO: not hardcoded
             if (ctrlStructIdentifier.contains(node)) {
                 add(node, expr("q_$name"))
@@ -202,11 +200,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
 
     // HINT: Same for Java and Prolog
     override fun ValueExpression.renderSelf(): RenderResult {
-        val map = if (type is TypeBoolean && (type as TypeBoolean).value != null) {
-            mapOf("value" to ((type as TypeBoolean).value == BooleanValue.TRUE).toString())
-        } else {
-            mapOf("value" to value)
-        }
+        val map = mapOf("value" to value)
 
         return RenderResult(renderTemplate(map))
     }
@@ -226,8 +220,8 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
 
         fun ValueExpression.rendered(): String {
             return when (type) {
-                is TypeBoolean -> render().rendered
-                is TypeInt -> render().rendered
+                MPPCG_Boolean -> render().rendered
+                is TypeNumber -> render().rendered
                 else -> ""
             }
         }
@@ -289,8 +283,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             BinaryPredicateOperator.NOT_EQUAL
         )
 
-        val infiniteSet =
-            (left is IntervalExpression || right is IntervalExpression || left.type is TypeCollection || right.type is TypeCollection)
+        val infiniteSet = left.type is TypeSet || right.type is TypeSet
         val map = mapOf(
             "lhs" to expanded.lhs,
             "rhs" to expanded.rhs,
@@ -361,11 +354,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun ValuePredicate.renderSelf(): RenderResult {
-        val map = if (type is TypeBoolean) {
-            mapOf("value" to (type as TypeBoolean).value?.name?.lowercase())
-        } else {
-            mapOf("value" to value)
-        }
+        val map = mapOf("value" to value)
         return RenderResult(renderTemplate(map))
     }
 
@@ -585,7 +574,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         val map = mapOf(
             "lhs" to expanded.lhs,
             "rhs" to expanded.rhs,
-            "type" to (type as TypeFunction).type,
+            "type" to functionType,
             "mapType" to mapType
         )
         return RenderResult(renderTemplate(map), info = mapOf("before" to IndividualInfo(expanded.before)))
@@ -661,7 +650,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
 
     override fun ComprehensionSet.renderSelf(): RenderResult {
         comprehensionSetIdentifier += identifiers.filterIsInstance<IdentifierExpression>()
-        val map = evaluatedExpressions.returnWithReset<Map<String, Any>> {
+        val map = evaluatedExpressions.returnWithReset {
             mapOf(
                 "identifiers" to identifiers.render(),
                 "predicates" to predicates.render(),
@@ -716,7 +705,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     override fun GeneralSumOrProductExpression.renderSelf(): RenderResult {
         ctrlStructIdentifier += identifiers
 
-        val map = evaluatedExpressions.returnWithReset<Map<String, Any?>> {
+        val map = evaluatedExpressions.returnWithReset {
             mapOf(
                 "identifiers" to identifiers.render(),
                 "predicate" to predicate.render(),
@@ -732,7 +721,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun InfiniteSet.renderSelf(): RenderResult {
-        return RenderResult(renderTemplate(mapOf("type" to type2String(type))))
+        return RenderResult(renderTemplate(mapOf("type" to type2String(type!!))))
     }
 
     override fun LambdaExpression.renderSelf(): RenderResult {
@@ -880,7 +869,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         stateCount = stateCountBefore
         exprCount = exprCountBefore
 
-        val map = evaluatedExpressions.returnWithReset<Map<String, Any?>> {
+        val map = evaluatedExpressions.returnWithReset {
             mapOf(
                 "name" to currentOperation,
                 "count" to thisQuantifierCount,
@@ -1182,16 +1171,20 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         return concreteVariables.find { (it as? ConcreteIdentifierExpression)?.name == cc.name } != null
     }
 
-    override fun type2String(type: Type?): String {
+    override fun type2String(type: Type): String {
         return when (type) {
-            is TypeNat1 -> "'NAT1'"
-            is TypeNat -> "'NAT'"
-            is TypeInt -> "'INT'"
-            is TypeInteger -> "'INTEGER'"
-            is TypeNatural -> "'NATURAL'"
+            MPPCG_Nat1 -> "'NAT1'"
+            MPPCG_Nat -> "'NAT'"
+            MPPCG_Int -> "'INT'"
+            MPPCG_Integer -> "'INTEGER'"
+            MPPCG_Natural -> "'NATURAL'"
+            MPPCG_Natural1 -> "'NATURAL1'"
+            MPPCG_Boolean -> "'BOOL'"
             is TypeSet -> type2String(type.type)
-            is TypeBoolean -> "'BOOL'"
-            else -> TODO("Infinite Set not implemented (${type!!::class.simpleName})")
+            else -> {
+                println(type)
+                TODO("type2String not implemented (${type::class.simpleName})")
+            }
         }
     }
 

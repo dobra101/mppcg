@@ -27,5 +27,3 @@ data class Invariant(
         }
     }
 }
-
-class InvariantException(msg: String) : Exception(msg)
