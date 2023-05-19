@@ -43,7 +43,7 @@ class Generator {
             .map { it.trim() }
             .toSet()
 
-        getAllIdentifiers().forEach { it.getAllIdentifiers() }
+        getAllIdentifiers().forEach { it.getAllIdentifiers() } // TODO: kann man das generisch halten? -> jeder knoten müsste liste mit allen childs haben
 
         // change names of all identifiers
         for (keyword in keywords) {

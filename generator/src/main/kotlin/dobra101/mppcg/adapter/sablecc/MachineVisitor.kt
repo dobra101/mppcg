@@ -10,6 +10,7 @@ import dobra101.mppcg.node.predicate.BinaryPredicate
 import dobra101.mppcg.node.predicate.BinaryPredicateOperator
 import dobra101.mppcg.node.predicate.Predicate
 
+// TODO: scoping generic?
 class MachineVisitor : AbstractVisitor() {
     override var result: Machine? = null
 

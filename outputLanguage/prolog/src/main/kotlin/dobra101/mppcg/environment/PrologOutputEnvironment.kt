@@ -162,7 +162,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             val rendered =
                 if (isConstant(node as IdentifierExpression)) {
                     // use constant prefix
-                    val cc = ConcreteIdentifierExpression(name, ValueExpression(), type)
+                    val cc = ConcreteIdentifierExpression(name, node, type)
                     "${cc.name}(${expr(exprCount)})"
                 } else {
                     val map = mapOf(
@@ -219,7 +219,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         }
 
         fun ValueExpression.rendered(): String {
-            return when (type) {
+            return when (valueType) {
                 MPPCG_Boolean -> render().rendered
                 is TypeNumber -> render().rendered
                 else -> ""
@@ -1155,19 +1155,19 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         }
     }
 
-    internal fun isConstant(identifierExpression: IdentifierExpression): Boolean {
+    private fun isConstant(identifierExpression: IdentifierExpression): Boolean {
         if (constants.contains(identifierExpression)) return true
         if (concreteConstants.contains(identifierExpression)) return true
 
-        val cc = ConcreteIdentifierExpression(identifierExpression.name, ValueExpression(), identifierExpression.type)
+        val cc = ConcreteIdentifierExpression(identifierExpression.name, identifierExpression, identifierExpression.type)
         return concreteConstants.find { (it as? ConcreteIdentifierExpression)?.name == cc.name } != null
     }
 
-    internal fun isVariable(identifierExpression: IdentifierExpression): Boolean {
+    private fun isVariable(identifierExpression: IdentifierExpression): Boolean {
         if (variables.variables.contains(identifierExpression)) return true
         if (concreteVariables.contains(identifierExpression)) return true
 
-        val cc = ConcreteIdentifierExpression(identifierExpression.name, ValueExpression(), identifierExpression.type)
+        val cc = ConcreteIdentifierExpression(identifierExpression.name, identifierExpression, identifierExpression.type)
         return concreteVariables.find { (it as? ConcreteIdentifierExpression)?.name == cc.name } != null
     }
 

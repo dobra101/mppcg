@@ -160,7 +160,11 @@ abstract class OutputLanguageEnvironment : EnvironmentUtils(), BEnvironment {
         st.importTemplates(STGroupFile("$templateDir/substitutions.stg"))
         st.importTemplates(STGroupFile("$templateDir/optimizer.stg"))
         st.importTemplates(STGroupFile("$templateDir/common.stg"))
-        st.importTemplates(STGroupFile("$templateDir/runCfg.stg"))
+        try {
+            st.importTemplates(STGroupFile("$templateDir/runCfg.stg"))
+        } catch (e: IllegalArgumentException) {
+            // to nothing, file is not necessary
+        }
         return st
     }
 

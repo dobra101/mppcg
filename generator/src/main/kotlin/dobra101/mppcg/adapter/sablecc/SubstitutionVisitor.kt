@@ -18,7 +18,8 @@ class SubstitutionVisitor : AbstractVisitor() {
         val assignments = mutableListOf<Substitution>()
 
         for (i: Int in left.indices) {
-            val rightType = right[i].type
+            // TODO: remove types
+//            val rightType = right[i].type
 
             val index = machineVisitor.variables.indexOf(left[i])
             if (index != -1) {
@@ -27,19 +28,19 @@ class SubstitutionVisitor : AbstractVisitor() {
             }
 
             // left type is null and right has type
-            left[i].type = left[i].type ?: rightType
+//            left[i].type = left[i].type ?: rightType
             if (left[i] is CallFunctionExpression) {
                 (left[i] as CallFunctionExpression).operator = CallFunctionOperator.SET
             }
             val assign = AssignSubstitution(left[i], right[i])
-            if (rightType == null) {
-                assignments.add(assign)
-                continue
-            }
+//            if (rightType == null) {
+//                assignments.add(assign)
+//                continue
+//            }
 
             // TODO: refactor
             if (left[i] is IdentifierExpression && !machineVisitor.knownIdentifier().contains(left[i])) {
-                assignments.add(DeclarationSubstitution(assign, assign.left.type!!))
+                assignments.add(DeclarationSubstitution(assign))
             } else {
                 assignments.add(assign)
             }

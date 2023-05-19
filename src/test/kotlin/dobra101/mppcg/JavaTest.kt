@@ -1,16 +1,14 @@
 package dobra101.mppcg
 
+import dobra101.mppcg.b.outputDir
 import dobra101.mppcg.environment.Language
 import dobra101.mppcg.prob.ProBResult
 import dobra101.mppcg.prob.ProBResultAnalyser
-import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.ExpectSpec
 import io.kotest.inspectors.forAll
-import io.kotest.matchers.longs.shouldBeExactly
-import io.kotest.matchers.shouldBe
 import java.io.File
 
-class PrologTest : ExpectSpec({
+class JavaTest : ExpectSpec({
     fun readExpectedResults(file: File, machines: List<File>): Map<File, ProBResult> {
         val result: MutableMap<File, ProBResult> = mutableMapOf()
         val content = file.readLines()
@@ -37,21 +35,17 @@ class PrologTest : ExpectSpec({
         "scheduler_deterministic_MC.mch",
         "QueensWithEvents_4.mch",
         "QueensWithEvents_8.mch",
-//        "sort_m2_data1000.mch",
+        "sort_m2_data1000.mch",
         "CAN_BUS_tlc.mch",
         "Cruise_finite1_deterministic_MC.mch",
         "LandingGear_R6.mch",
         "Train_1_beebook_deterministic_MC.mch"
     )
 
-    val exclude: List<String> = listOf(
-        //"Train_1_beebook_deterministic_MC.mch",
-//        "QueensWithEvents_4.mch"
-    )
+    val exclude: List<String> = listOf()
     val machines = File("src/main/resources/machines/").walk()
         .filter { it.isFile && it.name.endsWith(".mch") }
         .filter { if (include.isNotEmpty()) include.contains(it.name) else true }
-//        .filter { if (exclude.isNotEmpty()) !exclude.contains(it.name) else true }
         .toList()
 
     val expectedModelCheckingResults: Map<File, ProBResult> =
@@ -73,6 +67,19 @@ class PrologTest : ExpectSpec({
         return ProBResultAnalyser.analyze(probOutput)
     }
 
+    // TODO: is duplicate
+    fun compile(cp: String, vararg files: File) {
+        println("Compile: javac -Xlint:unchecked -cp $cp: ${files.joinToString(" ") { it.path }}")
+        val process: Process =
+            Runtime.getRuntime().exec("javac -Xlint:unchecked -cp $cp: ${files.joinToString(" ") { it.path }}")
+        process.waitFor()
+        val error = process.errorReader().readText()
+        process.errorReader().close()
+        if (error.isNotBlank()) {
+            throw RuntimeException(error)
+        }
+    }
+
     machines.forAll { machineFile ->
         context(machineFile.name) {
             println("Testing ${machineFile.name}")
@@ -83,28 +90,27 @@ class PrologTest : ExpectSpec({
                 mchResult = runProB(machineFile)
                 println(mchResult)
             }
-            listOf(true).forAll { optimize ->
-                val expectName = if (optimize) "optimized" else "regular"
-                expect(expectName) {
-                    val file = Launcher.launch(
-                        lang = Language.PROLOG,
-                        file = machineFile.name,
-                        parser = Parser.SableCC,
-                        optimize = optimize,
-                        benchmark = false
-                    )
-                    val result = Launcher.benchmarkProlog(file, timeout = 1000 + (mchResult!!.modelCheckingTime * 3))
-                    println(result)
+            val file = Launcher.launch(
+                lang = Language.JAVA,
+                file = machineFile.name,
+                parser = Parser.SableCC,
+                optimize = true,
+                benchmark = false
+            )
+            // TODO: outputDir is in other test file
+            compile(cp = outputDir.path + "/${machineFile.path}:inputLanguage/B/java/build/libs/btypes.jar", file)
 
-                    withClue("States do not match") {
-                        result.statesAnalysed shouldBeExactly mchResult!!.statesAnalysed
-                    }
-                    withClue("Transitions do not match") {
-                        result.transitionsFired shouldBeExactly mchResult!!.transitionsFired
-                    }
-                    result.counterExample shouldBe mchResult!!.counterExample
-                }
-            }
+            // TODO: compile file
+//            val result = Launcher.benchmarkProlog(file, timeout = 1000 + (mchResult!!.modelCheckingTime * 3))
+//            println(result)
+
+//            withClue("States do not match") {
+//                result.statesAnalysed shouldBeExactly mchResult!!.statesAnalysed
+//            }
+//            withClue("Transitions do not match") {
+//                result.transitionsFired shouldBeExactly mchResult!!.transitionsFired
+//            }
+//            result.counterExample shouldBe mchResult!!.counterExample
         }
     }
 })

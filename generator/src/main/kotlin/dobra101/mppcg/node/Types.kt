@@ -27,19 +27,19 @@ data class TypeVariable(var instance: Type? = null) : Type {
     }
 }
 
-open class TypeOperator(open val name: String, open val types: List<Type>) : Type {
+open class TypeOperator(open val name: String, open var types: List<Type>) : Type {
     override fun toString(): String {
         return "TypeOperator(name=$name, types=$types)"
     }
 }
 
-data class TypeRelation(val from: Type, val to: Type) :
+data class TypeRelation(var from: Type, var to: Type) :
     TypeSet(TypeSet(TypeOperator("couple", listOf(from, to))))
 
-open class TypeSet(val type: Type) : TypeOperator(name = "set", types = listOf(type))
+open class TypeSet(var type: Type) : TypeOperator(name = "set", types = listOf(type))
 
 // TODO: needed?
-open class BaseType(override val name: String, override val types: List<Type>) : TypeOperator(name, types)
+open class BaseType(override val name: String, override var types: List<Type>) : TypeOperator(name, types)
 
 data class TypeNumber(override val name: String) : BaseType(name, listOf())
 

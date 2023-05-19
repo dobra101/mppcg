@@ -2,7 +2,7 @@ package dobra101.mppcg.node.collection
 
 data class EnumCollectionNode(
     override var name: String,
-    override val elements: List<EnumEntry>
+    override val elements: List<EnumEntry>,
 ) : CollectionNode(name, elements, CollectionType.Enum, "enumCollectionExpression") {
     override fun copy(): CollectionNode {
         return EnumCollectionNode(name, elements)

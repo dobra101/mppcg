@@ -7,7 +7,7 @@ data class CallFunctionExpression(
     val expression: Expression,
     val parameters: List<Expression>,
     var operator: CallFunctionOperator = CallFunctionOperator.GET
-) : Expression("callFunction", null)
+) : Expression("callFunction")
 
 enum class CallFunctionOperator : BMethod {
     GET,

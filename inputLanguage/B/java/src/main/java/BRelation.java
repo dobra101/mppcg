@@ -17,6 +17,10 @@ public class BRelation<K extends Comparable<K>, V extends Comparable<V>> impleme
         this.entries.addAll(Arrays.asList(entries));
     }
 
+    public FunctionTypeChecker<K, V> typeCheck() {
+        return new FunctionTypeChecker<>(this);
+    }
+
     public List<Object> image(BInterval interval) {
         List<Object> result = new ArrayList<>();
         for (BCouple<K, V> entry : entries) {

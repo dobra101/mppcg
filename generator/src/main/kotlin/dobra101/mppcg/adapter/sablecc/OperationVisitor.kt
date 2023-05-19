@@ -19,6 +19,7 @@ class OperationVisitor : AbstractVisitor() {
         machineVisitor.currentScope = Scope(machineVisitor.scope)
 
         returnValues = node.returnValues.convert()
+        returnValues.forEach { machineVisitor.currentScope.known.remove(it) }
         parameters = node.parameters.convert()
         machineVisitor.recognize(parameters)
 
@@ -29,6 +30,8 @@ class OperationVisitor : AbstractVisitor() {
             returnValues = returnValues,
             body = node.operationBody.convert()
         )
+        parameters = emptyList()
+        returnValues = emptyList()
         machineVisitor.currentScope = machineVisitor.currentScope.parent!!
     }
 }

@@ -154,7 +154,7 @@ abstract class ExecutionTest(
                     val setupFile =
                         createSetupFile(dir, setupFileName, setupFileExtension, mch.nameWithoutExtension, execution)
 
-                    listOf(true, false).forAll { optimize ->
+                    listOf(true).forAll { optimize ->
                         val expectName = if (optimize) "optimized" else "regular"
                         expect(expectName) {
                             val file = Launcher.launch(

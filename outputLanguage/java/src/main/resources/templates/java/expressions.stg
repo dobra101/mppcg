@@ -25,10 +25,12 @@ binaryCollectionExpression(lhs, rhs, operator, rhsIsList) ::= <<
 <lhs>.<operator>(<rhs>)<endif>
 >>
 
-enumCollectionExpression(name, elements) ::= <<
+enumCollectionExpression(name, elements, isParameter) ::= <<
+<if(isParameter)>new BSet\<<name>\>(<elements: {elem | <name>.<elem>}; separator=", ">)<else>
 private enum <name> {
     <elements; separator=", ">
 }
+<endif>
 >>
 
 enumEntryExpression(name, enum) ::= <<

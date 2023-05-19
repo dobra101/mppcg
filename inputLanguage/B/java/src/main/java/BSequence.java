@@ -2,7 +2,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class BSequence<T extends Comparable<T>> {
+public class BSequence<T extends Comparable<T>> implements Comparable<BSequence<T>> {
     final List<T> elements;
 
     public BSequence(List<T> elements) {
@@ -64,5 +64,11 @@ public class BSequence<T extends Comparable<T>> {
     public String toString() {
         // TODO: only for execTest
         return elements.toString().replace("[", "{").replace("]", "}");
+    }
+
+    @Override
+    public int compareTo(final BSequence<T> o) {
+        if (elements == o.elements) return 0;
+        return -1;
     }
 }

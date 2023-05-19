@@ -1,7 +1,7 @@
 import java.util.*;
 
 @SuppressWarnings("unchecked")
-public class BCouple<K, V> {
+public class BCouple<K, V extends Comparable<V>> {
     final K left;
     final V right;
 

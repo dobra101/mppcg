@@ -8,24 +8,49 @@ import dobra101.mppcg.node.expression.*
 import dobra101.mppcg.node.predicate.*
 import dobra101.mppcg.node.substitution.*
 import kotlin.math.min
+import kotlin.reflect.*
+import kotlin.reflect.full.*
+import kotlin.reflect.jvm.isAccessible
 
 class TypeInference {
+
+    var indent = 0
 
     fun infereTypes(node: Program) {
         val env: MutableMap<MPPCGNode, Type> = mutableMapOf()
         analyse(node, env)
-        env.forEach {
-            if (it.key is Expression) {
-                if ((it.key as Expression).type == null) {
-                    (it.key as Expression).type = it.value
-                }
-                (it.key as Expression).type =
-                    prune((it.key as Expression).type!!) // TODO: exception if type variable is kept
-            }
-        }
+        env.filterKeys { it is ConcreteIdentifierExpression }
+            .forEach {
+                (it.key as ConcreteIdentifierExpression).type =
+                    typeFromEnv((it.key as ConcreteIdentifierExpression).name.removePrefix("c_"), env)
+            } // TODO: refactor
+        pruneAll(node)
     }
 
-    // ast muss gewisse nodes mit typen haben
+    private fun pruneAll(node: MPPCGNode) {
+        indent++
+//        println("  ".repeat(indent) + "$node")
+        val mppcgnode = typeOf<MPPCGNode?>()
+        val collection = typeOf<Collection<MPPCGNode>>()
+        val type = typeOf<Type?>()
+        val string = typeOf<String?>()
+        node::class.memberProperties
+            .filter { !it.returnType.isSubtypeOf(string) }
+            .forEach { kp ->
+                if (kp.visibility == KVisibility.PRIVATE) return@forEach
+                if (kp.call(node) == node || (node is ConcreteIdentifierExpression && kp.name == "node")) return@forEach
+
+                if (kp.returnType.isSubtypeOf(mppcgnode)) {
+                    kp.call(node)?.let { inst -> pruneAll(inst as MPPCGNode) }
+                } else if (kp.returnType.isSubtypeOf(collection)) {
+                    (kp.call(node) as Collection<*>).forEach { entry -> pruneAll(entry as MPPCGNode) }
+                } else if (kp.returnType.isSubtypeOf(type)) {
+//                    if (node is Expression) println("  ".repeat(indent) + "===> $node ${node.type}")
+                    (kp as? KMutableProperty1<out MPPCGNode, *>)?.setter?.call(node, prune(kp.call(node) as Type))
+                }
+            }
+        indent--
+    }
 
     // env: Jeder Wertvariablen wird ein Typ zugeordnet
     private fun analyse(node: MPPCGNode, env: MutableMap<MPPCGNode, Type>): Type {
@@ -38,13 +63,16 @@ class TypeInference {
             }
 
             is IdentifierExpression -> {
+                if (!env.contains(node)) {
+                    env[node] = TypeVariable()
+                }
                 val type = typeFromEnv(node, env, true)
-                if (node.type == null) node.type = prune(type)
-                return prune(type)
+                if (node.type == null) node.type = type
+                return type
             }
 
             is ValueExpression -> {
-                return node.type!!
+                return node.valueType
             }
 
             is BinaryExpression -> {
@@ -110,13 +138,29 @@ class TypeInference {
             }
 
             is AnonymousCollectionNode -> {
-                if (node.elements.isEmpty()) return TypeVariable()
-
                 val types = node.elements.map { analyse(it, env) }.toList()
                 for (i in 1 until types.size) {
                     unify(types[0], types[i])
                 }
-                val type = TypeSet(types[0])
+                val type = TypeSet(
+                    if (node.elements.isEmpty()) {
+                        if (node.collectionType != null) {
+                            node.collectionType!!
+                        } else {
+                            TypeVariable()
+                        }
+                    } else {
+                        types[0]
+                    }
+                )
+                if (node.collectionType != null) {
+                    if (node.elements.isNotEmpty()) {
+                        unify(node.collectionType!!, types[0])
+                    }
+                } else {
+                    node.collectionType = type.type
+                }
+
                 node.type = type
                 return type
             }
@@ -137,15 +181,20 @@ class TypeInference {
                     env[it] = TypeVariable()
                     analyse(it, env)
                 }
-                node.returnValues.forEach { analyse(it, env) }
+                node.returnValues.forEach {
+                    env[it] = TypeVariable()
+                    analyse(it, env)
+                }
                 node.body?.let { analyse(it, env) }
 
                 if (node.returnValues.isEmpty()) return MPPCG_Void
-                if (node.returnValues.size == 1) return node.returnValues[0].type!!
-                val type = TypeSet(node.returnValues[0].type!!)
+                val type = if (node.returnValues.size == 1) {
+                    node.returnValues[0].type!!
+                } else {
+                    TypeSet(node.returnValues[0].type!!)
+                }
                 node.type = type
-                env.clear()
-                env.putAll(envBefore)
+                loadOldEnv(env, envBefore)
                 env[node] = node.type
                 return type
             }
@@ -158,7 +207,9 @@ class TypeInference {
                 node.concreteVariables.forEach { env[it] = TypeVariable() }
                 node.sets.forEach {
                     val elementType = TypeOperator(it.name, listOf())
-                    env[it] = TypeSet(elementType)
+                    val type = TypeSet(elementType)
+                    env[it] = type
+                    it.type = type
                     it.elements.forEach { e -> analyse(e, env) }
                 }
 
@@ -324,6 +375,7 @@ class TypeInference {
                 }
                 val toType = TypeVariable()
                 unify(functionType, TypeSet(TypeOperator("couple", listOf(fromType, toType))))
+                node.type = toType
                 return toType
             }
 
@@ -339,9 +391,8 @@ class TypeInference {
                     if (identifierTypes.size == 1) identifierTypes[0] else TypeOperator("list", identifierTypes)
 
                 val type = TypeSet(TypeOperator("couple", listOf(fromType, exprType)))
-                env.clear()
-                env.putAll(envBefore)
-                node.type = type
+                loadOldEnv(env, envBefore)
+                node.type = type // TODO: remove
                 return type
             }
 
@@ -360,15 +411,50 @@ class TypeInference {
                         identifierTypes
                     )
                 )
-                env.clear()
-                env.putAll(envBefore)
-                node.type = type
+                loadOldEnv(env, envBefore)
+                node.type = type // TODO: remove
                 return type
             }
 
             is EnumEntry -> {
                 val type = TypeEnumValue(node.enum)
                 env[node] = type
+                node.type = type
+                return type
+            }
+
+            is WhileSubstitution -> {
+                analyse(node.condition, env)
+                analyse(node.body, env)
+            }
+
+            is DeclarationSubstitution -> {
+                analyse(node.assignment, env)
+            }
+
+            is Sequence -> {
+                node.elements.forEach { analyse(it, env) }
+                val type = TypeOperator(
+                    "sequence",
+                    listOf((if (node.elements.isNotEmpty()) node.elements.first().type!! else TypeVariable()))
+                )
+                env[node] = type
+                node.type = type
+                return type
+            }
+
+            is BinarySequenceExpression -> {
+                val leftType = analyse(node.left, env)
+                val rightType = analyse(node.right, env)
+                val type = when (node.operator) {
+                    BinarySequenceExpressionOperator.APPEND -> leftType
+                    BinarySequenceExpressionOperator.PREPEND -> rightType
+                    else -> {
+                        println("---------> $node")
+                        TODO("BinarySequenceExpression Type")
+                    }
+                }
+                node.type = type
                 return type
             }
 
@@ -376,6 +462,7 @@ class TypeInference {
                 TODO("Not implemented for class: ${node.javaClass}")
             }
         }
+
         return TypeVariable()
     }
 
@@ -403,8 +490,8 @@ class TypeInference {
                         unify(leftType, rightType)
                     }
                 } else {
-                    if ((rightType as TypeSet).type is TypeEnumValue) {
-                        unify(leftType, TypeOperator((rightType.type as TypeEnumValue).name, listOf()))
+                    if ((rightType as? TypeSet)?.type is TypeEnumValue) {
+                        unify(leftType, TypeOperator(((rightType as TypeSet).type as TypeEnumValue).name, listOf()))
                     } else {
                         unify(TypeSet(leftType), rightType)
                     }
@@ -419,8 +506,7 @@ class TypeInference {
                 }
                 analyse(node.predicate, env)
                 node.quantification?.let { analyse(it, env) }
-                env.clear()
-                env.putAll(envBefore)
+                loadOldEnv(env, envBefore)
             }
 
             is ValuePredicate -> {
@@ -436,6 +522,25 @@ class TypeInference {
         return MPPCG_Boolean
     }
 
+    // TODO: needed?
+    private fun loadOldEnv(env: MutableMap<MPPCGNode, Type>, envBefore: MutableMap<MPPCGNode, Type>) {
+        // TODO: needed?
+        env.filterKeys { !envBefore.containsKey(it) }
+            .forEach {
+                val value = prune(it.value)
+                if (it.key is Expression) {
+                    (it.key as Expression).type = value
+                } else if (it.key is Operation) {
+                    (it.key as Operation).type = value
+                } else {
+                    TODO("Not implemented")
+                }
+            }
+        env.clear()
+        env.putAll(envBefore)
+    }
+
+    // TODO: remove unsed parameter
     private fun typeFromEnv(node: MPPCGNode, env: Map<MPPCGNode, Type>, acceptTypeEnum: Boolean = false): Type {
         val type = env[node]
         if (type != null) return type
@@ -502,6 +607,16 @@ class TypeInference {
         if (type is TypeVariable && type.instance != null) {
             type.instance = prune(type.instance!!)
             return type.instance!!
+        }
+        if (type is TypeRelation) {
+            type.from = prune(type.from)
+            type.to = prune(type.to)
+        }
+        if (type is TypeSet) {
+            type.type = prune(type.type)
+        }
+        if (type is TypeOperator && type.types.isNotEmpty()) {
+            type.types = type.types.map { prune(it) }
         }
         return type
     }

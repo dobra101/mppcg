@@ -20,23 +20,25 @@ class ExpressionVisitor : AbstractVisitor() {
 
     override fun caseTIdentifierLiteral(node: TIdentifierLiteral) {
         result = machineVisitor.knownIdentifier().toList().findByName(node.text)
-        result?.let { machineVisitor.recognize(result!!); return }
+        result?.let { machineVisitor.recognize(result!!); return } // TODO: this recognize useless?
 
         result = machineVisitor.sets.findByName(node.text)?.copy() ?: machineVisitor.sets.findEntryByName(node.text)
                 ?: IdentifierExpression(name = node.text)
-        machineVisitor.recognize(result!!)
+        if (!OperationVisitor.returnValues.contains(result!!)) {
+            machineVisitor.recognize(result!!)
+        }
     }
 
     override fun caseTIntegerLiteral(node: TIntegerLiteral) {
-        result = ValueExpression(node.text, type = MPPCG_Int)
+        result = ValueExpression(node.text, valueType = MPPCG_Int)
     }
 
     override fun caseTStringLiteral(node: TStringLiteral) {
-        result = ValueExpression(node.text, type = MPPCG_String)
+        result = ValueExpression(node.text, valueType = MPPCG_String)
     }
 
     override fun caseTRealLiteral(node: TRealLiteral) {
-        result = ValueExpression(node.text, type = MPPCG_Real)
+        result = ValueExpression(node.text, valueType = MPPCG_Real)
     }
 
     override fun caseAAddExpression(node: AAddExpression) {
@@ -182,11 +184,11 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseABooleanTrueExpression(node: ABooleanTrueExpression) {
-        result = ValueExpression("true", type = MPPCG_Boolean)
+        result = ValueExpression("true", valueType = MPPCG_Boolean)
     }
 
     override fun caseABooleanFalseExpression(node: ABooleanFalseExpression) {
-        result = ValueExpression("false", type = MPPCG_Boolean)
+        result = ValueExpression("false", valueType = MPPCG_Boolean)
     }
 
     override fun caseAIntegerExpression(node: AIntegerExpression) {
@@ -205,14 +207,14 @@ class ExpressionVisitor : AbstractVisitor() {
     override fun caseAMaxIntExpression(node: AMaxIntExpression) {
         result = ValueExpression(
             value = (RuntimeConfig.config as BEnvironmentConfig).maxInteger.toString(),
-            type = MPPCG_Int
+            valueType = MPPCG_Int
         )
     }
 
     override fun caseAMinIntExpression(node: AMinIntExpression) {
         result = ValueExpression(
             value = (RuntimeConfig.config as BEnvironmentConfig).minInteger.toString(),
-            type = MPPCG_Int
+            valueType = MPPCG_Int
         )
     }
 
@@ -608,7 +610,18 @@ class ExpressionVisitor : AbstractVisitor() {
     }
 
     override fun caseASeqExpression(node: ASeqExpression) {
-        result = Sequence()
+        val expr = node.expression.convert()
+        if (expr !is InfiniteSet) {
+            TODO("Not implemented")
+        } else {
+            result = AnonymousCollectionNode(
+                collectionType = TypeOperator(
+                    "sequence",
+                    types = listOf(expr.setType)
+                )
+            )
+
+        }
     }
 
     override fun caseASeq1Expression(node: ASeq1Expression) {

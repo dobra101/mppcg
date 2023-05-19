@@ -2,7 +2,7 @@ machine(name, parameters, constraints, sets, constants, concrete_constants, prop
 public class <name> {
     <parameters>
     <constraints>
-    <sets>
+    <sets; separator="\n">
 
     <constants; separator="\n">
     <concrete_constants; separator="\n">
@@ -49,11 +49,13 @@ function(left, right) ::= <<
 <left>[<right>]
 >>
 
-invariant(body, idx, ignoreTypeCheck) ::= <<
+// TODO: check if inline possible
+invariant(resultHolder, body, idx, inline) ::= <<
 public boolean check_inv_<idx>() {
-    <if(ignoreTypeCheck)>// ignore type check
-return true;
-    <else>return <body>;<endif>
+    <if(inline)>return <body>;
+    <else><body>
+return <resultHolder>;
+<endif>
 }
 >>
 
@@ -113,8 +115,8 @@ couple(from, to) ::= <<
 new BCouple\<\>(<from>, <to>)
 >>
 
-sequence(elements) ::= <<
-new BSequence\<\>(<elements; separator=", ">)
+sequence(elements, type) ::= <<
+new <type>(<elements; separator=", ">)
 >>
 
 binarySequenceExpression(left, right, operator) ::= <<
@@ -132,4 +134,23 @@ comprehensionSetExpression(identifiers, supplier, predicates) ::= <<
 <supplier>.forEach((<identifiers; separator=", ">) ->
     (<predicates; separator=" && ">)
 )
+>>
+
+quantifier(quantifierResult, identifier, predicate, quantification, isForAll) ::= <<
+boolean <quantifierResult> = true;
+<predicate> {
+    // iterate i if iterable, and inner
+    if (!(<quantification>)) {
+        <quantifierResult> = false;
+        break;
+    }
+\}
+>>
+
+iteratorConstruct(type, name, collection) ::= <<
+for(<type> <name> : <collection>)
+>>
+
+functionTypeCheck(left, from, to, functionType, mapType) ::= <<
+<left>.typeCheck().hasDomain(<from>).hasRange(<to>).<mapType>.<functionType>.value()
 >>

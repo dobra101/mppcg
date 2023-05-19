@@ -22,6 +22,9 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     private var currentOperation: Operation? = null // HINT: only for B
     private var inInvariant: Boolean = false // HINT: only for B
 
+    private var memberAsIterator: Boolean = false // HINT: only for B
+    private var quantifierResultCount: Int = 0 // HINT: only for B
+
     /* ---------- EXPRESSIONS ---------- */
     override fun AnonymousCollectionNode.renderSelf(): RenderResult {
         fun renderAnonymousSetAsRelation(set: AnonymousCollectionNode): RenderResult {
@@ -57,7 +60,8 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     override fun EnumCollectionNode.renderSelf(): RenderResult {
         val map = mapOf(
             "name" to name.capitalize(),
-            "elements" to elements.map { it.name.uppercase() } // TODO: refactor
+            "elements" to elements.map { it.name },
+            "isParameter" to isParameter
         )
 
         return RenderResult(renderTemplate(map))
@@ -65,7 +69,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
 
     override fun EnumEntry.renderSelf(): RenderResult {
         val map = mapOf(
-            "name" to name.uppercase(),
+            "name" to name,
             "enum" to enum.capitalize()
         )
 
@@ -74,8 +78,10 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
 
     override fun IdentifierExpression.renderSelf(): RenderResult {
         // TODO: central keyword handler
+        val enumNode = (codeRepresentation as Machine).sets.find { it.elements.find { e -> e.name == name } != null }
+        val prefix = if (enumNode != null) enumNode.name.capitalize() + "." else ""
         val map = mapOf(
-            "name" to name
+            "name" to "$prefix$name"
         )
 
         return RenderResult(renderTemplate(map))
@@ -107,6 +113,22 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     /* ---------- PREDICATES ---------- */
     // TODO: refactor
     override fun BinaryPredicate.renderSelf(): RenderResult {
+        fun mapType2String(type: FunctionMapType) : String {
+            return when (type) {
+                FunctionMapType.FUNCTION -> "isFunction()"
+                FunctionMapType.INJECTION -> "isInjection()"
+                FunctionMapType.SURJECTION -> "isSurjection()"
+                FunctionMapType.BIJECTION -> "isBijection()"
+            }
+        }
+
+        fun functionType2String(type: FunctionType): String {
+            return when (type) {
+                FunctionType.TOTAL -> "isTotal(${(right as Function).left.render()})"
+                FunctionType.PARTIAL -> "isPartial()"
+            }
+        }
+
         if (operator != BinaryPredicateOperator.MEMBER) {
             val map = mapOf(
                 "lhs" to left.render(),
@@ -116,6 +138,26 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             )
 
             return RenderResult(renderTemplate(map))
+        }
+
+        if (right is Function) {
+            val map = mapOf(
+                "left" to left.render(),
+                "from" to (right as Function).left,
+                "to" to (right as Function).right,
+                "functionType" to functionType2String((right as Function).functionType),
+                "mapType" to mapType2String((right as Function).mapType)
+            )
+            return RenderResult(renderTemplate("functionTypeCheck", map))
+        }
+
+        if (memberAsIterator) {
+            val map = mapOf(
+                "type" to type2String(left.type!!),
+                "name" to left.render(),
+                "collection" to right.render()
+            )
+            return RenderResult(renderTemplate("iteratorConstruct", map))
         }
 
         if (right is EnumCollectionNode) {
@@ -136,10 +178,6 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             return RenderResult(renderTemplate("binaryPredicateMember", map))
         }
 
-        // type checks in invariants can be ignored in java
-        if (inInvariant) {
-            return RenderResult("")
-        }
         val map = mapOf(
             "lhs" to left.render(),
             "rhs" to right.render(),
@@ -205,7 +243,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         if (optimize) optimizer.renderOptimized(this)?.let { return it }
 
         // TODO: fix type
-        val rhs = if (right is AnonymousCollectionNode/* && left.type is TypeFunction*/) {
+        val rhs = if (right is AnonymousCollectionNode && left.type is TypeRelation) {
             renderAnonymousSetAsRelation(right as AnonymousCollectionNode)
         } else {
             right.render()
@@ -222,7 +260,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     override fun DeclarationSubstitution.renderSelf(): RenderResult {
         // TODO: optimize?
         val map = mapOf(
-            "type" to type2String(type!!),
+            "type" to type2String(assignment.left.type!!),
             "lhs" to assignment.left.render(),
             "rhs" to assignment.right.render()
         )
@@ -283,8 +321,8 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     /* ---------- B NODES ---------- */
     override fun Function.renderSelf(): RenderResult {
         val map = mapOf(
-            "left" to left,
-            "right" to right
+            "left" to left.render(),
+            "right" to right.render(),
         )
         return RenderResult(renderTemplate(map))
     }
@@ -413,7 +451,8 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
 
     override fun Sequence.renderSelf(): RenderResult {
         val map = mapOf(
-            "elements" to elements.render()
+            "elements" to elements.render(),
+            "type" to type2String(type!!)
         )
         return RenderResult(renderTemplate(map))
     }
@@ -456,11 +495,11 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         inInvariant = true
         val renderedPredicates = List(predicates.size) { idx ->
             val body = predicates[idx].render()
-            val ignoreTypeCheck = body.info.isEmpty()
             val map = mapOf(
+                "resultHolder" to "resultHolder", // TODO: set
                 "body" to body,
                 "idx" to idx,
-                "ignoreTypeCheck" to ignoreTypeCheck
+                "inline" to false // TODO: set inline
             )
             renderTemplate(map)
         }
@@ -472,7 +511,19 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun QuantifierPredicate.renderSelf(): RenderResult {
-        TODO("Not yet implemented")
+        memberAsIterator = true
+        val predicateRendered = predicate.render()
+        memberAsIterator = false
+        val map = mapOf(
+            "quantifierResult" to "resultHolder", // TODO: refactor
+            "identifier" to identifier.render(),
+            "predicate" to predicateRendered,
+            "quantification" to quantification?.render(),
+            "isForAll" to (type == QuantifierType.FORALL)
+        )
+        quantifierResultCount++;
+
+        return RenderResult(renderTemplate(map))
     }
 
     override fun Initialization.renderSelf(): RenderResult {
@@ -533,7 +584,9 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun Operation.renderSelf(): RenderResult {
+        // TODO: check if scope contains variables
         currentOperation = this
+        quantifierResultCount = 0
         if (optimize) optimizer.renderOptimized(this)?.let { return it }
 
         val bodyUsed = (body as? Precondition)?.substitution ?: body
@@ -593,6 +646,24 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             MPPCG_Real, MPPCG_Float -> "Double"
             MPPCG_String -> "String"
             MPPCG_Void -> "void"
+            is TypeSet -> "BSet<${type2String(type.type)}>"
+            is TypeOperator -> {
+                when (type.name) {
+                    "couple" -> {
+                        val from = type.types[0]
+                        val to = type.types[1]
+                        "BCouple<${type2String(from)}, ${type2String(to)}>"
+                    }
+
+                    "sequence" -> {
+                        "BSequence<${type2String(type.types[0])}>"
+                    }
+
+                    else -> {
+                        type.name.capitalize()
+                    }
+                }
+            }
 //            is TypeRelation -> {
 //                if (type.from == null || type.to == null) {
 //                    "BRelation<>"
@@ -611,7 +682,10 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
 //                }
 //            }
 
-            else -> throw TypeException(type::class.simpleName!!)
+            else -> {
+                println(type)
+                throw TypeException(type::class.simpleName!!)
+            }
         }
     }
 
