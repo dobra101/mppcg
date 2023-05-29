@@ -4,7 +4,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("unchecked")
-public class BSet<T extends Comparable<T>> implements Set<T> {
+public class BSet<T> implements Set<T> {
     private final Set<T> entries;
 
     public BSet(Set<T> entries) {
@@ -37,6 +37,31 @@ public class BSet<T extends Comparable<T>> implements Set<T> {
         Set<T> result = new HashSet<>(entries);
         result.removeAll(other.entries);
         return new BSet<>(result);
+    }
+
+    // from B2Program
+    public <K extends BSet<T>> BSet<K> pow() {
+        BSet<K> result = new BSet<>();
+        K start = (K) new BSet<T>();
+        Queue<K> queue = new LinkedList<>();
+        queue.add(start);
+        result = result.union(new BSet<K>(start));
+        while(!queue.isEmpty()) {
+            K currentSet = queue.remove();
+            for(T element : this) {
+                K nextSet = (K) currentSet.union(new BSet<>(element));
+                int previousSize = result.size();
+                result = result.union(new BSet<K>(nextSet));
+                if(previousSize < result.size()) {
+                    queue.add(nextSet);
+                }
+            }
+        }
+        return result;
+    }
+
+    public boolean containsNot(Object other) {
+        return !contains(other);
     }
 
     @Override
@@ -113,11 +138,11 @@ public class BSet<T extends Comparable<T>> implements Set<T> {
     }
 
     public T max() {
-        return entries.stream().max(Comparable::compareTo).orElse(null);
+        return entries.stream().reduce((a, b) -> ((Number) a).longValue() >= ((Number) b).longValue() ? a : b).orElse(null);
     }
 
     public T min() {
-        return entries.stream().min(Comparable::compareTo).orElse(null);
+        return entries.stream().reduce((a, b) -> ((Number) a).longValue() <= ((Number) b).longValue() ? a : b).orElse(null);
     }
 
     @Override

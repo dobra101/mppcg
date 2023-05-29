@@ -17,7 +17,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
 
     private val optimizer = JavaOptimizer(this)
 
-    private var codeRepresentation: Any? = null
+    private var codeRepresentation: Program? = null
 
     private var currentOperation: Operation? = null // HINT: only for B
     private var inInvariant: Boolean = false // HINT: only for B
@@ -40,7 +40,8 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         }
 
         val map = mutableMapOf(
-            "elements" to elements.render()
+            "elements" to elements.render(),
+            "type" to type2String(type!!)
         )
 
         return RenderResult(renderTemplate(map))
@@ -77,9 +78,22 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun IdentifierExpression.renderSelf(): RenderResult {
+        fun isConcrete(): Boolean {
+            return (codeRepresentation as Machine).concreteVariables.union((codeRepresentation as Machine).concreteConstants)
+                .filter { it is IdentifierExpression || it is ConcreteIdentifierExpression }
+                .find {
+                    if (it is IdentifierExpression) return@find it.name == name
+                    return (it as ConcreteIdentifierExpression).name == "c_$name"
+                } != null
+        }
+
         // TODO: central keyword handler
         val enumNode = (codeRepresentation as Machine).sets.find { it.elements.find { e -> e.name == name } != null }
-        val prefix = if (enumNode != null) enumNode.name.capitalize() + "." else ""
+        val prefix = when {
+            enumNode != null -> enumNode.name.capitalize() + "."
+            isConcrete() -> "c_"
+            else -> ""
+        }
         val map = mapOf(
             "name" to "$prefix$name"
         )
@@ -113,7 +127,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     /* ---------- PREDICATES ---------- */
     // TODO: refactor
     override fun BinaryPredicate.renderSelf(): RenderResult {
-        fun mapType2String(type: FunctionMapType) : String {
+        fun mapType2String(type: FunctionMapType): String {
             return when (type) {
                 FunctionMapType.FUNCTION -> "isFunction()"
                 FunctionMapType.INJECTION -> "isInjection()"
@@ -134,7 +148,9 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
                 "lhs" to left.render(),
                 "operator" to operator2String(operator),
                 "rhs" to right.render(),
-                "isMethodCall" to (operator == BinaryPredicateOperator.SUBSET)
+                "isMethodCall" to (operator == BinaryPredicateOperator.SUBSET
+                        || operator == BinaryPredicateOperator.NOT_MEMBER
+                        || operator == BinaryPredicateOperator.STRICT_SUBSET)
             )
 
             return RenderResult(renderTemplate(map))
@@ -171,6 +187,15 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         }
 
         if (right.type is TypeSet) {
+            if (right is AnonymousCollectionNode && (right as AnonymousCollectionNode).elements.isEmpty()) {
+                // type check
+                val map = mapOf(
+                    "lhs" to left.render(),
+                    "rhs" to type2String((right as AnonymousCollectionNode).collectionType!!),
+                    "operator" to operator2String(operator)
+                )
+                return RenderResult(renderTemplate(map))
+            }
             val map = mapOf(
                 "entry" to left.render(),
                 "set" to right.render()
@@ -436,8 +461,10 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun InfiniteSet.renderSelf(): RenderResult {
-        // HINT: n : INTEGER -> n.type = INTEGER
-        return RenderResult(type2String(type!!)) // TODO: refactor?
+        val map = mapOf(
+            "type" to type2String(type!!)
+        )
+        return RenderResult(renderTemplate(map))
     }
 
     override fun LambdaExpression.renderSelf(): RenderResult {
@@ -499,7 +526,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
                 "resultHolder" to "resultHolder", // TODO: set
                 "body" to body,
                 "idx" to idx,
-                "inline" to false // TODO: set inline
+                "inline" to (body.rendered.count { it == '\n' } == 0)
             )
             renderTemplate(map)
         }
@@ -664,23 +691,6 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
                     }
                 }
             }
-//            is TypeRelation -> {
-//                if (type.from == null || type.to == null) {
-//                    "BRelation<>"
-//                } else {
-//                    "BRelation<${nullableType2String(type.from!!)}, ${nullableType2String(type.to!!)}>"
-//                }
-//            }
-
-//            is new_TypeSet -> "BSet<${nullableType2String(type.type)}>"
-//            is TypeSequence -> "BSequence<${nullableType2String(type.type!!)}>"
-//            is TypeOperator -> {
-//                if (type.from == null || type.to == null) {
-//                    "BCouple<>"
-//                } else {
-//                    "BCouple<${nullableType2String(type.from!!)}, ${nullableType2String(type.to!!)}>"
-//                }
-//            }
 
             else -> {
                 println(type)
@@ -688,36 +698,6 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             }
         }
     }
-
-//    // TODO: still needed?
-//    private fun nullableType2String(type: Type): String {
-//        return when (type) {
-//            is TypeBoolean -> "Boolean"
-//            is TypeInt -> "Integer"
-//            is TypeNat -> "Integer"
-//            is TypeReal -> "Double"
-//            is TypeString -> "String"
-//            is TypeFunction -> {
-//                if (type.from == null || type.to == null) {
-//                    "BRelation<>"
-//                } else {
-//                    "BRelation<${nullableType2String(type.from!!)}, ${nullableType2String(type.to!!)}>"
-//                }
-//            }
-//
-//            is TypeSet -> "BSet<${nullableType2String(type.type)}>"
-//            is TypeSequence -> "BSequence<${nullableType2String(type.type!!)}>"
-//            is TypeCouple -> {
-//                if (type.from == null || type.to == null) {
-//                    "BCouple<>"
-//                } else {
-//                    "BCouple<${nullableType2String(type.from!!)}, ${nullableType2String(type.to!!)}>"
-//                }
-//            }
-//
-//            else -> throw TypeException(type::class.simpleName!!)
-//        }
-//    }
 
     override fun operator2String(operator: BinaryPredicateOperator): String {
         return when (operator) {
@@ -728,7 +708,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             BinaryPredicateOperator.EQUAL -> "=="
             BinaryPredicateOperator.NOT_EQUAL -> "!="
             BinaryPredicateOperator.MEMBER -> "instanceof"
-            BinaryPredicateOperator.NOT_MEMBER -> "notmember(java)"
+            BinaryPredicateOperator.NOT_MEMBER -> "containsNot"
             BinaryPredicateOperator.SUBSET -> "containsAll"
             BinaryPredicateOperator.STRICT_SUBSET -> "containsAllStrict??"
         }

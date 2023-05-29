@@ -449,6 +449,8 @@ class TypeInference {
                 val type = when (node.operator) {
                     BinarySequenceExpressionOperator.APPEND -> leftType
                     BinarySequenceExpressionOperator.PREPEND -> rightType
+                    BinarySequenceExpressionOperator.RESTRICT_TAIL -> leftType
+                    BinarySequenceExpressionOperator.RESTRICT_FRONT -> leftType
                     else -> {
                         println("---------> $node")
                         TODO("BinarySequenceExpression Type")

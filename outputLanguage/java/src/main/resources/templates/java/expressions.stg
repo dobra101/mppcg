@@ -1,5 +1,5 @@
-anonymousSetCollectionExpression(elements) ::= <<
-new BSet\<\>(<elements; separator=", ">)
+anonymousSetCollectionExpression(elements, type) ::= <<
+new <type>(<elements; separator=", ">)
 >>
 
 anonymousSetAsRelation(elements) ::= <<

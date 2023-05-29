@@ -67,7 +67,7 @@ concreteIdentifier(name, exprCount) ::= <<
 >>
 
 couple(from, to) ::= <<
-(<from>/<to>)
+(<from>-[<to>])
 >>
 
 unaryFunctionExpression(expression, operator, exprCount) ::= <<
@@ -101,14 +101,14 @@ universal_quantifier_<name>_<count>(State_0<if(parameters)>, <parameters; separa
 
 lambdaExpression(identifier, predicate, expression, value, exprCount) ::= <<
 findall(
-    (<identifier>/<value>),
+    (<identifier>-[<value>]),
     (
         <predicate>,
         <expression>
     ),
     Res_<exprCount>
 ),
-sort(Res_<exprCount>, Expr_<exprCount>)
+list2Avl(Res_<exprCount>, Expr_<exprCount>)
 >>
 
 initialization(body, resultStateCount) ::= <<

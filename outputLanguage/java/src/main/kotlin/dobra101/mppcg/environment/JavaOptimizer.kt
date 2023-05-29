@@ -1,6 +1,7 @@
 package dobra101.mppcg.environment
 
 import dobra101.mppcg.RenderResult
+import dobra101.mppcg.node.TypeNumber
 import dobra101.mppcg.node.b.Operation
 import dobra101.mppcg.node.expression.*
 import dobra101.mppcg.node.substitution.AssignSubstitution
@@ -44,7 +45,7 @@ class JavaOptimizer(private val environment: JavaOutputEnvironment) {
         operator: BinaryExpressionOperator,
         target: Expression
     ): RenderResult? {
-        if (target is IdentifierExpression && left == target) {
+        if (target is IdentifierExpression && left == target && left.type is TypeNumber) {
             val map = if (canBeFurtherOptimized(right, operator)) {
                 mapOf(
                     "identifier" to target.name,

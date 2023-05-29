@@ -21,6 +21,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         const val EXPRESSION_SEPARATOR = ",\n"
     }
 
+    private var codeRepresentation: Program? = null
     private var exprCount = 0
     private var stateCount = 0
     private var operationParameters: List<IdentifierExpression> = emptyList() // HINT: only for B
@@ -53,19 +54,33 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
 
     /* ---------- EXPRESSIONS ---------- */
     override fun AnonymousCollectionNode.renderSelf(): RenderResult {
+        fun isSetOfCouples(): Boolean {
+            return type is TypeSet && (type as TypeSet).types[0] is TypeOperator && ((type as TypeSet).types[0] as TypeOperator).name == "couple"
+        }
         return loadOrEvaluate(this) {
             val expanded = ExpandedExpressionList.of(elements)
-            if (expanded.before.isBlank()) {
-                return@loadOrEvaluate RenderResult(renderTemplate(mapOf("elements" to expanded.expressions)))
+            val map = mapOf(
+                "elements" to expanded.expressions,
+                "isRelation" to isSetOfCouples()
+            )
+            if (expanded.before.isBlank() && map["isRelation"] == false) {
+                return@loadOrEvaluate RenderResult(renderTemplate(map))
             }
 
-            val map = mapOf("elements" to expanded.expressions)
             val rendered = renderTemplate(map)
+            var resultExpr = rendered
+            var before = expanded.before
+            if (map["isRelation"] == true) {
+                resultExpr = expr(exprCount++)
+                before += "list2Avl($rendered, $resultExpr)"   // TODO: not hardcoded
+            } else {
+                before = before.removeSuffix(EXPRESSION_SEPARATOR)
+            }
 
-            add(node, rendered)
+            add(node, resultExpr)
             return@loadOrEvaluate RenderResult(
-                expanded.before.removeSuffix(EXPRESSION_SEPARATOR), // TODO: don't remove by hand
-                mapOf("resultExpr" to IndividualInfo(rendered))
+                before,
+                mapOf("resultExpr" to IndividualInfo(resultExpr))
             )
         }
     }
@@ -73,7 +88,8 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     override fun BinaryExpression.renderSelf(): RenderResult {
         return loadOrEvaluate(this) {
             val expanded = ExpandedBinary.of(left, right)
-            val isInfiniteSet = operator == BinaryExpressionOperator.POW || left.type is TypeSet || right.type is TypeSet
+            val isInfiniteSet =
+                operator == BinaryExpressionOperator.POW || left.type is TypeSet || right.type is TypeSet
 
             val map = mapOf(
                 "lhs" to expanded.lhs,
@@ -132,6 +148,10 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             return RenderResult(rendered, mapOf("resultExpr" to IndividualInfo(expr(exprName))))
         }
 
+        fun isEnumValue(): Boolean {
+            return (codeRepresentation as Machine).sets.find { it.elements.find { e -> e.name == name } != null } != null
+        }
+
         return loadOrEvaluate(this) {
             if (operationParameters.contains(node)
                 || comprehensionSetIdentifier.contains(node)
@@ -141,7 +161,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
                 return@loadOrEvaluate RenderResult(expr(name))
             }
 
-            if (node.type is TypeEnumValue) {
+            if (node.type is TypeEnumValue || isEnumValue()) {
                 add(node, "'$name'")
                 return@loadOrEvaluate RenderResult("'$name'")
             }
@@ -534,8 +554,8 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             return mapOf(
                 "name" to currentOperation,
                 "count" to whileCount,
-                "condition" to evaluatedExpressions.withReset(true) { condition.render() },
-                "body" to evaluatedExpressions.withReset(true) { body.render() },
+                "condition" to evaluatedExpressions.returnWithReset(true) { condition.render() },
+                "body" to evaluatedExpressions.returnWithReset(true) { body.render() },
                 "lastState" to stateCount
             )
         }
@@ -959,6 +979,8 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun Machine.renderSelf(): RenderResult {
+        codeRepresentation = this
+
         declarationStep = true
         this@PrologOutputEnvironment.concreteConstants = concreteConstants
         this@PrologOutputEnvironment.constants = constants
@@ -1159,7 +1181,8 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         if (constants.contains(identifierExpression)) return true
         if (concreteConstants.contains(identifierExpression)) return true
 
-        val cc = ConcreteIdentifierExpression(identifierExpression.name, identifierExpression, identifierExpression.type)
+        val cc =
+            ConcreteIdentifierExpression(identifierExpression.name, identifierExpression, identifierExpression.type)
         return concreteConstants.find { (it as? ConcreteIdentifierExpression)?.name == cc.name } != null
     }
 
@@ -1167,7 +1190,8 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         if (variables.variables.contains(identifierExpression)) return true
         if (concreteVariables.contains(identifierExpression)) return true
 
-        val cc = ConcreteIdentifierExpression(identifierExpression.name, identifierExpression, identifierExpression.type)
+        val cc =
+            ConcreteIdentifierExpression(identifierExpression.name, identifierExpression, identifierExpression.type)
         return concreteVariables.find { (it as? ConcreteIdentifierExpression)?.name == cc.name } != null
     }
 

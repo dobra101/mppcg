@@ -154,3 +154,7 @@ for(<type> <name> : <collection>)
 functionTypeCheck(left, from, to, functionType, mapType) ::= <<
 <left>.typeCheck().hasDomain(<from>).hasRange(<to>).<mapType>.<functionType>.value()
 >>
+
+infiniteSetExpression(type) ::= <<
+new <type>()
+>>

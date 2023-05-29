@@ -4,6 +4,7 @@
     empty/1,
     update/4,
     avl2List/2,
+    list2Avl/2,
     updateFunction/4,
     mppcg_member/2,
     mppcg_member_list/2,
@@ -71,6 +72,9 @@ update(Key, Value, AVL, NewAVL) :-
 update(Key, Value, AVL, NewAVL) :-
     avl:avl_store(Key, AVL, Value, NewAVL).
 
+list2Avl(List, AVL) :-
+    avl:list_to_avl(List, AVL).
+
 avl2List(AVL, List) :-
     avl:avl_to_list(AVL, List).
 
@@ -96,37 +100,22 @@ mppcg_member_(Set, function(From, To)) :-
     nonvar(From),
     nonvar(To),
     mppcg_member_function(Set, From, To).
+mppcg_member_(Element, AVL) :-
+    is_avl(AVL),
+    avl:avl_member(Element, AVL).
 mppcg_member_(Element, [Head | Tail]) :-
-    (Element = (X/Y), Head = (_/_)) ->
-    (sort([Head | Tail], Sorted),
-    mppcg_member_relation(X, Y, Sorted));
     mppcg_member_list(Element, [Head | Tail]).
 
-mppcg_member_relation(_, _, []) :- fail.
-mppcg_member_relation(X, Y, [(X/Y) | _]).
-mppcg_member_relation(X, Y, [(A/_) | Tail]) :-
-    number(X),
-    number(A),
-    A =< X,
-    mppcg_member_relation(X, Y, Tail), !.
-mppcg_member_relation(X, Y, [_ | Tail]) :-
-    mppcg_member_relation(X, Y, Tail).
-
-mppcg_member_function((X/Y), From, To) :-
+mppcg_member_function(X, From, To) :-
+    avl:is_avl(X),
+    avl:avl_domain(X, Domain),
+    avl:avl_range(X, Range),
+    flatten(Range, R),
+    mppcg_subset(Domain, From),
+    mppcg_subset(R, To).
+mppcg_member_function((X-Y), From, To) :-
     mppcg_member_(X, From),
     mppcg_member_(Y, To).
-mppcg_member_function(Set, From, To) :-
-    nonvar(Set),
-    mppcg_relation_split_xy(Set, Xs, Ys),
-    sort(Xs, XSorted),
-    sort(Ys, YSorted),
-    mppcg_subset(XSorted, From),
-    mppcg_subset(YSorted, To),
-    !.
-
-mppcg_relation_split_xy([], [], []).
-mppcg_relation_split_xy([(X/Y) | Tail], [X | NewX], [Y | NewY]) :-
-    mppcg_relation_split_xy(Tail, NewX, NewY).
 
 mppcg_member_list(_, []) :- fail.
 mppcg_member_list(X, [Head | _]) :-
@@ -220,33 +209,38 @@ mppcg_setUnion(Left, Right, set(Union)) :-
     !,
     sort(Appended, Union).
 
-mppcg_domain(set(Relation), set(Sorted)) :-
-    mppcg_domain(Relation, Domain),
-    sort(Domain, Sorted).
-mppcg_domain([], []) :- !.
-mppcg_domain([(X/_) | Tail], Sorted) :-
-    mppcg_domain(Tail, NewTail),
-    sort([X | NewTail], Sorted).
+mppcg_domain(Relation, set(Domain)) :-
+    avl:avl_domain(Relation, Domain).
 
-mppcg_range(set(Relation), set(Sorted)) :-
-    mppcg_range(Relation, Range),
-    sort(Range, Sorted).
-mppcg_range([], []) :- !.
-mppcg_range([(_/Y) | Tail], Sorted) :-
-    mppcg_range(Tail, NewTail),
-    sort([Y | NewTail], Sorted).
+mppcg_range(Relation, set(Range)) :-
+    avl:avl_range(Relation, R),
+    flatten(R, Range).
 
-mppcg_reverse(set(L), set(L1)) :- mppcg_reverse(L, L1), !.
+mppcg_reverse(Relation, Result) :-
+    avl:is_avl(Relation),
+    avl:avl_to_list(Relation, List),
+    mppcg_reverse(List, Result).
 mppcg_reverse([], []) :- !.
-mppcg_reverse([(X/Y) | Tail], [(Y/X) | NewTail]) :-
+mppcg_reverse([(X-Y) | Tail], Result) :-
+    mppcg_expandEntries(X, Y, Entries),
     mppcg_reverse(Tail, NewTail),
-    !.
+    append(Entries, NewTail, Result).
 
-mppcg_domainRestriction(Domain, set(Set), set(Result)) :-
-    mppcg_domainRestriction(Domain, Set, Result),
-    !.
+mppcg_expandEntries(_, [], []).
+mppcg_expandEntries(X, [Head | Tail], [(Head-X) | OtherTail]) :-
+    mppcg_expandEntries(X, Tail, OtherTail).
+
+mppcg_inverse(Set, Result) :-
+    resolve(Set, S),
+    mppcg_reverse(S, Result).
+
+mppcg_domainRestriction(Domain, Relation, Result) :-
+    avl:is_avl(Relation),
+    avl:avl_to_list(Relation, List),
+    mppcg_domainRestriction(Domain, List, ResultList),
+    avl:list_to_avl(ResultList, Result).
 mppcg_domainRestriction(_, [], []) :- !.
-mppcg_domainRestriction(Domain, [(X/Y) | Tail], [(X/Y) | NewTail]) :-
+mppcg_domainRestriction(Domain, [(X-Y) | Tail], [(X-Y) | NewTail]) :-
      mppcg_member(X, Domain),
      mppcg_domainRestriction(Domain, Tail, NewTail),
      !.
@@ -254,55 +248,44 @@ mppcg_domainRestriction(Domain, [_ | Tail], NewTail) :-
     mppcg_domainRestriction(Domain, Tail, NewTail),
     !.
 
-mppcg_domainSubtraction(Domain, set(Set), set(Result)) :-
-    mppcg_domainSubtraction(Domain, Set, Result),
-    !.
-mppcg_domainSubtraction(_, [], []) :- !.
-mppcg_domainSubtraction(Domain, [(X/Y) | Tail], [(X/Y) | NewTail]) :-
-    \+ mppcg_member(X, Domain),
-    mppcg_domainSubtraction(Domain, Tail, NewTail),
-    !.
-mppcg_domainSubtraction(Domain, [_ | Tail], NewTail) :-
-    mppcg_domainSubtraction(Domain, Tail, NewTail),
-    !.
+mppcg_domainSubtraction(List, Relation, Result) :-
+    resolve(List, L),
+    mppcg_domainSubtraction_(L, Relation, Result).
+mppcg_domainSubtraction_([], Relation, Relation).
+mppcg_domainSubtraction_([Head | Tail], Relation, Result) :-
+    (avl:avl_member(Head, Relation) ->
+    avl:avl_delete(Head, Relation, _, AVL);
+    AVL = Relation),
+    mppcg_domainSubtraction_(Tail, AVL, Result).
 
 mppcg_image(Relation, Set, set(Sorted)) :-
     resolve(Set, S),
-    mppcg_max(S, Max),
-    sort(Relation, R),
-    mppcg_image_max(R, S, Max, Image),
-    sort(Image, Sorted),
-    !.
-mppcg_image(Relation, Set, set(Sorted)) :-
-    resolve(Set, S),
-    sort(Relation, R),
-    mppcg_image_(R, S, Image),
-    sort(Image, Sorted),
-    !.
-
-mppcg_image_([], _, []) :- !.
-mppcg_image_([(X/Y) | Rest], Set, [Y | NewTail]) :-
-    member(X, Set),
-    mppcg_image_(Rest, Set, NewTail).
-mppcg_image_([_ | Rest], Set, NewTail) :-
-    mppcg_image_(Rest, Set, NewTail).
-
-mppcg_image_max([], _, _, []) :- !.
-mppcg_image_max([(X/_) | _], _, Max, []) :- number(X), number(Max), X > Max.
-mppcg_image_max([(X/Y) | Rest], Set, Max, [Y | NewTail]) :-
-    member(X, Set),
-    mppcg_image_max(Rest, Set, Max, NewTail).
-mppcg_image_max([_ | Rest], Set, Max, NewTail) :-
-    mppcg_image_max(Rest, Set, Max, NewTail).
-
+    findall(
+        Value,
+        (
+            mppcg_member(X, S),
+            avl:avl_fetch(X, Relation, Value)
+        ),
+        Values
+    ),
+    flatten(Values, V),
+    sort(V, Sorted).
 
 mppcg_override(Overridden, Set, Result) :-
     resolve(Overridden, O),
     resolve(Set, S),
     mppcg_domain(S, Domain),
     mppcg_domainSubtraction(Domain, O, Tail),
-    append(S, Tail, R),
-    sort(R, Result).
+    mppcg_relationUnion(S, Tail, Result).
+
+mppcg_relationUnion(AVL, New, Result) :-
+    avl:is_avl(New),
+    avl:avl_to_list(New, List),
+    mppcg_relationUnion_(AVL, List, Result).
+mppcg_relationUnion_(AVL, [], AVL).
+mppcg_relationUnion_(AVL, [(Key-Value) | Tail], Result) :-
+    avl:avl_store(Key, AVL, Value, Result1),
+    mppcg_relationUnion_(Result1, Tail, Result).
 
 mppcg_rangeRestriction(Relation, set(Set), set(Result)) :-
     mppcg_rangeRestriction(Relation, Set, Result),
@@ -335,6 +318,10 @@ mppcg_rangeSubtraction_([_ | Tail], Range, NewTail) :-
     mppcg_rangeSubtraction_(Tail, Range, NewTail),
     !.
 
+mppcg_powerSet(AVL, PowerSet) :-
+    avl:is_avl(AVL),
+    avl:avl_to_list(AVL, Set),
+    mppcg_powerSet_(Set, PowerSet).
 mppcg_powerSet(X, PowerSet) :-
     resolve(X, X1),
     mppcg_powerSet_(X1, PowerSet).
@@ -343,6 +330,10 @@ mppcg_powerSet_(Set, set(Sorted)) :-
     sort(Powerset, Sorted),
     !.
 
+mppcg_powerSet1(AVL, PowerSet) :-
+    avl:is_avl(AVL),
+    avl:avl_to_list(AVL, Set),
+    mppcg_powerSet1_(Set, PowerSet).
 mppcg_powerSet1(X, PowerSet) :-
     resolve(X, X1),
     mppcg_powerSet1_(X1, PowerSet).
@@ -423,17 +414,21 @@ mppcg_sequenceReverse([Head | Tail], Reversed) :-
     mppcg_sequenceReverse(Tail, ReversedTail),
     append(ReversedTail, [Head], Reversed).
 
-mppcg_forwardComposition(P, Q, Result) :-
-    findall((X, Y),
-        (mppcg_member((X/Z), P), mppcg_member((Z/Y), Q)),
+mppcg_forwardComposition(P, Q, AVL) :-
+    findall(
+        (X-Y),
+        (avl:avl_member(X, P, [Z]), avl:avl_member(Z, Q, Y)),
         Result
-    ).
+    ),
+    avl:list_to_avl(Result, AVL).
 
-mppcg_mult(Interval1, Interval2, Result) :-
-    findall((X/Y),
+mppcg_mult(Interval1, Interval2, AVL) :-
+    findall(
+        (X-[Y]),
         (mppcg_member(X, Interval1), mppcg_member(Y, Interval2)),
         Result
-    ).
+    ),
+    avl:list_to_avl(Result, AVL).
 
 mppcg_equal(X, Y) :-
     resolve(X, X1),
@@ -479,27 +474,18 @@ mppcg_callFunction(Expression, Parameters, Result) :-
     !,
     (length(Flat, 1) -> Flat = [Result]; Result = Flat).
 
-mppcg_callFunction_parameter([], _) :- fail.
-mppcg_callFunction_parameter([X | _], X) :- !.
-mppcg_callFunction_parameter([_ | Tail], X) :-
-    mppcg_callFunction_parameter(Tail, X).
+mppcg_callFunction_multiParameter([], _, []).
+mppcg_callFunction_multiParameter([Head | Tail], AVL, Result) :-
+    mppcg_callFunction_singleParameter(Head, AVL, Res1),
+    mppcg_callFunction_multiParameter(Tail, AVL, Res2),
+    append(Res1, Res2, Result).
 
-mppcg_callFunction_multiParameter(_, [], []).
-mppcg_callFunction_multiParameter(Parameters, [(X/Y) | Tail], [Y | YTail]) :-
-    !,
-    mppcg_callFunction_parameter(Parameters, X),
-    mppcg_callFunction_multiParameter(Parameters, Tail, YTail).
-mppcg_callFunction_multiParameter(Parameters, [_ | Tail], YTail) :-
-    mppcg_callFunction_multiParameter(Parameters, Tail, YTail).
-
-mppcg_callFunction_singleParameter(_, [], []).
-mppcg_callFunction_singleParameter(X, [(X/Y) | Tail], [Y | YTail]) :-
-    !,
-    mppcg_callFunction_singleParameter(X, Tail, YTail).
-mppcg_callFunction_singleParameter(X, [_ | Tail], YTail) :-
-    mppcg_callFunction_singleParameter(X, Tail, YTail).
-
-
+mppcg_callFunction_singleParameter(Parameter, AVL, Result) :-
+    findall(
+        Value,
+        avl:avl_member(Parameter, AVL, Value),
+        Result
+    ).
 
 flatten(L, Res) :-
     flatten(L, [], Flat),
@@ -562,10 +548,3 @@ mppcg_generalConcat([], []).
 mppcg_generalConcat([(_/X) | Tail], Concat) :-
     mppcg_generalConcat(Tail, Rest),
     append(X, Rest, Concat).
-
-mppcg_inverse(Set, Result) :-
-    resolve(Set, S), !,
-    mppcg_inverse_(S, Result).
-mppcg_inverse_([], []).
-mppcg_inverse_([(X/Y) | Tail], [(Y/X) | NewTail]) :-
-    mppcg_inverse_(Tail, NewTail).

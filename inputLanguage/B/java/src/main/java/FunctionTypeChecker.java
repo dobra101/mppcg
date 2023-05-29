@@ -1,4 +1,4 @@
-public class FunctionTypeChecker<K extends Comparable<K>, V extends Comparable<V>> {
+public class FunctionTypeChecker<K, V> {
 
     private final BRelation<K, V> fun;
     private boolean value = true;
@@ -38,7 +38,7 @@ public class FunctionTypeChecker<K extends Comparable<K>, V extends Comparable<V
         return this;
     }
 
-    public FunctionTypeChecker isPartial() {
+    public FunctionTypeChecker<K, V> isPartial() {
         return this;
     }
 

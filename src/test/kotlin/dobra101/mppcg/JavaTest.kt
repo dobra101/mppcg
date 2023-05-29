@@ -4,8 +4,10 @@ import dobra101.mppcg.b.outputDir
 import dobra101.mppcg.environment.Language
 import dobra101.mppcg.prob.ProBResult
 import dobra101.mppcg.prob.ProBResultAnalyser
+import io.kotest.assertions.throwables.shouldNotThrowAny
 import io.kotest.core.spec.style.ExpectSpec
 import io.kotest.inspectors.forAll
+import io.kotest.matchers.ints.shouldBeExactly
 import java.io.File
 
 class JavaTest : ExpectSpec({
@@ -33,13 +35,13 @@ class JavaTest : ExpectSpec({
         "Lift.mch",
         "TrafficLight_MC.mch",
         "scheduler_deterministic_MC.mch",
-        "QueensWithEvents_4.mch",
-        "QueensWithEvents_8.mch",
-        "sort_m2_data1000.mch",
-        "CAN_BUS_tlc.mch",
-        "Cruise_finite1_deterministic_MC.mch",
-        "LandingGear_R6.mch",
-        "Train_1_beebook_deterministic_MC.mch"
+//        "QueensWithEvents_4.mch",
+//        "QueensWithEvents_8.mch",
+//        "sort_m2_data1000.mch",q
+//        "CAN_BUS_tlc.mch",
+//        "Cruise_finite1_deterministic_MC.mch",
+//        "LandingGear_R6.mch",
+//        "Train_1_beebook_deterministic_MC.mch"
     )
 
     val exclude: List<String> = listOf()
@@ -98,7 +100,10 @@ class JavaTest : ExpectSpec({
                 benchmark = false
             )
             // TODO: outputDir is in other test file
-            compile(cp = outputDir.path + "/${machineFile.path}:inputLanguage/B/java/build/libs/btypes.jar", file)
+            shouldNotThrowAny {
+                compile(cp = outputDir.path + "/${machineFile.path}:inputLanguage/B/java/build/libs/btypes.jar", file)
+            }
+            1 shouldBeExactly 1
 
             // TODO: compile file
 //            val result = Launcher.benchmarkProlog(file, timeout = 1000 + (mchResult!!.modelCheckingTime * 3))

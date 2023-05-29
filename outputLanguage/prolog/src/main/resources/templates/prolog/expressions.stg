@@ -1,5 +1,5 @@
-anonymousSetCollectionExpression(elements) ::= <<
-set([<elements; separator=", ">])
+anonymousSetCollectionExpression(elements, isRelation) ::= <<
+<if(isRelation)>[<elements; separator=", ">]<else>set([<elements; separator=", ">])<endif>
 >>
 
 binaryExpression(lhs, rhs, operator, exprCount, math, infiniteSet) ::= <<
