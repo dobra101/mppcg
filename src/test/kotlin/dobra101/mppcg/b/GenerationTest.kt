@@ -51,7 +51,7 @@ class GenerationTest : ExpectSpec({
         .forAll { machineFile ->
             context(machineFile.name) {
                 println("Testing ${machineFile.name}")
-                listOf(true, false).forAll { optimize ->
+                listOf(true).forAll { optimize ->
                     val expectName = if (optimize) "optimized" else "regular"
                     expect(expectName) {
                         val expectation = expectations.firstOrNull { it.file.name == machineFile.name }

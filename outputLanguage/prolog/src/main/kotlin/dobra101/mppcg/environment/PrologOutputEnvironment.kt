@@ -60,17 +60,16 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         return loadOrEvaluate(this) {
             val expanded = ExpandedExpressionList.of(elements)
             val map = mapOf(
-                "elements" to expanded.expressions,
-                "isRelation" to isSetOfCouples()
+                "elements" to expanded.expressions
             )
-            if (expanded.before.isBlank() && map["isRelation"] == false) {
+            if (expanded.before.isBlank() && !isSetOfCouples()) {
                 return@loadOrEvaluate RenderResult(renderTemplate(map))
             }
 
             val rendered = renderTemplate(map)
             var resultExpr = rendered
             var before = expanded.before
-            if (map["isRelation"] == true) {
+            if (isSetOfCouples()) {
                 resultExpr = expr(exprCount++)
                 before += "list2Avl($rendered, $resultExpr)"   // TODO: not hardcoded
             } else {
@@ -655,10 +654,13 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             val before1 = ExpandedExpression.of(expression)
             val before2 = ExpandedExpressionList.of(parameters)
 
+            val singleValue = (type is TypeNumber || (type is TypeOperator && (type as TypeOperator).types.isEmpty()))
+
             val map = mapOf(
                 "expression" to before1.expression,
                 "parameters" to before2.expressions,
-                "exprCount" to exprCount
+                "exprCount" to exprCount,
+                "expectSingleValue" to singleValue
             )
 
             val before = "${before1.before}${before2.before}"
@@ -670,9 +672,18 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
 
     override fun ComprehensionSet.renderSelf(): RenderResult {
         comprehensionSetIdentifier += identifiers.filterIsInstance<IdentifierExpression>()
+        var renderedIdentifiers: String? = null;
+        if (identifiers.size > 1) {
+            // TODO: more than two identifiers possible
+            val idMap = mapOf(
+                "first" to identifiers[0].render(),
+                "second" to identifiers[1].render()
+            )
+            renderedIdentifiers = renderTemplate("comprehensionSetIdentifier", idMap)
+        }
         val map = evaluatedExpressions.returnWithReset {
             mapOf(
-                "identifiers" to identifiers.render(),
+                "identifiers" to (renderedIdentifiers ?: identifiers[0].render()),
                 "predicates" to predicates.render(),
                 "exprCount" to exprCount
             )

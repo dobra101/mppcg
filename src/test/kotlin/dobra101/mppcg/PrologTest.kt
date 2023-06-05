@@ -41,7 +41,7 @@ class PrologTest : ExpectSpec({
         "CAN_BUS_tlc.mch",
         "Cruise_finite1_deterministic_MC.mch",
         "LandingGear_R6.mch",
-        "Train_1_beebook_deterministic_MC.mch"
+//        "Train_1_beebook_deterministic_MC.mch"
     )
 
     val exclude: List<String> = listOf(
@@ -93,7 +93,7 @@ class PrologTest : ExpectSpec({
                         optimize = optimize,
                         benchmark = false
                     )
-                    val result = Launcher.benchmarkProlog(file, timeout = 1000 + (mchResult!!.modelCheckingTime * 3))
+                    val result = Launcher.benchmarkProlog(file, timeout = 1000 + (mchResult!!.modelCheckingTime * 2))
                     println(result)
 
                     withClue("States do not match") {

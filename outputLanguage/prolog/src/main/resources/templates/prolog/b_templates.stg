@@ -51,8 +51,8 @@ callFunctionAccess(expression, parameters) ::= <<
 <expression>(<parameters>)
 >>
 
-callFunction(expression, parameters, exprCount) ::= <<
-mppcg_callFunction(<expression>, <parameters>, Expr_<exprCount>)
+callFunction(expression, parameters, exprCount, expectSingleValue) ::= <<
+mppcg_callFunction<if(expectSingleValue)>_singleValue<endif>(<expression>, <parameters>, Expr_<exprCount>)
 >>
 
 concreteIdentifierDeclaration(name, before, value, inline, exprCount, interval) ::= <<
@@ -142,13 +142,12 @@ select(condition, then, elseSubstitution, when) ::= <<
 
 comprehensionSetExpression(identifiers, predicates, exprCount) ::= <<
 findall(
-    (<identifiers; separator="/">),
+    (<identifiers>),
     (
         <predicates; separator=",\n">
     ),
     Res_<exprCount>),
-sort(Res_<exprCount>, Expr_<exprCount>_l),
-Expr_<exprCount> = set(Expr_<exprCount>_l)
+list2Avl(Res_<exprCount>, Expr_<exprCount>)
 >>
 
 
@@ -189,4 +188,8 @@ unarySequenceExpression(sequence, operator, exprCount) ::= <<
 
 binarySequenceExpression(lhs, rhs, operator, exprCount) ::= <<
 <operator>(<lhs>, <rhs>, Expr_<exprCount>)
+>>
+
+comprehensionSetIdentifier(first, second) ::= <<
+<first> - [<second>]
 >>

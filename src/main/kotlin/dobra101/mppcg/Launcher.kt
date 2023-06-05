@@ -46,6 +46,7 @@ object Launcher {
             generateRunCfg("${outputPath}runCfg.pl")
             val inputResourcePath = "inputLanguage/B/prolog/src/main/resources"
             copyFile("avl.pl", inputResourcePath)
+            copyFile("ordsets.pl", inputResourcePath)
             copyFile("btypes.pl", inputResourcePath)
         }
 
@@ -103,6 +104,7 @@ object Launcher {
 
         val inputResourcePath = "inputLanguage/B/prolog/src/main/resources"
         copyFile("avl.pl", inputResourcePath, prologResourcesPath)
+        copyFile("ordsets.pl", inputResourcePath, prologResourcesPath)
         copyFile("btypes.pl", inputResourcePath, prologResourcesPath)
         copyFile("runCfg.pl", "generator/build/generated", prologResourcesPath)
 

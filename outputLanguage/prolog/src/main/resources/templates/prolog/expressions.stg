@@ -1,5 +1,5 @@
-anonymousSetCollectionExpression(elements, isRelation) ::= <<
-<if(isRelation)>[<elements; separator=", ">]<else>set([<elements; separator=", ">])<endif>
+anonymousSetCollectionExpression(elements) ::= <<
+[<elements; separator=", ">]
 >>
 
 binaryExpression(lhs, rhs, operator, exprCount, math, infiniteSet) ::= <<
@@ -18,7 +18,7 @@ binaryCollectionExpression(lhs, rhs, operator, exprCount) ::= <<
 enumCollectionExpression(name, elements, isParameter, exprCount) ::= <<
 <if(isParameter)>
 s_<name>(Expr_<exprCount>)<else>
-s_<name>(set([<elements; separator = ", ">]))<endif>
+s_<name>([<elements; separator = ", ">])<endif>
 >>
 
 // TODO: add enum name?
