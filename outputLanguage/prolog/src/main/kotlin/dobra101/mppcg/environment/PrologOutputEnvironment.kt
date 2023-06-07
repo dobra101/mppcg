@@ -9,6 +9,7 @@ import dobra101.mppcg.node.collection.*
 import dobra101.mppcg.node.expression.*
 import dobra101.mppcg.node.predicate.*
 import dobra101.mppcg.node.substitution.*
+import org.intellij.lang.annotations.Identifier
 import kotlin.math.max
 
 class PrologOutputEnvironment : OutputLanguageEnvironment() {
@@ -186,6 +187,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
                 } else {
                     val map = mapOf(
                         "name" to name,
+                        "returnSet" to (false && type is TypeSet && ((type as TypeSet).type as TypeOperator).name != "couple"),
                         "stateCount" to stateCount,
                         "exprCount" to exprCount
                     )
@@ -271,14 +273,18 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
                 else -> "" // when is exhaustive
             }
 
-            val lhs = (left as IdentifierExpression).name
+            val lhs = when {
+                comprehensionSetIdentifier.contains(left) -> left.render().rendered
+                ctrlStructIdentifier.contains(left) -> left.render().rendered
+                else -> (left as IdentifierExpression).name
+            }
 
             val map = mapOf(
                 "lhs" to lhs,
                 "rhs" to rhs,
                 "stateCount" to stateCount,
                 "negate" to (operator == BinaryPredicateOperator.NOT_EQUAL),
-                "useGet" to !ctrlStructIdentifier.contains(left)
+                "useGet" to (!ctrlStructIdentifier.contains(left) && !comprehensionSetIdentifier.contains(left))
             )
             val rendered = renderTemplate("optimizedBinaryPredicateEqual", map)
             return RenderResult("$before$rendered")
@@ -671,25 +677,40 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun ComprehensionSet.renderSelf(): RenderResult {
-        comprehensionSetIdentifier += identifiers.filterIsInstance<IdentifierExpression>()
-        var renderedIdentifiers: String? = null;
-        if (identifiers.size > 1) {
-            // TODO: more than two identifiers possible
-            val idMap = mapOf(
-                "first" to identifiers[0].render(),
-                "second" to identifiers[1].render()
+        fun nestedIdentifier(ids: List<Expression>): String {
+            if (ids.size == 1) {
+                return identifiers[0].render().rendered
+
+            }
+            if (ids.size == 2) {
+                val map = mapOf(
+                    "first" to ids[0].render(),
+                    "second" to ids[1].render(),
+                )
+
+                return renderTemplate("comprehensionSetIdentifier", map)
+            }
+
+            val map = mapOf(
+                "first" to ids[0].render(),
+                "second" to nestedIdentifier(ids.subList(1, ids.size)),
             )
-            renderedIdentifiers = renderTemplate("comprehensionSetIdentifier", idMap)
+
+            return renderTemplate("comprehensionSetIdentifier", map)
         }
-        val map = evaluatedExpressions.returnWithReset {
-            mapOf(
-                "identifiers" to (renderedIdentifiers ?: identifiers[0].render()),
-                "predicates" to predicates.render(),
-                "exprCount" to exprCount
-            )
+
+        return evaluatedExpressions.returnWithReset {
+            comprehensionSetIdentifier += identifiers.filterIsInstance<IdentifierExpression>()
+            val map = evaluatedExpressions.returnWithReset {
+                mapOf(
+                    "identifiers" to nestedIdentifier(identifiers),
+                    "predicates" to predicates.render(),
+                    "exprCount" to exprCount
+                )
+            }
+            comprehensionSetIdentifier -= identifiers.filterIsInstance<IdentifierExpression>().toSet()
+            return@returnWithReset RenderResult(renderTemplate(map), exprToInfo(node))
         }
-        comprehensionSetIdentifier -= identifiers.filterIsInstance<IdentifierExpression>().toSet()
-        return RenderResult(renderTemplate(map), exprToInfo(this))
     }
 
     override fun ConcreteIdentifierExpression.renderSelf(): RenderResult {

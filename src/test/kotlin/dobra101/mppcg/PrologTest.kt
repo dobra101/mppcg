@@ -37,7 +37,7 @@ class PrologTest : ExpectSpec({
         "scheduler_deterministic_MC.mch",
         "QueensWithEvents_4.mch",
         "QueensWithEvents_8.mch",
-//        "sort_m2_data1000.mch",
+        "sort_m2_data1000.mch",
         "CAN_BUS_tlc.mch",
         "Cruise_finite1_deterministic_MC.mch",
         "LandingGear_R6.mch",

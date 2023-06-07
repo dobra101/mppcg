@@ -312,3 +312,52 @@ OPERATIONS
     END
 
 END
+
+/*
+132600 States, 340266 Transitions
+
+T2Complete: 2250
+T2ReleaseBus: 2250
+T3ReEnableWait: 1750
+T3ReleaseBus: 1750 ! 1775 (+25)
+T3Poll: 7327 ! 7427 (+100)
+Update: 4328 ! 4353 (+25)
+T1Calculate: 52520
+T2Wait: 8660 ! 9510 (+850)
+T3writebus: 16118
+T2WriteBus: 4250
+T2Reset: 9250
+T2ReadBus: 25905
+T1SendResult: 52520
+T1Wait: 23720 ! 24570 (+850)
+T3Wait: 23445 ! 23545 (+100)
+T2Evaluate: 25905
+T2Calculate: 10800
+T3Initiate: 16118
+T3Read: 20447 ! 21172 (+725)
+T1Evaluate: 10504
+T3Evaluate: 20477 ! 21172 (+695)
+
+
+T3ReleaseBus: (mppcg_equal), get
+T3Poll: get
+Update: get, domain, max, equal
+
+T2Wait: (equal), get
+?-> T2_state = T2_WAIT
+!-> T2_timer = 3, T2_state, T2_EN
+
+
+T1Wait: (equal), get
+?-> T1_state = T1_WAIT
+!-> T1_timer = 2, T1_state = T1_EN
+
+
+T3Wait: (equal), get
+T3Read: get, equal
+
+T3Evaluate: get
+?-> T3_state = T3_READY, T3_evaluated = false, T3_enabled = false
+!-> T3_state = T3_READ
+
+*/

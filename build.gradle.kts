@@ -25,6 +25,7 @@ dependencies {
     testImplementation("io.kotest:kotest-property:5.5.5")
     // TODO: location and version can differ
     testImplementation(files("/usr/local/sicstus4.7.0/lib/sicstus-4.7.0/bin/jasper.jar"))
+    implementation(kotlin("stdlib-jdk8"))
 }
 
 application {

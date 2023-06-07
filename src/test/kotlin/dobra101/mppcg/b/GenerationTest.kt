@@ -71,40 +71,53 @@ class GenerationTest : ExpectSpec({
                             )
                         }
 
-                        println("Running ProB for max ${(1000 + expectation!!.walltime * 2)/1000} seconds")
+                        println("Running ProB for at most ${(1000 + expectation!!.walltime * 2) / 1000} seconds")
 
-                        if (expectation.withDeadlock || expectation.withInvariantViolation) {
+                        if (expectation.withDeadlock) {
+                            println("NOT CHECKING DEADLOCK")
                             // model check also without deadlock check
                             val result = Launcher.benchmarkProlog(
                                 file!!,
-                                checkDeadlock = !expectation.withDeadlock,
-                                checkInvariant = !expectation.withInvariantViolation,
+                                checkDeadlock = false,
+                                checkInvariant = true,
                                 timeout = 1000 + expectation.walltime * 2
                             )
                             withClue("Counterexample found") {
-                                result.counterExample shouldBe null
+                                if (!expectation.withInvariantViolation) {
+                                    result.counterExample shouldBe null
+                                } else {
+                                    result.counterExample shouldNotBe null
+                                }
                             }
-                            withClue("States do not match") {
-                                result.statesAnalysed shouldBeExactly expectation.states
-                            }
-                            withClue("States do not match") {
-                                result.transitionsFired shouldBeExactly expectation.transitions
-                            }
-                            // TODO: print hint if times differ too much
                         }
 
-                        // run with deadlock check
-                        val result = Launcher.benchmarkProlog(file!!, timeout = 1000 + expectation.walltime * 2)
-                        withClue("Counterexample found") {
-                            if (expectation.withDeadlock) {
-                                result.counterExample shouldNotBe null
-                                result.counterExample!!.type shouldBe "deadlock"
-                            } else {
-                                result.counterExample shouldBe null
+                        if (expectation.withInvariantViolation) {
+                            println("NOT CHECKING INVARIANT")
+                            // model check also without invariant check
+                            val result = Launcher.benchmarkProlog(
+                                file!!,
+                                checkDeadlock = true,
+                                checkInvariant = false,
+                                timeout = 1000 + expectation.walltime * 2
+                            )
+                            withClue("Counterexample found") {
+                                if (!expectation.withDeadlock) {
+                                    result.counterExample shouldBe null
+                                } else {
+                                    result.counterExample shouldNotBe null
+                                }
                             }
                         }
-                        if (expectation.withDeadlock || expectation.withInvariantViolation) {
-                            return@expect
+
+
+                        val result = Launcher.benchmarkProlog(
+                            file!!,
+                            checkDeadlock = !expectation.withDeadlock,
+                            checkInvariant = !expectation.withInvariantViolation,
+                            timeout = 1000 + expectation.walltime * 2
+                        )
+                        withClue("Counterexample found") {
+                            result.counterExample shouldBe null
                         }
                         withClue("States do not match") {
                             result.statesAnalysed shouldBeExactly expectation.states

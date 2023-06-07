@@ -26,8 +26,8 @@ enumEntryExpression(name) ::= <<
 '<name>'
 >>
 
-identifierExpression(name, stateCount, exprCount) ::= <<
-get(State_<stateCount>, '<name>', Expr_<exprCount>)
+identifierExpression(name, returnSet, stateCount, exprCount) ::= <<
+<if(returnSet)>get(State_<stateCount>, '<name>', Expr_<exprCount>)<else>get(State_<stateCount>, '<name>', [Expr_<exprCount>])<endif>
 >>
 
 intervalExpression(lhs, rhs) ::= <<

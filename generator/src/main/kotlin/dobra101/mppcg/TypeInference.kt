@@ -29,7 +29,6 @@ class TypeInference {
 
     private fun pruneAll(node: MPPCGNode) {
         indent++
-//        println("  ".repeat(indent) + "$node")
         val mppcgnode = typeOf<MPPCGNode?>()
         val collection = typeOf<Collection<MPPCGNode>>()
         val type = typeOf<Type?>()
@@ -45,7 +44,6 @@ class TypeInference {
                 } else if (kp.returnType.isSubtypeOf(collection)) {
                     (kp.call(node) as Collection<*>).forEach { entry -> pruneAll(entry as MPPCGNode) }
                 } else if (kp.returnType.isSubtypeOf(type)) {
-//                    if (node is Expression) println("  ".repeat(indent) + "===> $node ${node.type}")
                     (kp as? KMutableProperty1<out MPPCGNode, *>)?.setter?.call(node, prune(kp.call(node) as Type))
                 }
             }
@@ -404,12 +402,8 @@ class TypeInference {
                 }
 
                 analyse(node.predicates, env)
-                // TODO: nested couples for more than two identifiers?
                 val type = if (identifierTypes.size == 1) TypeSet(identifierTypes[0]) else TypeSet(
-                    TypeOperator(
-                        "couple",
-                        identifierTypes
-                    )
+                    nestedCouples(identifierTypes)
                 )
                 loadOldEnv(env, envBefore)
                 node.type = type // TODO: remove
@@ -456,6 +450,13 @@ class TypeInference {
                         TODO("BinarySequenceExpression Type")
                     }
                 }
+                node.type = type
+                return type
+            }
+
+            is GeneralSumOrProductExpression -> {
+                analyse(node.predicate, env)
+                val type = analyse(node.expression, env)
                 node.type = type
                 return type
             }
@@ -584,10 +585,8 @@ class TypeInference {
         } else if (a is TypeOperator && b is TypeOperator) {
 
 
-            if (((a.name != b.name) || (a.types.size != b.types.size)) && !unifyable(
-                    a,
-                    b
-                )
+            if (((a.name != b.name) || (a.types.size != b.types.size))
+                && !unifyable(a, b)
             ) { // TODO: and to or, min types size not necessary in for loop
                 throw InferenceError("Types $a and $b do not match.")
             }
@@ -629,6 +628,18 @@ class TypeInference {
             return true
         } else if (pruned is TypeOperator) return pruned.types.find { occursInType(typeVariable, it) } != null
         return false
+    }
+
+    private fun nestedCouples(types: List<Type>): Type {
+        if (types.size == 1) return types[0]
+        val couple = TypeOperator("couple", listOf(types[0], types[1]))
+        if (types.size == 2) return couple
+
+        val sublist = types.subList(2, types.size)
+        return TypeOperator(
+            "couple",
+            listOf(couple, nestedCouples(sublist))
+        )
     }
 }
 

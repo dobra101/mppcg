@@ -62,29 +62,68 @@ is_list([_ | Tail]) :-
 get(State, Key, Value) :-
     avl:avl_fetch(Key, State, Value).
 
-
 empty(T) :- avl:empty_avl(T).
 
 update(Key, Value, AVL, NewAVL) :-
     functor(Key, Functor, 1),
     arg(1, Key, Parameter),
-    get(AVL, Functor, set(FuncRel)),
-    updateFunction(FuncRel, Parameter, Value, NewValue),
-    avl:avl_store(Functor, AVL, set(NewValue), NewAVL),
+    get(AVL, Functor, [FuncRel]),
+    updateAVL(FuncRel, Parameter, Value, NewValue),
+    % use this to get same avl representation
+    %(avl:avl_fetch(Functor, AVL) -> avl:avl_delete(Functor, AVL, _, AVL1); AVL1 = AVL),
+    %avl2List(AVL1, List),
+    %ordsets:list_to_ord_set([Functor-[NewValue] | List], Ordered),
+    %list2Avl(Ordered, NewAVL),
+    avl:avl_store(Functor, AVL, [NewValue], NewAVL),
     !.
 update(Key, Value, AVL, NewAVL) :-
-    avl:avl_store(Key, AVL, Value, NewAVL).
+    % use this to get same avl representation
+    %(avl:avl_fetch(Key, AVL) -> avl:avl_delete(Key, AVL, _, AVL1); AVL1 = AVL),
+    %avl2List(AVL1, List),
+    %ordsets:list_to_ord_set([Key-[Value] | List], Ordered),
+    %list2Avl(Ordered, NewAVL).
+    avl:avl_store(Key, AVL, [Value], NewAVL).
 
 list2Avl(List, AVL) :-
-    collapseList(List, empty, AVL).
+    collapseList(List, empty, AVL),
+    !.
+list2Avl(List, List).
 
-avl2List(AVL, List) :-
-    avl:avl_to_list(AVL, List).
+avl2List(AVL, AVLList) :-
+    avl:is_avl(AVL),
+    avl:avl_map(btypes:avl2List1, AVL, Mapped),
+    avl:avl_to_list(Mapped, List),
+    ordsets:list_to_ord_set(List, Ordered),
+    AVLList = Ordered, % needed since ProB inserts 'unsafe' as second parameter
+    !.
+avl2List(List, List).
 
-updateFunction([], Parameter, Value, [Parameter/Value]).
-updateFunction([Parameter/_ | Tail], Parameter, Value, [Parameter/Value | Tail]) :- !.
-updateFunction([K/V | Tail], Parameter, Value, [K/V | NewTail]) :-
-    updateFunction(Tail, Parameter, Value, NewTail).
+avl2List1([], []).
+avl2List1([Head | Tail], Result) :-
+    avl2List(Head, NewHead),
+    avl2List1(Tail, NewTail),
+    ((is_list(NewHead), NewHead \= []) ->
+    append(NewHead, NewTail, Result);
+    Result = [NewHead | NewTail]
+    ).
+
+updateAVL(AVL, Key, Value, NewAVL) :-
+    Key \= (_X - _Y),
+    avl:avl_store(Key, AVL, [Value], NewAVL).
+updateAVL(AVL, X-[Y], Value, NewAVL) :-
+    avl:avl_fetch(X, AVL, [AVLAtX]),
+    updateAVL(AVLAtX, Y, Value, NewAVLAtX),
+    !,
+    avl:avl_store(X, AVL, [NewAVLAtX], NewAVL).
+updateAVL(AVL, X-[Y], Value, NewAVL) :-
+    appendValueToKey(Y, Value, NewValue),
+    list2Avl([NewValue], AVLAtX),
+    avl:avl_store(X, AVL, [AVLAtX], NewAVL).
+
+appendValueToKey(Y, Value, Y - [Value]) :-
+    Y \= (_X - _Y1), !.
+appendValueToKey(X - [Y], Value, X - [Result]) :-
+    appendValueToKey(Y, Value, Result).
 
 %%%%%%%%%%%%%%%%%%%%%%%%% HELPER %%%%%%%%%%%%%%%%%%%%%%%%%
 between(A, B, Element) :-
@@ -119,14 +158,15 @@ gen_int_between(Start, End, Int) :-
     gen_int_between(Start1, End, Int).
 
 mppcg_expandEntries(_, [], []).
-mppcg_expandEntries(X, [Head | Tail], [(Head-[X]) | OtherTail]) :-
+mppcg_expandEntries(X, [Head | Tail], [(X-[Head]) | OtherTail]) :-
     mppcg_expandEntries(X, Tail, OtherTail).
 
-collapseList([], Acc, Acc).
+collapseList([], Acc, AVL) :-
+    avl:avl_map(btypes:collapseInnerList, Acc, AVL).
 collapseList([(X - Y) | Tail], Acc, Result) :-
     avl:avl_member(X, Acc, Y1),
-    append(Y, Y1, YRes),
-    avl:avl_change(X, Acc, Y1, NewAcc, YRes),
+    ordsets:ord_union(Y, Y1, YRes),
+    avl:avl_store(X, Acc, YRes, NewAcc),
     !,
     collapseList(Tail, NewAcc, Result).
 collapseList([(X - Y) | Tail], Acc, Result) :-
@@ -136,6 +176,14 @@ collapseList([(X - Y) | Tail], Acc, Result) :-
 collapseList(AVL, _, AVL) :-
     avl:is_avl(AVL).
 
+
+collapseInnerList([[]], [empty]) :-
+    !.
+collapseInnerList([(X-Y) | Tail], [Result]) :-
+    list_to_ord_set([(X-Y) | Tail], Ord),
+    !,
+    collapseList(Ord, empty, Result).
+collapseInnerList(List, List).
 
 collapseListOfLists([], []).
 collapseListOfLists([Head | Tail], [Collapsed | NewTail]) :-
@@ -162,6 +210,10 @@ flatten([Head | Tail], Acc, Flat) :-
     (is_list(Head) -> append(Head, Acc, NewAcc); append([Head], Acc, NewAcc)),
     flatten(Tail, NewAcc, Flat).
 
+sortIfList(X, X) :-
+    var(X),
+    !.
+sortIfList([], []) :- !.
 sortIfList([Head | Tail], Sorted) :-
     ordsets:list_to_ord_set([Head | Tail], Sorted).
 %%%%%%%%%%%%%%%%%%%%%%%%% HELPER END %%%%%%%%%%%%%%%%%%%%%%%%%
@@ -191,9 +243,10 @@ mppcg_member_(Set, function(From, To)) :-
     nonvar(From),
     nonvar(To),
     mppcg_member_function(Set, From, To).
-mppcg_member_(Element, [Head | Tail]) :-
+mppcg_member_(Element, List) :-
+    is_list(List),
     !,
-    mppcg_member_list(Element, [Head | Tail]).
+    mppcg_member_list(Element, List).
 mppcg_member_(Element, AVL) :-
     mppcg_member_avl(Element, AVL).
 
@@ -210,21 +263,70 @@ mppcg_member_function(AVL, From, To) :-
     mppcg_member_function_avl(AVL, From, To).
 
 mppcg_member_function_avl(AVL, From, To) :-
-    avl:avl_domain(AVL, Domain),
-    avl:avl_range(AVL, Range),
+    mppcg_avl_domain(AVL, Domain),
+    mppcg_avl_range(AVL, Range),
     flatten(Range, RangeFlat),
     mppcg_subset(Domain, From),
     mppcg_subset(RangeFlat, To).
 
-mppcg_member_avl((X-Y), AVL) :-
+% use instead of avl:avl_domain
+mppcg_avl_domain(AVL, Domain) :-
+    findall(Key-Flat,
+        (
+            avl:avl_member(Key, AVL, Values), % values are either avls, or just values
+            findall(Dom,
+                (
+                    member(V, Values),
+                    avl:is_avl(V),
+                    mppcg_avl_domain(V, Dom)
+                ),
+                ValuesDomains
+            ),
+            flatten(ValuesDomains, Flat)
+        ),
+        DomainList
+    ),
+    pruneDomainList(DomainList, Domain).
+
+pruneDomainList([], []).
+pruneDomainList([Head - [] | Tail], [Head | NewTail]) :-
+    !,
+    pruneDomainList(Tail, NewTail).
+pruneDomainList([Head | Tail], [Head | NewTail]) :-
+    pruneDomainList(Tail, NewTail).
+
+
+% use instead of avl:avl_range
+mppcg_avl_range(AVL, Range) :-
+    avl:avl_range(AVL, NestedRange),
+    nestedRange(NestedRange, RangeUnordered),
+    ordsets:list_to_ord_set(RangeUnordered, Range).
+
+nestedRange([], []).
+nestedRange([[Head] | Tail], Range) :-
+    avl:is_avl(Head),
+    !,
+    mppcg_avl_range(Head, HeadRange),
+    nestedRange(Tail, NewTail),
+    append(HeadRange, NewTail, Range).
+nestedRange([[Head] | Tail], [Head | NewTail]) :-
+    nestedRange(Tail, NewTail).
+
+
+mppcg_member_avl(Element, AVL) :-
+    \+ avl:is_avl(AVL),
+    !,
+    mppcg_equal(Element, AVL).
+mppcg_member_avl((X-[Y]), AVL) :-
     !,
     avl:avl_member(X, AVL, Y1),
-    mppcg_equal(Y, Y1).
+    member(YMember, Y1),
+    mppcg_member_avl(Y, YMember).
 mppcg_member_avl(Element, AVL) :-
     avl:avl_member(Element, AVL).
 
 % TODO: cut?
-mppcg_member_list(_, []) :- fail.
+mppcg_member_list(_, []) :- fail, !.
 mppcg_member_list(X, [Head | _]) :-
     mppcg_equal(X, Head).
 mppcg_member_list(X, [_ | Tail]) :-
@@ -287,17 +389,14 @@ mppcg_setUnion(Left, Right, Union) :-
 
 %%%%%%%%%%%%%%%%%%%%%%%%% RELATIONS %%%%%%%%%%%%%%%%%%%%%%%%%
 mppcg_domain(AVL, Domain) :-
-    avl:avl_domain(AVL, Domain).
+    mppcg_avl_domain(AVL, Domain).
 
-
-%mppcg_range(AVL, Range) :-
-%    avl:avl_range(AVL, AVLRange),
-%    flatten(AVLRange, Flat),
-%    ordsets:list_to_ord_set(Flat, Range).
 
 mppcg_range(AVL, Range) :-
-    findall(Value, avl:avl_member(_, AVL, Value), Values),
-    flatten(Values, Range).
+    mppcg_avl_range(AVL, Range).
+%mppcg_range(AVL, Range) :-
+%    findall(Value, avl:avl_member(_, AVL, Value), Values),
+%    flatten(Values, Range).
 
 
 % TODO: could be optimized
@@ -320,7 +419,7 @@ mppcg_inverse(Set, Result) :-
 
 
 mppcg_domainRestriction(Domain, AVL, Result) :-
-    avl:avl_domain(AVL, AVLDomain),
+    mppcg_avl_domain(AVL, AVLDomain),
     ordsets:list_to_ord_set(Domain, DomainOrdSet),
     ordsets:ord_intersection(DomainOrdSet, AVLDomain, Intersection),
     ordsets:ord_subtract(AVLDomain, Intersection, Difference),
@@ -328,7 +427,7 @@ mppcg_domainRestriction(Domain, AVL, Result) :-
 
 
 mppcg_domainSubtraction(Domain, AVL, Result) :-
-    avl:avl_domain(AVL, AVLDomain),
+    mppcg_avl_domain(AVL, AVLDomain),
     ordsets:list_to_ord_set(Domain, DomainOrdSet),
     ordsets:ord_intersection(DomainOrdSet, AVLDomain, Intersection),
     deleteKeysFromAVL(Intersection, AVL, Result).
@@ -361,7 +460,7 @@ mppcg_image_(AVL, [Head | Tail], Image) :-
 
 
 mppcg_override(AVL1, AVL2, Result) :-
-    avl:avl_domain(AVL2, Domain),
+    mppcg_avl_domain(AVL2, Domain),
     mppcg_domainSubtraction(Domain, AVL1, Subtracted),
     mppcg_relationUnion(AVL2, Subtracted, Result).
 
@@ -375,7 +474,7 @@ mppcg_relationUnion_(AVL, [(Key-Value) | Tail], Result) :-
     avl:avl_member(Key, AVL, OldValue),
     !,
     ordsets:ord_union(OldValue, Value, NewValue),
-    avl:avl_change(Key, AVL, OldValue, NewAVL, NewValue),
+    avl:avl_store(Key, AVL, NewValue, NewAVL),
     mppcg_relationUnion_(NewAVL, Tail, Result).
 mppcg_relationUnion_(AVL, [(Key-Value) | Tail], Result) :-
     avl:avl_store(Key, AVL, Value, NewAVL),
@@ -395,6 +494,7 @@ mppcg_forwardComposition(P, Q, AVL) :-
     avl:list_to_avl(Result, AVL).
 
 
+% TODO: multiply ASTs
 mppcg_mult(Left, Right, AVL) :-
     findall(
         (X-[Y]),
@@ -475,7 +575,7 @@ mppcg_powerSet1(Set, PowerSet) :-
 
 
 mppcg_powerSet_set(Set, OrdSet) :-
-    findall(Subset, mppcg_subset_(Subset, Set), PowerSet),
+    findall(Subset, mppcg_subset(Subset, Set), PowerSet),
     ordsets:list_to_ord_set(PowerSet, OrdSet).
 mppcg_powerSet1_set(Set, OrdSet) :-
     mppcg_powerSet_set(Set, PowerSet),
@@ -492,6 +592,12 @@ mppcg_min(X, Min) :-
     resolve(X, X1),
     ordsets:list_to_ord_set(X1, [Min | _]).
 
+mppcg_card(AVL, Card) :-
+    avl:is_avl(AVL),
+    !,
+    findall(Val, avl:avl_member(_, AVL, Val), Values),
+    flatten(Val, Values),
+    length(Values, Card).
 mppcg_card(X, Card) :-
     resolve(X, X1),
     is_list(X1),
@@ -551,12 +657,25 @@ mppcg_equal_(X, Y) :-
     number(Y),
     !,
     X =< Y,
-    Y >= Y.
+    Y =< X.
 mppcg_equal_(List1, List2) :-
     is_list(List1),
     is_list(List2),
-    ordsets:list_to_ord_set(List1, List),
-    ordsets:list_to_ord_set(List2, List).
+    ordsets:list_to_ord_set(List1, Ord1),
+    ordsets:list_to_ord_set(List2, Ord2),
+    (Ord1 = Ord2; mppcg_equal_nestedSets(Ord1, Ord2)),
+    !.
+
+
+mppcg_equal_nestedSets([], []).
+mppcg_equal_nestedSets([[Head1 | Tail1] | OuterTail1], [[Head2 | Tail2] | OuterTail2]) :-
+    mppcg_equal([Head1 | Tail1], [Head2 | Tail2]),
+    mppcg_equal_nestedSets(OuterTail1, OuterTail2).
+mppcg_equal_nestedSets([Head1 | Tail1], [Head2 | Tail2]) :-
+    \+ is_list(Head1),
+    \+ is_list(Head2),
+    mppcg_equal(Head1, Head2),
+    mppcg_equal_nestedSets(Tail1, Tail2).
 
 
 mppcg_notEqual(AVL, AVL2) :-
@@ -643,9 +762,22 @@ resolve((A, B), List) :- resolve_interval((A, B), List), !.
 resolve(function(From, To), function(F, T)) :-
     resolve(From, F),
     resolve(To, T).
+resolve(X-Y, Couple) :- resolve_couple(X-Y, Couple), !.
+resolve([Head | Tail], List) :- resolve_list([Head | Tail], List), !.
 resolve(X, X).
 resolve_interval((A, B), List) :-
     nonvar(A),
     nonvar(B),
     !,
     findall(X, between(A, B, X), List).
+resolve_couple((X-Y)-[Z], Couple) :-
+    !,
+    appendValueToKey(X-Y, Z, Couple).
+resolve_couple(X-Y, X-Y).
+resolve_list([], []).
+resolve_list([X-Y | Tail], Result) :-
+    !,
+    mppcg_expandEntries(X, Y, Expanded),
+    resolve_list(Tail, NewTail),
+    append(Expanded, NewTail, Result).
+resolve_list(List, List).
