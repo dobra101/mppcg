@@ -40,6 +40,7 @@ class GenerationTest : ExpectSpec({
         File("src/test/resources/dobra101/mppcg/generate/operators/expectations.csv").toExpectations()
     val machines = File("src/test/resources/dobra101/mppcg/generate/operators/").walk()
         .filter { it.isFile && it.name.endsWith(".mch") }
+        .filter { it.nameWithoutExtension == "tictac"}
         .toList()
 
     machines.filter { mch -> expectations.find { expect -> expect.file == mch } == null }

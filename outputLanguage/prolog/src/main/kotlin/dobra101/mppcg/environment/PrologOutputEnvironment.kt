@@ -55,27 +55,25 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
 
     /* ---------- EXPRESSIONS ---------- */
     override fun AnonymousCollectionNode.renderSelf(): RenderResult {
-        fun isSetOfCouples(): Boolean {
-            return type is TypeSet && (type as TypeSet).types[0] is TypeOperator && ((type as TypeSet).types[0] as TypeOperator).name == "couple"
-        }
         return loadOrEvaluate(this) {
             val expanded = ExpandedExpressionList.of(elements)
             val map = mapOf(
                 "elements" to expanded.expressions
             )
-            if (expanded.before.isBlank() && !isSetOfCouples()) {
+
+            if (expanded.before.isBlank()) {
                 return@loadOrEvaluate RenderResult(renderTemplate(map))
             }
 
             val rendered = renderTemplate(map)
             var resultExpr = rendered
             var before = expanded.before
-            if (isSetOfCouples()) {
-                resultExpr = expr(exprCount++)
-                before += "list2Avl($rendered, $resultExpr)"   // TODO: not hardcoded
-            } else {
+//            if (isSetOfCouples()) {
+//                resultExpr = expr(exprCount++)
+//                before += "list2Avl($rendered, $resultExpr)"   // TODO: not hardcoded
+//            } else {
                 before = before.removeSuffix(EXPRESSION_SEPARATOR)
-            }
+//            }
 
             add(node, resultExpr)
             return@loadOrEvaluate RenderResult(
@@ -187,7 +185,6 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
                 } else {
                     val map = mapOf(
                         "name" to name,
-                        "returnSet" to (false && type is TypeSet && ((type as TypeSet).type as TypeOperator).name != "couple"),
                         "stateCount" to stateCount,
                         "exprCount" to exprCount
                     )
@@ -660,13 +657,10 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             val before1 = ExpandedExpression.of(expression)
             val before2 = ExpandedExpressionList.of(parameters)
 
-            val singleValue = (type is TypeNumber || (type is TypeOperator && (type as TypeOperator).types.isEmpty()))
-
             val map = mapOf(
                 "expression" to before1.expression,
                 "parameters" to before2.expressions,
                 "exprCount" to exprCount,
-                "expectSingleValue" to singleValue
             )
 
             val before = "${before1.before}${before2.before}"

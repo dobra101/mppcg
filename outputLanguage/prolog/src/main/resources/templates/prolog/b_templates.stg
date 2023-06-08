@@ -48,11 +48,11 @@ binaryFunctionExpression(lhs, rhs, operator, exprCount) ::= <<
 >>
 
 callFunctionAccess(expression, parameters) ::= <<
-<expression>(<parameters>)
+<expression>(<parameters; separator="-">)
 >>
 
 callFunction(expression, parameters, exprCount, expectSingleValue) ::= <<
-mppcg_callFunction<if(expectSingleValue)>_singleValue<endif>(<expression>, <parameters>, Expr_<exprCount>)
+mppcg_callFunction(<expression>, <parameters>, Expr_<exprCount>)
 >>
 
 concreteIdentifierDeclaration(name, before, value, inline, exprCount, interval) ::= <<
@@ -67,7 +67,7 @@ concreteIdentifier(name, exprCount) ::= <<
 >>
 
 couple(from, to) ::= <<
-(<from>-[<to>])
+<from>-<to>
 >>
 
 unaryFunctionExpression(expression, operator, exprCount) ::= <<
@@ -101,14 +101,13 @@ universal_quantifier_<name>_<count>(State_0<if(parameters)>, <parameters; separa
 
 lambdaExpression(identifier, predicate, expression, value, exprCount) ::= <<
 findall(
-    (<identifier>-[<value>]),
+    (<identifier>-<value>),
     (
         <predicate>,
         <expression>
     ),
-    Res_<exprCount>
-),
-list2Avl(Res_<exprCount>, Expr_<exprCount>)
+    Expr_<exprCount>
+)
 >>
 
 initialization(body, resultStateCount) ::= <<
@@ -146,8 +145,8 @@ findall(
     (
         <predicates; separator=",\n">
     ),
-    Res_<exprCount>),
-list2Avl(Res_<exprCount>, Expr_<exprCount>)
+    Expr_<exprCount>
+)
 >>
 
 
@@ -156,9 +155,7 @@ props(invariants, indices) ::= <<
 prop(State, unsafe) :-
     \+ check_inv(State),
     !.
-prop(State, List) :-
-    avl2List(State, List),
-    !.
+prop(State, State) :- !.
 
 check_inv(State) :-
     <indices :{ idx | check_inv_<idx>(State)}; separator=", !, \n">.
@@ -191,5 +188,5 @@ binarySequenceExpression(lhs, rhs, operator, exprCount) ::= <<
 >>
 
 comprehensionSetIdentifier(first, second) ::= <<
-<first> - [<second>]
+<first> - <second>
 >>
