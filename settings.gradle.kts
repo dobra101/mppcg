@@ -4,4 +4,3 @@ include("outputLanguage:java")
 include("outputLanguage:prolog")
 include("inputLanguage:B:java")
 include("inputLanguage:B:prolog")
-findProject(":inputLanguage:B:prolog")?.name = "prolog"

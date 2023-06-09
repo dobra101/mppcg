@@ -19,7 +19,7 @@ abstract class AbstractVisitor: DepthFirstAdapter() {
         var result: MPPCGNode? = null
     }
     abstract val result: MPPCGNode?
-    protected val logger: Logger = Logger.getLogger(this::class.simpleName)
+    private val logger: Logger = Logger.getLogger(this::class.simpleName)
 
     init {
         val manager = LogManager.getLogManager()

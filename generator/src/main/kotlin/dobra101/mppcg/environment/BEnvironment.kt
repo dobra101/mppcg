@@ -12,6 +12,10 @@ import dobra101.mppcg.node.expression.UnaryExpression
 import dobra101.mppcg.node.predicate.QuantifierPredicate
 import dobra101.mppcg.node.substitution.ParallelSubstitution
 
+/**
+ * Provides rendering methods only used in B models.
+ * Extends the [OutputLanguageEnvironment].
+ */
 interface BEnvironment {
 
     /* Expression */

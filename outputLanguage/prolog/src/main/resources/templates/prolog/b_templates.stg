@@ -6,9 +6,8 @@ machine(name, parameters, constraints, sets, constants, concrete_constants, prop
 <sets; separator=".\n\n">.
 <endif>
 
-<if(concrete_constants)>
-<concrete_constants; separator="\n\n">
-<endif>
+init_constants :-
+    <if(concrete_constants)><concrete_constants; separator=",\n"><else>!<endif>.
 
 <initialization>
 
@@ -56,10 +55,13 @@ mppcg_callFunction(<expression>, <parameters>, Expr_<exprCount>)
 >>
 
 concreteIdentifierDeclaration(name, before, value, inline, exprCount, interval) ::= <<
-<if(inline)><name>(<value>).<else>
-<if(interval)><name>(<value>) :- <before>.<else>
-<name>(Expr_<exprCount>) :-
-    <value>.<endif><endif>
+retractall(<name>(_)),
+<if(inline)>
+assert((<name>(<value>)))<else>
+<if(interval)>assert((<name>(<value>) :- <before>))<else>
+<value>,
+ordsets:list_to_ord_set(Expr_<exprCount>, Ord_<exprCount>),
+assert((<name>(Ord_<exprCount>)))<endif><endif>
 >>
 
 concreteIdentifier(name, exprCount) ::= <<
@@ -112,6 +114,7 @@ findall(
 
 initialization(body, resultStateCount) ::= <<
 start(State_<resultStateCount>) :-
+    init_constants,
     empty(State_0)<if(body)>,
     <body; separator=",\n"><endif>.
 >>

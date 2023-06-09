@@ -52,8 +52,7 @@
 :- use_module(runCfg).
 
 is_list([]).
-is_list([_ | Tail]) :-
-    is_list(Tail).
+is_list([_ | _]).
 
 get(State, Key, Value) :-
     ord_fetch(Key, State, Value).
@@ -152,6 +151,9 @@ sortIfList([Head | Tail], Sorted) :-
 
 %%%%%%%%%%%%%%%%%%%%%%%%% MEMBER %%%%%%%%%%%%%%%%%%%%%%%%%
 mppcg_member(_, Y) :- var(Y), !, fail.
+mppcg_member(X, 'BOOL') :-
+    (X = true; X = false),
+    !.
 mppcg_member(X, Y) :-
     resolve(X, X1),
     resolve(Y, Y1),
@@ -171,6 +173,7 @@ mppcg_member_(Set, function(From, To)) :-
     mppcg_member_function(Set, From, To).
 mppcg_member_(Element, [X-Y | Tail]) :-
     nonvar(Element),
+    ordsets:is_ordset([X-Y | Tail]),
     !,
     mppcg_member_ordlist(Element, [X-Y | Tail]).
 mppcg_member_(Element, List) :-
@@ -234,14 +237,18 @@ mppcg_setSubtraction(empty, _, empty) :- !.
 mppcg_setSubtraction(Left, Right, Result) :-
     resolveNonVar(Left, L),
     resolveNonVar(Right, R),
-    ordsets:ord_subtract(L, R, Result).
+    ordsets:list_to_ord_set(L, L1),
+    ordsets:list_to_ord_set(R, R1),
+    ordsets:ord_subtract(L1, R1, Result).
 %%%%%%%%%%%%%%%%%%%%%%%%% SET SUBTRACTION END %%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%% SET INTERSECTION %%%%%%%%%%%%%%%%%%%%%%%%%
 mppcg_setIntersection(Left, Right, Intersection) :-
     resolveNonVar(Left, L),
     resolveNonVar(Right, R),
-    ordsets:ord_intersection(L, R, Intersection).
+    ordsets:list_to_ord_set(L, L1),
+    ordsets:list_to_ord_set(R, R1),
+    ordsets:ord_intersection(L1, R1, Intersection).
 %%%%%%%%%%%%%%%%%%%%%%%%% SET INTERSECTION END %%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%% SET UNION %%%%%%%%%%%%%%%%%%%%%%%%%
@@ -250,17 +257,25 @@ mppcg_setUnion([], Set, Set) :- !.
 mppcg_setUnion(Set1, Set2, Union) :-
     resolveNonVar(Set1, L),
     resolveNonVar(Set2, R),
-    ordsets:ord_union(L, R, Union).
+    ordsets:list_to_ord_set(L, L1),
+    ordsets:list_to_ord_set(R, R1),
+    ordsets:ord_union(L1, R1, Union).
 %%%%%%%%%%%%%%%%%%%%%%%%% SET UNION END %%%%%%%%%%%%%%%%%%%%%%%%%
 
 %%%%%%%%%%%%%%%%%%%%%%%%% RELATIONS %%%%%%%%%%%%%%%%%%%%%%%%%
-mppcg_domain([], []) :- !.
-mppcg_domain([Key-_ | Tail], [Key | NewTail]) :-
-    mppcg_domain(Tail, NewTail).
+mppcg_domain(List, Ordered) :-
+    mppcg_domain_(List, Domain),
+    ordsets:list_to_ord_set(Domain, Ordered).
+mppcg_domain_([], []) :- !.
+mppcg_domain_([Key-_ | Tail], [Key | NewTail]) :-
+    mppcg_domain_(Tail, NewTail).
 
-mppcg_range([], []) :- !.
-mppcg_range([_-Value | Tail], [Value | NewTail]) :-
-    mppcg_range(Tail, NewTail).
+mppcg_range(List, Ordered) :-
+    mppcg_range_(List, Range),
+    ordsets:list_to_ord_set(Range, Ordered).
+mppcg_range_([], []) :- !.
+mppcg_range_([_-Value | Tail], [Value | NewTail]) :-
+    mppcg_range_(Tail, NewTail).
 
 mppcg_reverse(List, Reversed) :-
     mppcg_reverse(List, [], Reversed).
@@ -269,8 +284,13 @@ mppcg_reverse([], Acc, Acc).
 mppcg_reverse([Head | Tail], Acc, Result) :-
     mppcg_reverse(Tail, [Head | Acc], Result).
 
-mppcg_inverse(Set, Result) :-
-    mppcg_reverse(Set, Result).
+mppcg_inverse(Set, Inversed) :-
+    mppcg_inverse_(Set, Result),
+    ordsets:list_to_ord_set(Result, Inversed).
+
+mppcg_inverse_([], []).
+mppcg_inverse_([X-Y | Tail], [Y-X | NewTail]) :-
+    mppcg_inverse_(Tail, NewTail).
 
 
 mppcg_domainRestriction(Domain, List, Result) :-
@@ -320,7 +340,7 @@ mppcg_image(List, Set, Image) :-
     findall(Res,
         (
             member(M, S),
-            ord_fetch(M, List, Res)
+            ord_fetchAll(M, List, Res)
         ),
         Result
     ),

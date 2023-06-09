@@ -10,7 +10,7 @@ interface MPPCGNode {
      * @return A RenderResult containing the resulting string and individual information
      */
     fun render(): RenderResult {
-        return environment.call(this)
+        return environment.delegateCall(this)
     }
 
     val templateName: String

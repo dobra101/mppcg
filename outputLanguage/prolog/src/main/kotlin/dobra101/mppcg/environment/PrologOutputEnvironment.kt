@@ -2,6 +2,9 @@ package dobra101.mppcg.environment
 
 import dobra101.mppcg.IndividualInfo
 import dobra101.mppcg.RenderResult
+import dobra101.mppcg.environment.PrologOutputEnvironment.Companion.BEFORE
+import dobra101.mppcg.environment.PrologOutputEnvironment.Companion.EXPRESSION_SEPARATOR
+import dobra101.mppcg.environment.PrologOutputEnvironment.Companion.RESULT_EXPR
 import dobra101.mppcg.node.*
 import dobra101.mppcg.node.b.*
 import dobra101.mppcg.node.b.Function
@@ -9,9 +12,13 @@ import dobra101.mppcg.node.collection.*
 import dobra101.mppcg.node.expression.*
 import dobra101.mppcg.node.predicate.*
 import dobra101.mppcg.node.substitution.*
-import org.intellij.lang.annotations.Identifier
 import kotlin.math.max
 
+/**
+ * This is the [OutputLanguageEnvironment] for Prolog.
+ *
+ * Here, the ```renderSelf```-method is implemented for each node.
+ */
 class PrologOutputEnvironment : OutputLanguageEnvironment() {
     override val templateDir = "templates/prolog"
     override val fileExtension = "pl"
@@ -20,6 +27,8 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
 
     companion object {
         const val EXPRESSION_SEPARATOR = ",\n"
+        const val BEFORE = "before"
+        const val RESULT_EXPR = "resultExpr"
     }
 
     private var codeRepresentation: Program? = null
@@ -42,6 +51,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     private var ignoreOutput: Boolean = false // HINT: only for B
     private var returnValues: List<Expression> = listOf() // HINT: only for B
     private var ctrlStructIdentifier: List<IdentifierExpression> = listOf() // HINT: only for B
+    private var concreteIdentifierExpressionDeclared: MutableMap<String, Boolean> = mutableMapOf() // HINT: only for B
 
     private fun expr(name: Any): String = "Expr_$name"
 
@@ -66,19 +76,12 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             }
 
             val rendered = renderTemplate(map)
-            var resultExpr = rendered
-            var before = expanded.before
-//            if (isSetOfCouples()) {
-//                resultExpr = expr(exprCount++)
-//                before += "list2Avl($rendered, $resultExpr)"   // TODO: not hardcoded
-//            } else {
-                before = before.removeSuffix(EXPRESSION_SEPARATOR)
-//            }
+            val before = expanded.before.removeSuffix(EXPRESSION_SEPARATOR)
 
-            add(node, resultExpr)
+            add(node, rendered)
             return@loadOrEvaluate RenderResult(
                 before,
-                mapOf("resultExpr" to IndividualInfo(resultExpr))
+                mapOf(RESULT_EXPR to IndividualInfo(rendered))
             )
         }
     }
@@ -116,7 +119,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             add(node, expr(exprCount))
 
             if (isParameter) {
-                val info = mapOf("resultExpr" to IndividualInfo(expr(exprCount)))
+                val info = mapOf(RESULT_EXPR to IndividualInfo(expr(exprCount)))
                 // expr is now assigned -> increase
                 exprCount++
                 return@loadOrEvaluate RenderResult(renderTemplate(map), info)
@@ -143,7 +146,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             )
             val rendered = renderTemplate(map)
             if (optimize) evaluatedExpressions[this] = expr(exprName)
-            return RenderResult(rendered, mapOf("resultExpr" to IndividualInfo(expr(exprName))))
+            return RenderResult(rendered, mapOf(RESULT_EXPR to IndividualInfo(expr(exprName))))
         }
 
         fun isEnumValue(): Boolean {
@@ -200,7 +203,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             "lhs" to expanded.lhs,
             "rhs" to expanded.rhs
         )
-        return RenderResult(renderTemplate(map), info = mapOf("before" to IndividualInfo(expanded.before)))
+        return RenderResult(renderTemplate(map), info = mapOf(BEFORE to IndividualInfo(expanded.before)))
     }
 
     override fun SetCollectionNode.renderSelf(): RenderResult {
@@ -323,8 +326,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             if (lineBreaks != 0) return false
             if (operator == LogicPredicateOperator.AND) return false
             if (left !is BinaryPredicate) return false
-            if (right !is BinaryPredicate) return false
-            return true
+            return right is BinaryPredicate
         }
 
         val expanded = ExpandedBinary.of(left, right, true, this@PrologOutputEnvironment)
@@ -599,7 +601,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             "type" to functionType,
             "mapType" to mapType
         )
-        return RenderResult(renderTemplate(map), info = mapOf("before" to IndividualInfo(expanded.before)))
+        return RenderResult(renderTemplate(map), info = mapOf(BEFORE to IndividualInfo(expanded.before)))
     }
 
     override fun BinaryCollectionExpression.renderSelf(): RenderResult {
@@ -709,13 +711,10 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
 
     override fun ConcreteIdentifierExpression.renderSelf(): RenderResult {
         if (declarationStep) {
-            evaluatedExpressions.clear()
             stateCount = 0
-            exprCount = 0
-            temporaryVariables = hashSetOf()
 
             val renderedValue = value.render()
-            val before = if (renderedValue.containsKey("before")) renderedValue["before"].info else ""
+            val before = if (renderedValue.containsKey(BEFORE)) renderedValue[BEFORE].info else ""
             val map = mapOf(
                 "name" to name,
                 "before" to before.removeSuffix(EXPRESSION_SEPARATOR),
@@ -724,7 +723,9 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
                 "inline" to (!renderedValue.rendered.contains(EXPRESSION_SEPARATOR) && value !is ComprehensionSet && value !is LambdaExpression && before.isBlank()), // TODO: type checks needed?
                 "exprCount" to exprCount - 1 // last assigned expression
             )
-            return RenderResult(renderTemplate("concreteIdentifierDeclaration", map))
+            val rendered = RenderResult(renderTemplate("concreteIdentifierDeclaration", map))
+            concreteIdentifierExpressionDeclared[rendered.rendered] = !((map["inline"] as Boolean) || (map["interval"] as Boolean))
+            return rendered
         }
 
         return loadOrEvaluate(this) {
@@ -745,7 +746,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             "to" to expanded.rhs
         )
 
-        return RenderResult(renderTemplate(map), info = mapOf("before" to IndividualInfo(expanded.before)))
+        return RenderResult(renderTemplate(map), info = mapOf(BEFORE to IndividualInfo(expanded.before)))
     }
 
     override fun GeneralSumOrProductExpression.renderSelf(): RenderResult {
@@ -829,7 +830,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
                     before = expanded.before
                     expanded.expression
                 } else {
-                    value.render()
+                    value.render().rendered
                 }
                 val resultAt =
                     if (evaluatedExpressions.contains(value)) evaluatedExpressions[value] else expr(exprCount - 1)
@@ -868,7 +869,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
 
     // HINT: SAME FOR JAVA AND PROLOG
     override fun Invariant.renderSelf(): RenderResult {
-        val checkInvs = List(predicates.size) { idx ->
+        val checkInvariants = List(predicates.size) { idx ->
             evaluatedExpressions.clear()
             exprCount = 0
             stateCount = 0
@@ -879,10 +880,10 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             renderTemplate(map)
         }
 
-        val renderedCheckInvs = renderTemplate("invariants", mapOf("list" to checkInvs))
+        val renderedCheckInvariants = renderTemplate("invariants", mapOf("list" to checkInvariants))
 
         val map = mapOf(
-            "invariants" to renderedCheckInvs,
+            "invariants" to renderedCheckInvariants,
             "indices" to predicates.indices.map { it }
         )
 
@@ -1018,7 +1019,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         this@PrologOutputEnvironment.concreteVariables = concreteVariables
         this@PrologOutputEnvironment.variables = variables
 
-        val concreteConstantsRendered = concreteConstants.render()
+        concreteConstants.render()
 
         declarationStep = false
 
@@ -1028,7 +1029,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             "constraints" to constraints?.render(),
             "sets" to sets.render(),
             "constants" to constants.render(),
-            "concrete_constants" to concreteConstantsRendered,
+            "concrete_constants" to concreteIdentifierExpressionDeclared.toList().sortedBy { it.second }.map { it.first }.toList(),
 //            "properties" to properties?.render(), // TODO: use properties
             "definitions" to definitions?.render(),
             "variables" to variables.render(),
@@ -1045,28 +1046,23 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun Operation.renderSelf(): RenderResult {
-        evaluatedExpressions.clear()
-        stateCount = 0
-        exprCount = 0
-        temporaryVariables = hashSetOf()
-        operationParameters = parameters.map { it as IdentifierExpression }
-        currentOperation = name
-        whileCount = 0
-        quantifierCount = 0
-
+        fun resetEnvironment() {
+            evaluatedExpressions.clear()
+            stateCount = 0
+            exprCount = 0
+            temporaryVariables = hashSetOf()
+            operationParameters = parameters.map { it as IdentifierExpression }
+            currentOperation = name
+            whileCount = 0
+            quantifierCount = 0
+        }
+        resetEnvironment()
         ignoreOutput = true
         this@PrologOutputEnvironment.returnValues = returnValues
         val bodyNoOutput = body?.render()
         val stateCountNoOutput = stateCount
         ignoreOutput = false
-        evaluatedExpressions.clear()
-        stateCount = 0
-        exprCount = 0
-        temporaryVariables = hashSetOf()
-        operationParameters = parameters.map { it as IdentifierExpression }
-        currentOperation = name
-        whileCount = 0
-        quantifierCount = 0
+        resetEnvironment()
         val bodyWithOutput = body?.render()
 
         val map = mapOf(
@@ -1090,13 +1086,8 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     // TODO: are all operators math-operators?
     private fun isMathOperator(operator: BinaryExpressionOperator): Boolean {
         return when (operator) {
-            BinaryExpressionOperator.ADD -> true
-            BinaryExpressionOperator.MINUS -> true
-            BinaryExpressionOperator.MULT -> true
-            BinaryExpressionOperator.DIV -> true
-            BinaryExpressionOperator.MOD -> true
-            BinaryExpressionOperator.POW -> true
             BinaryExpressionOperator.PARALLEL_PRODUCT -> false
+            else -> true
         }
     }
 
@@ -1240,7 +1231,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
 
     private fun exprToInfo(node: MPPCGNode): Map<String, IndividualInfo> {
         if (optimize) evaluatedExpressions[node] = expr(exprCount)
-        val info = mapOf("resultExpr" to IndividualInfo(expr(exprCount)))
+        val info = mapOf(RESULT_EXPR to IndividualInfo(expr(exprCount)))
         // expr is now assigned -> increase
         exprCount++
         return info
@@ -1258,13 +1249,13 @@ private data class ExpandedExpressionList(val before: String = "", val expressio
                 if (it is ValueExpression || it is SetEntry) {
                     result.rendered
                 } else {
-                    if (result.rendered.isNotBlank() && result.containsKey("resultExpr")) {
-                        before += "${result.rendered}${PrologOutputEnvironment.EXPRESSION_SEPARATOR}"
+                    if (result.rendered.isNotBlank() && result.containsKey(RESULT_EXPR)) {
+                        before += "${result.rendered}$EXPRESSION_SEPARATOR"
                     }
-                    if (result.containsKey("before")) {
-                        before += result["before"].info
+                    if (result.containsKey(BEFORE)) {
+                        before += result[BEFORE].info
                     }
-                    if (result.info.containsKey("resultExpr")) result["resultExpr"].info
+                    if (result.info.containsKey(RESULT_EXPR)) result[RESULT_EXPR].info
                     else result.rendered
                 }
             }
@@ -1306,16 +1297,16 @@ private data class ExpandedBinary(val before: String = "", val lhs: String = "",
 
         fun createSideString(rendered: RenderResult, before: StringBuilder): String {
             // TODO: replace result expr by variable to avoid misspelling
-            val result = if (rendered.containsKey("resultExpr")) {
+            val result = if (rendered.containsKey(RESULT_EXPR)) {
                 if (rendered.rendered.isNotBlank()) {
-                    before.append("${rendered.rendered}${PrologOutputEnvironment.EXPRESSION_SEPARATOR}")
+                    before.append("${rendered.rendered}$EXPRESSION_SEPARATOR")
                 }
-                rendered["resultExpr"].info
+                rendered[RESULT_EXPR].info
             } else {
                 rendered.rendered
             }
-            if (rendered.containsKey("before")) {
-                before.append(rendered["before"].info)
+            if (rendered.containsKey(BEFORE)) {
+                before.append(rendered[BEFORE].info)
             }
             return result
         }
@@ -1327,20 +1318,20 @@ private data class ExpandedExpression(val before: String = "", val expression: S
         fun of(expression: Expression): ExpandedExpression {
             val expanded = expression.render()
 
-            var before = if (expanded.rendered.isNotBlank() && expanded.containsKey("resultExpr")) {
-                "${expanded.rendered}${PrologOutputEnvironment.EXPRESSION_SEPARATOR}"
+            var before = if (expanded.rendered.isNotBlank() && expanded.containsKey(RESULT_EXPR)) {
+                "${expanded.rendered}${EXPRESSION_SEPARATOR}"
             } else {
                 ""
             }
 
-            val expr = if (expanded.containsKey("resultExpr")) {
-                expanded["resultExpr"].info
+            val expr = if (expanded.containsKey(RESULT_EXPR)) {
+                expanded[RESULT_EXPR].info
             } else {
                 expanded.rendered
             }
 
-            if (expanded.containsKey("before")) {
-                before += expanded["before"].info
+            if (expanded.containsKey(BEFORE)) {
+                before += expanded[BEFORE].info
             }
 
             return ExpandedExpression(before, expr)

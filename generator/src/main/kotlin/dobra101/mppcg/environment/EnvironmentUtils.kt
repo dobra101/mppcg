@@ -1,6 +1,5 @@
 package dobra101.mppcg.environment
 
-//import dobra101.mppcg.node.Type
 import dobra101.mppcg.node.b.*
 import dobra101.mppcg.node.collection.BinaryCollectionOperator
 import dobra101.mppcg.node.collection.CollectionNode

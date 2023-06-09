@@ -11,7 +11,6 @@ import dobra101.mppcg.node.predicate.*
 import dobra101.mppcg.node.substitution.*
 import org.stringtemplate.v4.STGroup
 import org.stringtemplate.v4.STGroupFile
-import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
 import java.util.logging.LogManager
@@ -31,7 +30,7 @@ abstract class OutputLanguageEnvironment : EnvironmentUtils(), BEnvironment {
     abstract val templateDir: String // TODO: as file
     private val group: STGroup by lazy { importTemplates() } // prevents templateDir from being null
 
-    protected val logger: Logger = Logger.getLogger(this::class.simpleName)
+    private val logger: Logger = Logger.getLogger(this::class.simpleName)
 
     init {
         val manager = LogManager.getLogManager()
@@ -69,11 +68,14 @@ abstract class OutputLanguageEnvironment : EnvironmentUtils(), BEnvironment {
 
     abstract fun ClassVariables.renderSelf(): RenderResult
 
-    fun call(node: MPPCGNode): RenderResult {
+    /**
+     * Delegates the render call to the corresponding node.
+     */
+    fun delegateCall(node: MPPCGNode): RenderResult {
         return when (node) {
-            is Expression -> callExpression(node)
-            is Predicate -> callPredicate(node)
-            is Substitution -> callSubstitution(node)
+            is Expression -> delegateExpression(node)
+            is Predicate -> delegatePredicate(node)
+            is Substitution -> delegateSubstitution(node)
             is ClassVariables -> node.renderSelf()
 
             /* B Nodes */
@@ -85,7 +87,7 @@ abstract class OutputLanguageEnvironment : EnvironmentUtils(), BEnvironment {
         }
     }
 
-    private fun callExpression(node: Expression): RenderResult {
+    private fun delegateExpression(node: Expression): RenderResult {
         return when (node) {
             is AnonymousCollectionNode -> node.renderSelf()
             is BinaryExpression -> node.renderSelf()
@@ -119,7 +121,7 @@ abstract class OutputLanguageEnvironment : EnvironmentUtils(), BEnvironment {
         }
     }
 
-    private fun callPredicate(node: Predicate): RenderResult {
+    private fun delegatePredicate(node: Predicate): RenderResult {
         return when (node) {
             is BinaryPredicate -> node.renderSelf()
             is BinaryLogicPredicate -> node.renderSelf()
@@ -134,7 +136,7 @@ abstract class OutputLanguageEnvironment : EnvironmentUtils(), BEnvironment {
         }
     }
 
-    private fun callSubstitution(node: Substitution): RenderResult {
+    private fun delegateSubstitution(node: Substitution): RenderResult {
         return when (node) {
             is AssignSubstitution -> node.renderSelf()
             is DeclarationSubstitution -> node.renderSelf()
@@ -163,7 +165,7 @@ abstract class OutputLanguageEnvironment : EnvironmentUtils(), BEnvironment {
         try {
             st.importTemplates(STGroupFile("$templateDir/runCfg.stg"))
         } catch (e: IllegalArgumentException) {
-            // to nothing, file is not necessary
+            // do nothing, file is not necessary
         }
         return st
     }

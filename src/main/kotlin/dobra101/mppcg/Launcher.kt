@@ -11,7 +11,7 @@ import kotlinx.cli.required
 import java.io.File
 import java.util.logging.Logger
 
-// TODO: generate multiple at once
+// TODO: generate multiple files at once
 object Launcher {
     private val logger: Logger = Logger.getLogger(Launcher::class.simpleName)
     fun launch(
@@ -24,6 +24,9 @@ object Launcher {
         minInt: Long = -1,
         maxInt: Long = 4
     ): File {
+        /**
+         * Copies a file with a given name from the input path to the output path.
+         */
         fun copyFile(name: String, inputPath: String) {
             val inputFile = File("$inputPath/$name")
             val outputFile = File("$outputPath/$name")
@@ -45,7 +48,6 @@ object Launcher {
         if (lang == Language.PROLOG) {
             generateRunCfg("${outputPath}runCfg.pl")
             val inputResourcePath = "inputLanguage/B/prolog/src/main/resources"
-            copyFile("avl.pl", inputResourcePath)
             copyFile("ordsets.pl", inputResourcePath)
             copyFile("btypes.pl", inputResourcePath)
         }
@@ -103,7 +105,6 @@ object Launcher {
 
 
         val inputResourcePath = "inputLanguage/B/prolog/src/main/resources"
-        copyFile("avl.pl", inputResourcePath, prologResourcesPath)
         copyFile("ordsets.pl", inputResourcePath, prologResourcesPath)
         copyFile("btypes.pl", inputResourcePath, prologResourcesPath)
         copyFile("runCfg.pl", "generator/build/generated", prologResourcesPath)
@@ -117,8 +118,11 @@ object Launcher {
         logger.info("Started ProB with pid ${process.pid()}")
         val exitValue = process.waitFor()
 
+        println("PROB DONE")
+
         val probOutput = process.inputReader().readText()
         process.inputReader().close()
+        println("LINES: ${probOutput.lines().size}")
 
         if (exitValue != 0) {
             val error = process.errorReader().readText()
