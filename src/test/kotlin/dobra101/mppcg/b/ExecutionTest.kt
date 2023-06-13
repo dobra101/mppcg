@@ -90,9 +90,9 @@ class ExecutionTestProlog : ExecutionTest(Language.PROLOG, "prolog.stg", ".pl", 
 class ExecutionTestJava : ExecutionTest(Language.JAVA, "java.stg", ".java", runSetup) {
     companion object {
         private val runSetup = { dir: String, file: File, setupFile: File ->
-            // TODO: check if btypes.jar exist
-            compile(cp = outputDir.path + "/$dir:inputLanguage/B/java/build/libs/btypes.jar", file, setupFile)
-            execute(cp = outputDir.path + "/$dir:inputLanguage/B/java/build/libs/btypes.jar", setup = setupFile)
+            val cp = "${outputDir.path}/$dir/RunConfig.java:${outputDir.path}/$dir:inputLanguage/B/java/build/libs/btypes.jar"
+            compile(cp = cp, file, setupFile)
+            execute(cp = cp, setup = setupFile)
         }
 
         private fun compile(cp: String, vararg files: File) {
@@ -167,10 +167,13 @@ abstract class ExecutionTest(
                             )
 
                             val resultString = runSetup(dir, file, setupFile)
+                            println("ResultString: $resultString")
                             val resultMap = string2ResultMap(resultString)
+                            println("ResultMap: $resultMap")
+                            println("Expected: ${execution.result}")
                             for ((key, value) in execution.result) {
-                                withClue("Expect ${key.joinToString { it.methodName }} = $value") {
-                                    resultMap[key.map { it.methodName }] shouldBeEqualIgnoringCase value
+                                withClue("Expect ${key.joinToString { it.method }} = $value") {
+                                    resultMap[key.map { it.method }] shouldBeEqualIgnoringCase value
                                 }
                             }
                         }

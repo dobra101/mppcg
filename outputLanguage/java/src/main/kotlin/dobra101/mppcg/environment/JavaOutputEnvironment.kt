@@ -23,22 +23,15 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     private var inInvariant: Boolean = false // HINT: only for B
 
     private var memberAsIterator: Boolean = false // HINT: only for B
-    private var quantifierResultCount: Int = 0 // HINT: only for B
+    private var equalsIsAssignment: Boolean = false // HINT: only for B
+    private var iteratorCount: Int = 0
+
+    private val MPPCG_MAX_INT: String = "RunConfig.maxInt"
+    private val MPPCG_MIN_INT: String = "RunConfig.minInt"
+
 
     /* ---------- EXPRESSIONS ---------- */
     override fun AnonymousCollectionNode.renderSelf(): RenderResult {
-        fun renderAnonymousSetAsRelation(set: AnonymousCollectionNode): RenderResult {
-            val map = mutableMapOf(
-                "elements" to set.elements.render()
-            )
-
-            return RenderResult(renderTemplate("anonymousSetAsRelation", map))
-        }
-
-        if (elements.isNotEmpty() && elements.first() is Couple) {
-            return renderAnonymousSetAsRelation(this)
-        }
-
         val map = mutableMapOf(
             "elements" to elements.render(),
             "type" to type2String(type!!)
@@ -79,11 +72,12 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
 
     override fun IdentifierExpression.renderSelf(): RenderResult {
         fun isConcrete(): Boolean {
-            return (codeRepresentation as Machine).concreteVariables.union((codeRepresentation as Machine).concreteConstants)
+            val mch = codeRepresentation as Machine
+
+            return mch.concreteVariables.union(mch.concreteConstants).union(mch.constants)
                 .filter { it is IdentifierExpression || it is ConcreteIdentifierExpression }
                 .find {
-                    if (it is IdentifierExpression) return@find it.name == name
-                    return (it as ConcreteIdentifierExpression).name == "c_$name"
+                    (it is IdentifierExpression && it.name == name) || ((it as ConcreteIdentifierExpression).name == "c_$name")
                 } != null
         }
 
@@ -138,9 +132,27 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
 
         fun functionType2String(type: FunctionType): String {
             return when (type) {
-                FunctionType.TOTAL -> "isTotal(${(right as Function).left.render()})"
+                FunctionType.TOTAL -> "isTotal(${(right as Function).left.render().rendered})"
                 FunctionType.PARTIAL -> "isPartial()"
             }
+        }
+
+        if (equalsIsAssignment && operator == BinaryPredicateOperator.EQUAL) {
+            if (right !is ComprehensionSet) {
+                val map = mapOf(
+                    "identifier" to left.render(),
+                    "rhs" to right.render()
+                )
+                return RenderResult(renderTemplate("assignSubstitution", map))
+            }
+
+            val map = mapOf(
+                "type" to type2String(left.type!!),
+                "identifier" to left.render(),
+                "body" to right.render(),
+                "ic" to iteratorCount
+            )
+            return RenderResult(renderTemplate("delayedAssignSubstitution", map))
         }
 
         if (operator != BinaryPredicateOperator.MEMBER) {
@@ -159,8 +171,8 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         if (right is Function) {
             val map = mapOf(
                 "left" to left.render(),
-                "from" to (right as Function).left,
-                "to" to (right as Function).right,
+                "from" to (right as Function).left.render(),
+                "to" to (right as Function).right.render(),
                 "functionType" to functionType2String((right as Function).functionType),
                 "mapType" to mapType2String((right as Function).mapType)
             )
@@ -267,27 +279,18 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
 
         if (optimize) optimizer.renderOptimized(this)?.let { return it }
 
-        // TODO: fix type
-        val rhs = if (right is AnonymousCollectionNode && left.type is TypeRelation) {
-            renderAnonymousSetAsRelation(right as AnonymousCollectionNode)
-        } else {
-            right.render()
-        }
+        // TODO: fix type -> needed? -> if not required, delete template
+//        val rhs = if (right is AnonymousCollectionNode && left.type is TypeRelation) {
+//            renderAnonymousSetAsRelation(right as AnonymousCollectionNode)
+//        } else {
+//            right.render()
+//        }
+
+        val rhs = right.render()
 
         val map = mapOf(
             "identifier" to left.render(),
             "rhs" to rhs
-        )
-
-        return RenderResult(renderTemplate(map))
-    }
-
-    override fun DeclarationSubstitution.renderSelf(): RenderResult {
-        // TODO: optimize?
-        val map = mapOf(
-            "type" to type2String(assignment.left.type!!),
-            "lhs" to assignment.left.render(),
-            "rhs" to assignment.right.render()
         )
 
         return RenderResult(renderTemplate(map))
@@ -410,6 +413,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun ComprehensionSet.renderSelf(): RenderResult {
+        iteratorCount++
         fun Predicate.memberAndComprehensionSetIdentifier(identifiers: List<Expression>): Boolean {
             if (this !is BinaryPredicate) return false
             if (operator != BinaryPredicateOperator.MEMBER) return false
@@ -418,22 +422,33 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
 
         val predicateList = predicates.asList()
         val condition: MutableList<Predicate> = mutableListOf()
-        val supplier: MutableList<Map<String, String>> = mutableListOf()
+        val supplier: MutableMap<String, Pair<String, String>> = mutableMapOf()
         predicateList.forEach {
             if (it.memberAndComprehensionSetIdentifier(identifiers)) {
-                val map = mapOf(
-                    (it as BinaryPredicate).left.render().rendered to it.right.render().rendered
-                )
-                supplier.add(map)
+                val id = (it as BinaryPredicate).left
+                val key = id.render().rendered
+                if (!supplier.containsKey(key)) {
+                    supplier[key] = Pair(type2String(id.type!!), it.right.render().rendered)
+                }
             } else {
                 condition.add(it)
             }
         }
 
+        val iterators = supplier.map {
+            val itMap = mapOf(
+                "type" to it.value.first,
+                "name" to it.key,
+                "collection" to it.value.second
+            )
+            RenderResult(renderTemplate("iteratorConstruct", itMap)).rendered
+        }
+
         val map = mapOf(
             "identifiers" to identifiers.render(),
-            "supplier" to supplier,
-            "predicates" to condition.render()
+            "iterators" to iterators,
+            "predicates" to condition.render(),
+            "ic" to iteratorCount
         )
         return RenderResult(renderTemplate(map))
     }
@@ -441,7 +456,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     override fun ConcreteIdentifierExpression.renderSelf(): RenderResult {
         val map = mapOf(
             "name" to name,
-            "value" to value.render(),
+            "value" to if (value is LambdaExpression || value is ComprehensionSet) null else value.render(),
             "type" to type2String(type!!),
             "declare" to (currentOperation == null)
         )
@@ -461,17 +476,40 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun InfiniteSet.renderSelf(): RenderResult {
+        fun createInterval(from: String, to: String): RenderResult {
+            val map = mapOf("left" to from, "right" to to)
+            return RenderResult(renderTemplate("intervalExpression", map))
+        }
+
+        // TODO: support true infinite sets
+        val interval = when (setType) {
+            MPPCG_Int -> createInterval(MPPCG_MIN_INT, MPPCG_MAX_INT)
+            MPPCG_Nat -> createInterval("0", MPPCG_MAX_INT)
+            MPPCG_Nat1 -> createInterval("1", MPPCG_MAX_INT)
+            else -> null
+        }
+
         val map = mapOf(
-            "type" to type2String(type!!)
+            "type" to type2String(type!!),
+            "interval" to interval
         )
         return RenderResult(renderTemplate(map))
     }
 
     override fun LambdaExpression.renderSelf(): RenderResult {
+        val predicateRendered =
+            if (predicate is BinaryPredicate && (predicate as BinaryPredicate).right is IntervalExpression) {
+                (predicate as BinaryPredicate).right.render()
+            } else {
+                predicate.render()
+            }
         val map = mapOf(
             "identifier" to identifiers.render(),
-            "predicate" to predicate.render(),
-            "expression" to expression.render()
+            "type" to type2String(type!!),
+            "predicate" to predicateRendered,
+            "expression" to expression.render(),
+            "exprType" to type2String(expression.type!!),
+            "identifierType" to identifiers.map { type2String(it.type!!) }
         )
         return RenderResult(renderTemplate(map))
     }
@@ -521,9 +559,10 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     override fun Invariant.renderSelf(): RenderResult {
         inInvariant = true
         val renderedPredicates = List(predicates.size) { idx ->
+            iteratorCount = 0
             val body = predicates[idx].render()
             val map = mapOf(
-                "resultHolder" to "resultHolder", // TODO: set
+                "ic" to 1,
                 "body" to body,
                 "idx" to idx,
                 "inline" to (body.rendered.count { it == '\n' } == 0)
@@ -538,17 +577,66 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun QuantifierPredicate.renderSelf(): RenderResult {
+        fun Predicate.memberAndIdentifier(identifiers: List<Expression>): Boolean {
+            if (this !is BinaryPredicate) return false
+            if (operator != BinaryPredicateOperator.MEMBER) return false
+            return identifiers.contains(left)
+        }
+
+        fun renderQuantification(pred: List<Predicate>): RenderResult {
+            val ic = iteratorCount
+            val quantificationRendered = quantification?.render()
+            val resultIc = iteratorCount
+            val map = mapOf(
+                "body" to quantificationRendered,
+                "ic" to ic,
+                "resultIc" to resultIc,
+                "pred" to pred.render(),
+                "isConstruct" to (quantification is QuantifierPredicate)
+            )
+
+            return RenderResult(renderTemplate("quantification", map))
+        }
+
+        iteratorCount++
+        val ic = iteratorCount
+
+        val predicateList = predicate.asList()
+        val iteratorIdentifier = mutableListOf<Expression>()
+        val remainingPredicates = mutableListOf<Predicate>()
+        val condition = mutableListOf<Predicate>()
+        for (pred in predicateList) {
+            if (pred is BinaryPredicate && iteratorIdentifier.contains(pred.left)) {
+                condition.add(pred)
+            } else if (!pred.memberAndIdentifier(identifier)) {
+                condition.add(pred)
+            } else {
+                iteratorIdentifier.add((pred as BinaryPredicate).left)
+                remainingPredicates.add(0, pred)
+            }
+        }
+
+        val quantificationRendered = renderQuantification(condition)
+        var currentBody = quantificationRendered
         memberAsIterator = true
-        val predicateRendered = predicate.render()
+
+        remainingPredicates.forEach {
+            val id = (it as BinaryPredicate).left
+            val itMap = mapOf(
+                "type" to type2String(id.type!!),
+                "name" to id.render().rendered,
+                "collection" to it.right.render().rendered,
+                "body" to currentBody
+            )
+            currentBody = RenderResult(renderTemplate("iteratorConstruct", itMap))
+        }
+
         memberAsIterator = false
         val map = mapOf(
-            "quantifierResult" to "resultHolder", // TODO: refactor
-            "identifier" to identifier.render(),
-            "predicate" to predicateRendered,
-            "quantification" to quantification?.render(),
+            "body" to currentBody,
+            "ic" to ic,
             "isForAll" to (type == QuantifierType.FORALL)
         )
-        quantifierResultCount++;
 
         return RenderResult(renderTemplate(map))
     }
@@ -588,6 +676,13 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
 
     override fun Machine.renderSelf(): RenderResult {
         codeRepresentation = this
+        iteratorCount = 0
+
+        equalsIsAssignment = true
+        val renderedProperties =
+            properties.filter { it is BinaryPredicate && (it.right is LambdaExpression || it.right is ComprehensionSet) }
+                .render()
+        equalsIsAssignment = false
 
         val map = mapOf(
             "name" to name,
@@ -596,7 +691,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             "sets" to sets.render(),
             "constants" to constants.render(),
             "concrete_constants" to concreteConstants.render(),
-//            "properties" to properties?.render(),
+            "properties" to renderedProperties,
             "definitions" to definitions?.render(),
             "variables" to variables.render(),
             "concrete_variables" to concreteVariables.render(),
@@ -613,7 +708,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     override fun Operation.renderSelf(): RenderResult {
         // TODO: check if scope contains variables
         currentOperation = this
-        quantifierResultCount = 0
+        iteratorCount = 0
         if (optimize) optimizer.renderOptimized(this)?.let { return it }
 
         val bodyUsed = (body as? Precondition)?.substitution ?: body
@@ -629,10 +724,21 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
                 )
             }
 
+        val declarations = returnValues.filterIsInstance<IdentifierExpression>()
+            .map {
+                val map = mapOf(
+                    "type" to type2String(it.type!!),
+                    "name" to it.name,
+                    "value" to "null"
+                )
+                renderTemplate("declareVariable", map)
+            }
+
         val map = mapOf(
             "name" to name,
             "parameters" to typedParameters,
             "returnValues" to returnValues.render(),
+            "returnValueDeclarations" to declarations,
             "body" to bodyUsed?.render(),
             "type" to type2String(type)
         )
@@ -642,6 +748,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun Transition.renderSelf(): RenderResult {
+        iteratorCount = 0
         val typedParameters = parameters.filterIsInstance<IdentifierExpression>()
             .map {
                 renderTemplate(
@@ -653,10 +760,32 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
                 )
             }
 
+        val bodyAsList = ArrayList<Predicate>()
+        var currentPred = body
+        while (currentPred is BinaryLogicPredicate) {
+            if (currentPred.operator == LogicPredicateOperator.AND) {
+                bodyAsList.add(0, currentPred.right)
+                currentPred = currentPred.left
+            } else {
+                break
+            }
+        }
+        bodyAsList.add(0, currentPred)
+
+        val predicates = bodyAsList.map {
+            val icBefore = iteratorCount + 1
+            val map = mapOf(
+                "predicate" to it.render(),
+                "count" to icBefore,
+                "isConstruct" to (it is QuantifierPredicate)
+            )
+            RenderResult(renderTemplate("transitionPredicate", map)).rendered
+        }
+
         val map = mapOf(
             "name" to name,
             "parameters" to typedParameters,
-            "body" to body.render()
+            "body" to predicates
         )
 
         return RenderResult(renderTemplate(map))
@@ -664,24 +793,18 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
 
     override fun type2String(type: Type): String {
         return when (type) {
-//            is TypeAnonymousCollection -> "anonymous type"
             MPPCG_Boolean -> "Boolean"
-//            is TypeCollection -> if (type.type == CollectionType.Enum) type.name.capitalize() else type.name
             MPPCG_Nat1, MPPCG_Nat, MPPCG_Natural,
             MPPCG_Integer, MPPCG_Int -> "Integer"
 
             MPPCG_Real, MPPCG_Float -> "Double"
             MPPCG_String -> "String"
             MPPCG_Void -> "void"
+            is TypeRelation -> "BRelation<${type2String(type.from)}, ${type2String(type.to)}>"
             is TypeSet -> "BSet<${type2String(type.type)}>"
+            is TypeCouple -> "BCouple<${type2String(type.from)}, ${type2String(type.to)}>"
             is TypeOperator -> {
                 when (type.name) {
-                    "couple" -> {
-                        val from = type.types[0]
-                        val to = type.types[1]
-                        "BCouple<${type2String(from)}, ${type2String(to)}>"
-                    }
-
                     "sequence" -> {
                         "BSequence<${type2String(type.types[0])}>"
                     }

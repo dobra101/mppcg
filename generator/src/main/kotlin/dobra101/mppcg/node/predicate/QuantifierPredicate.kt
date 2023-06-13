@@ -7,7 +7,7 @@ data class QuantifierPredicate(
     val predicate: Predicate,
     val quantification: Predicate? = null,
     val type: QuantifierType
-) : Predicate("quantifier")
+) : Predicate("quantifierPredicate")
 
 enum class QuantifierType {
     FORALL,

@@ -8,11 +8,13 @@ public class <name> {
     <concrete_constants; separator="\n">
     <variables; separator="\n">
 
-    <properties>
     <definitions>
     <concrete_variables>
-    <assertions>
     <initialization>
+
+    private void initProperties() {
+        <properties; separator="\n">
+    }
 
     <operations; separator="\n\n">
 
@@ -30,8 +32,9 @@ public class <name> {
 }
 >>
 
-operation(name, parameters, body, returnValues, type) ::= <<
+operation(name, parameters, body, returnValues, returnValueDeclarations, type) ::= <<
 public <if(type)><type><else>void<endif> <name>(<parameters; separator=", ">) {
+    <returnValueDeclarations>
     <body>
     <if(returnValues)>
     return <returnValues>;
@@ -41,20 +44,30 @@ public <if(type)><type><else>void<endif> <name>(<parameters; separator=", ">) {
 
 transition(name, body, parameters) ::= <<
 public boolean tr_<name>(<parameters; separator=", ">) {
-    return <body>;
+    <body; separator="\n\n">
+
+    return true;
 }
+>>
+
+transitionPredicate(predicate, count, isConstruct) ::= <<
+<if(isConstruct)><predicate>
+if (!ic_<count>) {
+    return false;
+}<else>if (!(<predicate>)) {
+    return false;
+}<endif>
 >>
 
 function(left, right) ::= <<
 <left>[<right>]
 >>
 
-// TODO: check if inline possible
-invariant(resultHolder, body, idx, inline) ::= <<
+invariant(ic, body, idx, inline) ::= <<
 public boolean check_inv_<idx>() {
     <if(inline)>return <body>;
     <else><body>
-return <resultHolder>;
+return ic_<ic>;
 <endif>
 }
 >>
@@ -65,6 +78,7 @@ invariants(list) ::= <<
 
 initialization(substitutions, name) ::= <<
 public <name>() {
+    initProperties();
     <substitutions; separator="\n">
 }
 >>
@@ -87,15 +101,15 @@ parallelSubstitution(substitutions) ::= <<
 
 concreteIdentifier(name, value, type, declare) ::= <<
 <if(declare)>
-<type> <name> = <value>;<else>
+<type> <name><if(value)> = <value><endif>;<else>
 <name><endif>
 >>
 
-lambdaExpression(identifier, predicate, expression) ::= <<
-Lambda:
-I: <identifier>
-P: <predicate>
-E: <expression>
+lambdaExpression(identifier, type, predicate, expression, exprType, identifierType) ::= <<
+new <type>(
+    <predicate>.stream()
+        .map(<identifier> -> new BCouple\<<identifierType>, <exprType>\>(<identifier>, <expression>))
+        .toList())
 >>
 
 callFunction(expression, parameters, operator) ::= <<
@@ -127,34 +141,48 @@ unarySequenceExpression(sequence, operator) ::= <<
 <sequence>.<operator>()
 >>
 
-comprehensionSetExpression(identifiers, supplier, predicates) ::= <<
-<supplier: {s | <s.keys: {key | <s.(key)>.forEach(<key> -> ...)}>}; separator=", ">
-
----
-<supplier>.forEach((<identifiers; separator=", ">) ->
-    (<predicates; separator=" && ">)
-)
->>
-
-quantifier(quantifierResult, identifier, predicate, quantification, isForAll) ::= <<
-boolean <quantifierResult> = true;
-<predicate> {
-    // iterate i if iterable, and inner
-    if (!(<quantification>)) {
-        <quantifierResult> = false;
-        break;
+comprehensionSetExpression(identifiers, iterators, predicates, ic) ::= <<
+<iterators; separator=" {\n\t"> {
+    if (<predicates; separator=" && ">) {
+        ic_<ic>.add(<identifiers; separator=", ">);
     }
-\}
+<iterators: {it | \}}; separator="\n">
 >>
 
-iteratorConstruct(type, name, collection) ::= <<
-for(<type> <name> : <collection>)
+quantifierPredicate(body, ic, isForAll) ::= <<
+boolean ic_<ic> = true;
+<body>
+>>
+
+
+quantification(ic, pred, body, resultIc, isConstruct) ::= <<
+<if(isConstruct)>
+<body>
+ic_<ic> &= new BBoolean(<pred; separator=" && ">).implies(ic_<resultIc>).value();<else>
+<if(pred)>ic_<ic> &= new BBoolean(<pred; separator=" && ">).implies(<body>).value();
+if (!ic_<ic>) {
+    break;
+}<else>if (!(<body>)) {
+    break;
+}<endif><endif>
+>>
+
+iteratorConstruct(type, name, collection, body) ::= <<
+<if(body)>for (<type> <name> : <collection>) {
+    <body>
+}<else>for (<type> <name> : <collection>)<endif>
 >>
 
 functionTypeCheck(left, from, to, functionType, mapType) ::= <<
 <left>.typeCheck().hasDomain(<from>).hasRange(<to>).<mapType>.<functionType>.value()
 >>
 
-infiniteSetExpression(type) ::= <<
-new <type>()
+infiniteSetExpression(type, interval) ::= <<
+new <type>(<if(interval)><interval><endif>)
+>>
+
+delayedAssignSubstitution(type, identifier, body, ic) ::= <<
+<type> ic_<ic> = new <type>();
+<body>
+<identifier> = ic_<ic>;
 >>

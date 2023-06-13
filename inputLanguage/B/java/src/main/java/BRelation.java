@@ -20,19 +20,34 @@ public class BRelation<K, V> implements Set<BCouple<K, V>> {
         return new FunctionTypeChecker<>(this);
     }
 
-    public List<Object> image(BInterval interval) {
-        List<Object> result = new ArrayList<>();
+    public BSet<V> image(BSet<K> set) {
+        return new BSet<>(set.stream().map(this::get).collect(Collectors.toSet()));
+    }
+
+    public BSet<V> image(BInterval interval) {
+        Set<V> result = new HashSet<>();
         for (BCouple<K, V> entry : entries) {
             if (entry.left instanceof Integer && interval.contains((Integer) entry.left)) {
                 result.add(entry.right);
             }
         }
-        return result;
+        return new BSet<>(result);
     }
 
     public BRelation<V, K> reverse() {
         List<BCouple<V, K>> reversed = entries.stream().map(c -> new BCouple<V, K>(c.right, c.left)).toList();
         return new BRelation<>(reversed);
+    }
+
+    public BRelation<V, K> inverse() {
+        List<BCouple<V, K>> inversed = entries.stream().map(c -> new BCouple<V, K>(c.right, c.left)).toList();
+        return new BRelation<>(inversed);
+    }
+
+    public BRelation<K, V> union(BRelation<K, V> other) {
+        List<BCouple<K, V>> newEntries = new ArrayList<>(entries);
+        newEntries.addAll(other.entries);
+        return new BRelation<>(newEntries);
     }
 
     public BSet<K> domain() {
@@ -51,7 +66,7 @@ public class BRelation<K, V> implements Set<BCouple<K, V>> {
         );
     }
 
-    public BRelation<K, V> overwrite(BRelation<K, V> other) {
+    public BRelation<K, V> override(BRelation<K, V> other) {
         List<BCouple<K, V>> result = new ArrayList<>(other.entries);
         result.addAll(domainSubtraction(other.domain()));
         return new BRelation<>(result);
@@ -108,6 +123,19 @@ public class BRelation<K, V> implements Set<BCouple<K, V>> {
             }
         }
         return null;
+    }
+
+    public BSet<BRelation<K, V>> pow() {
+        BSet<BCouple<K, V>> bSet = new BSet<>(new HashSet<>(entries));
+        Set<BRelation<K, V>> setOfRelations = bSet.pow().stream()
+                .map(subset -> new BRelation<>(subset.stream().toList()))
+                .collect(Collectors.toSet());
+
+        return new BSet<>(setOfRelations);
+    }
+
+    public boolean add(K key, V value) {
+        return add(new BCouple<>(key, value));
     }
 
     @Override

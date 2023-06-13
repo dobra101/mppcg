@@ -18,32 +18,17 @@ class SubstitutionVisitor : AbstractVisitor() {
         val assignments = mutableListOf<Substitution>()
 
         for (i: Int in left.indices) {
-            // TODO: remove types
-//            val rightType = right[i].type
-
             val index = machineVisitor.variables.indexOf(left[i])
             if (index != -1) {
                 // left is variable
                 left[i] = machineVisitor.variables[index]
             }
 
-            // left type is null and right has type
-//            left[i].type = left[i].type ?: rightType
             if (left[i] is CallFunctionExpression) {
                 (left[i] as CallFunctionExpression).operator = CallFunctionOperator.SET
             }
             val assign = AssignSubstitution(left[i], right[i])
-//            if (rightType == null) {
-//                assignments.add(assign)
-//                continue
-//            }
-
-            // TODO: refactor
-            if (left[i] is IdentifierExpression && !machineVisitor.knownIdentifier().contains(left[i])) {
-                assignments.add(DeclarationSubstitution(assign))
-            } else {
-                assignments.add(assign)
-            }
+            assignments.add(assign)
 
             machineVisitor.recognize(assign.left)
         }
@@ -61,10 +46,10 @@ class SubstitutionVisitor : AbstractVisitor() {
 
     override fun caseASelectSubstitution(node: ASelectSubstitution) {
         result = Select(
-            condition = node.condition.convert()!!,
-            then = node.then.convert(),
-            whenSubstitution = node.whenSubstitutions.convert(),
-            elseSubstitution = node.`else`.convertOrNull()
+                condition = node.condition.convert()!!,
+                then = node.then.convert(),
+                whenSubstitution = node.whenSubstitutions.convert(),
+                elseSubstitution = node.`else`.convertOrNull()
         )
     }
 
@@ -100,10 +85,10 @@ class SubstitutionVisitor : AbstractVisitor() {
 
     override fun caseAIfSubstitution(node: AIfSubstitution) {
         result = IfSubstitution(
-            node.condition.convert()!!,
-            node.then.convert()!!,
-            node.elsifSubstitutions.convert(),
-            node.`else`.convert()
+                node.condition.convert()!!,
+                node.then.convert()!!,
+                node.elsifSubstitutions.convert(),
+                node.`else`.convert()
         )
     }
 

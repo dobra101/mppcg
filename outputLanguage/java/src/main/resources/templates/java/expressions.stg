@@ -41,9 +41,8 @@ identifierExpression(name) ::= <<
 <name>
 >>
 
-// TODO: implement
 intervalExpression(left, right) ::= <<
-new BInterval(<left>, <right>)
+new BSet\<Integer\>(new BInterval(<left>, <right>))
 >>
 
 // TODO: add type

@@ -11,6 +11,11 @@ public class BSet<T> implements Set<T> {
         this.entries = entries;
     }
 
+    public BSet(BInterval interval) {
+        this.entries = new HashSet<>();
+        interval.forEach(e -> this.entries.add((T) e));
+    }
+
     @SuppressWarnings("unchecked")
     public BSet(T... entries) {
         this.entries = new HashSet<>();
@@ -39,6 +44,10 @@ public class BSet<T> implements Set<T> {
         return new BSet<>(result);
     }
 
+    public BSet<T> subtraction(BSet<T> other) {
+        return minus(other);
+    }
+
     // from B2Program
     public <K extends BSet<T>> BSet<K> pow() {
         BSet<K> result = new BSet<>();
@@ -58,6 +67,11 @@ public class BSet<T> implements Set<T> {
             }
         }
         return result;
+    }
+
+    public <K> BRelation<T, K> mult(BSet<K> other) {
+        // TODO: implement
+        return null;
     }
 
     public boolean containsNot(Object other) {

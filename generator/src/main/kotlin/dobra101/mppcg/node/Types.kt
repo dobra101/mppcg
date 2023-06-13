@@ -33,10 +33,11 @@ open class TypeOperator(open val name: String, open var types: List<Type>) : Typ
     }
 }
 
-data class TypeRelation(var from: Type, var to: Type) :
-    TypeSet(TypeSet(TypeOperator("couple", listOf(from, to))))
+data class TypeRelation(var from: Type, var to: Type) : TypeSet(TypeCouple(from, to))
 
 open class TypeSet(var type: Type) : TypeOperator(name = "set", types = listOf(type))
+
+data class TypeCouple(var from: Type, var to: Type) : TypeOperator(name = "couple", types = listOf(from, to))
 
 // TODO: needed?
 open class BaseType(override val name: String, override var types: List<Type>) : TypeOperator(name, types)

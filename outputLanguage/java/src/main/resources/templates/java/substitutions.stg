@@ -3,9 +3,9 @@ assignSubstitution(identifier, rhs) ::= <<
 >>
 
 ifSubstitution(condition, then, elseIf, elseSubstitution) ::= <<
-if(<condition>) {
+if (<condition>) {
     <then>
-}<if(elseSubstitution)> else <if(elseIf)>if(<elseIf>)<endif>{
+}<if(elseSubstitution)> else<if(elseIf)> if (<elseIf>)<endif> {
     <elseSubstitution>
 }<endif>
 >>
@@ -24,4 +24,8 @@ whileSubstitution(condition, body) ::= <<
 while (<condition>) {
     <body>
 }
+>>
+
+declareVariable(type, name, value) ::= <<
+<type> <name><if(value)> = <value><endif>;
 >>

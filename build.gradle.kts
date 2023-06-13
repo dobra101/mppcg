@@ -50,10 +50,6 @@ val killProB = tasks.register("killProB") {
     }
 }
 
-val testSingleFile = tasks.register("singleExecTest") {
-
-}
-
 tasks {
     named("run") {
         dependsOn(killProB)
@@ -67,6 +63,17 @@ tasks {
 
     named("clean") {
         dependsOn(killProB)
+    }
+
+    named("test") {
+        dependsOn(":inputLanguage:B:java:build")
+        doFirst {
+            copy {
+                from("inputLanguage/B/java/build")
+                into("generator/build/generated")
+                include("btypes.jar")
+            }
+        }
     }
 }
 

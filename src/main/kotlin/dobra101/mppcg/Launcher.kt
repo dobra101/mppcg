@@ -50,6 +50,8 @@ object Launcher {
             val inputResourcePath = "inputLanguage/B/prolog/src/main/resources"
             copyFile("ordsets.pl", inputResourcePath)
             copyFile("btypes.pl", inputResourcePath)
+        } else if (lang == Language.JAVA) {
+            generateRunCfg("${outputPath}RunConfig.java")
         }
 
         if (benchmark) {

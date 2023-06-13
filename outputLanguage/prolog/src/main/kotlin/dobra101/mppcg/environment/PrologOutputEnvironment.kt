@@ -424,10 +424,6 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         return RenderResult("${expandedRhs.before}$rendered")
     }
 
-    override fun DeclarationSubstitution.renderSelf(): RenderResult {
-        return assignment.render()
-    }
-
     override fun ElseIfSubstitution.renderSelf(): RenderResult {
         // TODO: consider state and expr count?
         val map = mapOf(

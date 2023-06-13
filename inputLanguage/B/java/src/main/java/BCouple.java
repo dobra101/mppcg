@@ -32,7 +32,6 @@ public class BCouple<K, V> {
         return right;
     }
 
-    // TODO: only for test cases
     @Override
     public String toString() {
         return "(" + left + " |-> " + right + ")";

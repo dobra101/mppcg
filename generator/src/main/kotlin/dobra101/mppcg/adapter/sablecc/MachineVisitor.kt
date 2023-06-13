@@ -9,6 +9,7 @@ import dobra101.mppcg.node.expression.IdentifierExpression
 import dobra101.mppcg.node.predicate.BinaryPredicate
 import dobra101.mppcg.node.predicate.BinaryPredicateOperator
 import dobra101.mppcg.node.predicate.Predicate
+import dobra101.mppcg.node.substitution.AssignSubstitution
 
 // TODO: scoping generic?
 class MachineVisitor : AbstractVisitor() {

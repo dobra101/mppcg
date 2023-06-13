@@ -220,7 +220,6 @@ class Generator {
                 right.getAllIdentifiers()
             }
 
-            is DeclarationSubstitution -> assignment.getAllIdentifiers()
             is ElseIfSubstitution -> {
                 condition.getAllIdentifiers()
                 then.getAllIdentifiers()

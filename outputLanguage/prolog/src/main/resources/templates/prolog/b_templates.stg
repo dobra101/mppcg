@@ -86,7 +86,7 @@ invariants(list) ::= <<
 <list; separator="\n\n">
 >>
 
-quantifier(name, count, parameters, predicate, quantification, universalQuantifier, stateCount) ::= <<
+quantifierPredicate(name, count, parameters, predicate, quantification, universalQuantifier, stateCount) ::= <<
 <if(universalQuantifier)>\+ universal_quantifier_<name>_<count>(State_<stateCount><if(parameters)>, <parameters; separator=", "><endif>)<else>
 % exist quantifier
 <predicate><if(quantification)>,
