@@ -1,0 +1,31 @@
+assignSubstitution(identifier, rhs) ::= <<
+<identifier> = <rhs>;
+>>
+
+ifSubstitution(condition, then, elseIf, elseSubstitution) ::= <<
+if (<condition>) {
+    <then>
+}<if(elseSubstitution)> else<if(elseIf)> if (<elseIf>)<endif> {
+    <elseSubstitution>
+}<endif>
+>>
+
+declarationSubstitution(type, lhs, rhs, classVar) ::= <<
+<if(rhs)>
+<if(classVar)>public <endif><type> <lhs> = <rhs>;<else>
+<if(classVar)>public <endif><type> <lhs>;<endif>
+>>
+
+sequenceSubstitution(substitutions) ::= <<
+<substitutions; separator="\n">
+>>
+
+whileSubstitution(condition, body) ::= <<
+while (<condition>) {
+    <body>
+}
+>>
+
+declareVariable(type, name, value) ::= <<
+<type> <name><if(value)> = <value><endif>;
+>>

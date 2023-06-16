@@ -1,0 +1,144 @@
+:- use_module(btypes).
+
+init_constants :-
+    retractall(c_n(_)),
+    assert((c_n(1000))),
+    retractall(c_f(_)),
+    findall(
+        (Expr_i-Expr_1),
+        (
+            c_n(Expr_0),
+            mppcg_member(Expr_i, (1, Expr_0)),
+            Expr_1 is 15000 - Expr_i
+        ),
+        Expr_2
+    ),
+    ordsets:list_to_ord_set(Expr_2, Ord_2),
+    assert((c_f(Ord_2))).
+
+start(State_4) :-
+    init_constants,
+    empty(State_0),
+    % Parallel Substitution:
+    c_f(Expr_3),
+    update('g', Expr_3, State_0, State_1),
+    update('k', 1, State_1, State_2),
+    update('l', 1, State_2, State_3),
+    update('j', 1, State_3, State_4).
+
+% Transitions
+trans('progress', State_0, State_4) :-
+    % Select
+    c_n(Expr_0),
+    \+ get(State_0, 'k', Expr_0), 
+    c_n(Expr_1),
+    get(State_0, 'j', Expr_1),
+
+    % Then
+    % Parallel Substitution:
+    get(State_0, 'g', Expr_2),
+    get(State_0, 'k', Expr_tmp_k),
+    get(State_0, 'l', Expr_3),
+    mppcg_callFunction(Expr_2, Expr_3, Expr_4),
+    mppcg_callFunction(Expr_2, Expr_tmp_k, Expr_5),
+    mppcg_override([Expr_tmp_k-Expr_4], [Expr_3-Expr_5], Expr_6),
+    mppcg_override(Expr_2, Expr_6, Expr_7),
+    update('g', Expr_7, State_0, State_1),
+    Expr_8 is Expr_tmp_k + 1,
+    update('k', Expr_8, State_1, State_2),
+    update('j', Expr_8, State_2, State_3),
+    update('l', Expr_8, State_3, State_4).
+
+trans('prog1', State_0, State_2) :-
+    % Select
+    c_n(Expr_0),
+    \+ get(State_0, 'k', Expr_0), 
+    c_n(Expr_1),
+    \+ get(State_0, 'j', Expr_1), 
+    get(State_0, 'g', Expr_2),
+    get(State_0, 'l', Expr_3),
+    mppcg_callFunction(Expr_2, Expr_3, Expr_4),
+    get(State_0, 'j', Expr_5),
+    Expr_6 is Expr_5 + 1,
+    mppcg_callFunction(Expr_2, Expr_6, Expr_7),
+    Expr_4 =< Expr_7,
+
+    % Then
+    % Parallel Substitution:
+    get(State_0, 'l', Expr_8),
+    update('l', Expr_8, State_0, State_1),
+    get(State_1, 'j', Expr_9),
+    Expr_10 is Expr_9 + 1,
+    update('j', Expr_10, State_1, State_2).
+
+trans('prog2', State_0, State_2) :-
+    % Select
+    c_n(Expr_0),
+    \+ get(State_0, 'k', Expr_0), 
+    c_n(Expr_1),
+    \+ get(State_0, 'j', Expr_1), 
+    get(State_0, 'g', Expr_2),
+    get(State_0, 'l', Expr_3),
+    mppcg_callFunction(Expr_2, Expr_3, Expr_4),
+    get(State_0, 'j', Expr_5),
+    Expr_6 is Expr_5 + 1,
+    mppcg_callFunction(Expr_2, Expr_6, Expr_7),
+    Expr_4 > Expr_7,
+
+    % Then
+    % Parallel Substitution:
+    get(State_0, 'j', Expr_tmp_j),
+    Expr_8 is Expr_tmp_j + 1,
+    update('j', Expr_8, State_0, State_1),
+    update('l', Expr_8, State_1, State_2).
+
+trans('final_evt', State_0, State_0) :-
+    % Select
+    c_n(Expr_0),
+    get(State_0, 'k', Expr_0),
+
+    % Then
+    true.
+
+% Invariant
+prop(State, unsafe) :-
+    \+ check_inv(State),
+    !.
+prop(State, State) :- !.
+
+check_inv(State) :-
+    check_inv_0(State), !, 
+    check_inv_1(State), !, 
+    check_inv_2(State), !, 
+    check_inv_3(State).
+
+check_inv_0(State_0) :-
+    get(State_0, 'j', Expr_0),
+    get(State_0, 'k', Expr_1),
+    c_n(Expr_2),
+    mppcg_member(Expr_0, (Expr_1, Expr_2)),
+    !.
+
+check_inv_1(State_0) :-
+    get(State_0, 'l', Expr_0),
+    get(State_0, 'k', Expr_1),
+    get(State_0, 'j', Expr_2),
+    mppcg_member(Expr_0, (Expr_1, Expr_2)),
+    !.
+
+check_inv_2(State_0) :-
+    get(State_0, 'g', Expr_0),
+    get(State_0, 'l', Expr_1),
+    mppcg_callFunction(Expr_0, Expr_1, Expr_2),
+    get(State_0, 'k', Expr_3),
+    get(State_0, 'j', Expr_4),
+    mppcg_image(Expr_0, (Expr_3, Expr_4), Expr_5),
+    mppcg_min(Expr_5, Expr_6),
+    mppcg_equal(Expr_2, Expr_6),
+    !.
+
+check_inv_3(State_0) :-
+    get(State_0, 'g', Expr_0),
+    c_n(Expr_1),
+    mppcg_member(Expr_0, function((1, Expr_1), 'NATURAL')),
+    !.

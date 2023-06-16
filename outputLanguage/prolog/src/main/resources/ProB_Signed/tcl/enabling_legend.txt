@@ -1,0 +1,26 @@
+Legend of all possible enabling relations. In the following, 'op1' stays for the operation in the respective table line and 'op2' for the operation in the respective table column. Further, read(op) and write(op) denote the sets of variables that are read and written by 'op', respectively. 
+
+* infeasible: op1 (row) is not feasible and thus cannot influence op2 (column)
+* guaranteed: op2 guaranteed to be executable after op1
+* guaranteed_enable: op2 guaranteed to become enabled after op1
+* guaranteed_keep: op2 guaranteed to stay enabled after op1
+* impossible: op2 impossible to execute after op1
+* impossible_disable: op2 guaranteed to become disabled after op1
+* impossible_keep: op2 impossible to become enabled after op1
+* impossible_infeasible: op2 is not feasible and thus impossible to execute after op1
+* keep: op2 always stays enabled resp. disabled after op1
+* syntactic_unchanged: op1 does not write any variable read in the guard of op2, 
+                       i.e. write(op1) /\ read(op2) = {}
+* syntactic_independent: op1 and op2 are syntactically independent, 
+                         i.e. read(op1) /\ write(op2) = {} & write(op1) /\ read(op2) = {} 
+                              & write(op1) /\ write(op2) = {}
+* syntactic_fully_independent: op1 and op2 are syntactically independent and additionally, 
+                               read(op1) /\ read(op2) = {} is fulfilled
+* syntactic_keep: op1 cannot modify syntactically the guard of op2, 
+                  but it can influence the effect of op2
+* possible: op2 possible after op1
+* possible_enable:  op2 possible after op1, but op2 cannot be disabled, i.e. only enabled by op1
+* possible_disable: op2 possible after op1, but op2 cannot be enabled, i.e. only disabled by op1
+* activation_indepdendent: op1 does not influence guard of op2, 
+                           but (op1;op2) could have a different effect than (op2;op1)
+* timeout(R): time-out occurrence while computing the enabling relation 'R'

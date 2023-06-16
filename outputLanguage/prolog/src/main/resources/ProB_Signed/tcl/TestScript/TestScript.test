@@ -1,0 +1,507 @@
+package require tcltest
+namespace import tcltest::*
+source TestScriptProcedures.tcl
+
+test testSplitRefinement-1 {Test of correct splitting} {splitRefinementAssertionString "P \[FD= Q"} "P FD Q"
+test testSplitRefinement-2 {Test of correct splitting} {splitRefinementAssertionString "P \[F= Q"} "P F Q"
+test testSplitRefinement-3 {Test of correct splitting} {splitRefinementAssertionString "T1 \[T= Q"} "T1 T Q"
+test testSplitRefinement-4 {Test of correct splitting} {splitRefinementAssertionString "Failure \[F= Q"} "Failure F Q"
+test testSplitRefinement-5 {Test of correct splitting} {splitRefinementAssertionString "Div \[FD= Q"} "Div FD Q"
+test testSplitRefinement-6 {Test of correct splitting} {splitRefinementAssertionString "P \[FD= Div"} "P FD Div"
+test testSplitRefinement-7 {Test of correct splitting} {splitRefinementAssertionString "PS_2_Mx \[| \{|out|\} |\] P(0,Mx) \
+           \[T= P(0,Mx)"} "PS_2_Mx\[|\{|out|\}|\]P(0,Mx) T P(0,Mx)"
+
+test test-splitDAssertion-1 {Test of correct splitting} {splitDAssertion "P :\[deterministic \[F\] \]"} "P F"
+test test-splitDAssertion-2 {Test of correct splitting} {splitDAssertion "PS_2_Mx \[| \{|out|\} |\] P(0,Mx) :\[deterministic \[F\] \]"} "PS_2_Mx\[|\{|out|\}|\]P(0,Mx) F" 
+test test-splitDAssertion-3 {Test of correct splitting} {splitDAssertion "P(1,2,3,4) :\[deadlock free \[FD\] \]"} "P(1,2,3,4) FD"
+test test-splitDAssertion-4 {Test of correct splitting} {splitDAssertion "P :\[deterministic \]"} "P FD"
+test test-splitDAssertion-5 {Test of correct splitting} {splitDAssertion "P(1,2,3,4) :\[deadlock free \[T\] \]"} "P(1,2,3,4) FD"
+
+test test-splitLivelockAssertion-1 {Test of correct splitting} {splitLivelockAssertion "P :\[livelock free \[F\] \]"} "P"
+test test-splitLivelockAssertion-2 {Test of correct splitting} {splitLivelockAssertion "P || Q :\[divergence free \[F\] \]"} "P||Q"
+test test-splitLivelockAssertion-3 {Test of correct splitting} {splitLivelockAssertion "PS_2_Mx \[| \{|out|\} |\] P(0,Mx) :\[livelock free \[F\] \]"} "PS_2_Mx\[|\{|out|\}|\]P(0,Mx)"
+
+test test-isRefinement-1 {Test of recognizing refinement assertions} {isRefinement "P \[FD= Q"} 1
+test test-isRefinement-2 {Test of recognizing refinement assertions} {isRefinement "P \[F= Q"} 1
+test test-isRefinement-3 {Test of recognizing refinement assertions} {isRefinement "P \[T= Q"} 1
+test test-isRefinement-4 {Test of recognizing refinement assertions} {isRefinement "P FD= Q"} 0
+test test-isRefinement-5 {Test of recognizing refinement assertions} {isRefinement "P \[T Q"} 0
+
+test test-isDeterminism-1 {Test of recognizing determinism assertions} {isDeterminism "P :\[ deterministic free\]"} 1
+test test-isDeterminism-2 {Test of recognizing determinism assertions} {isDeterminism "P :\[ isdeterministicfree\]"} 1
+test test-isDeterminism-3 {Test of recognizing determinism assertions} {isDeterminism "P :\[ isdetermin isticfree\]"} 0
+test test-isDeterminism-4 {Test of recognizing determinism assertions} {isDeterminism "P_deterministic :\[ some string\]"} 0
+test test-isDeterminism-5 {Test of recognizing determinism assertions} {isDeterminism "a?x:\{|1,2,3|\} -> STOP :\[\
+                                                                                         deterministic-\[FD\]\]"} 1
+
+test test-isDeadlock-1 {Test of recognizing deadlock assertions} {isDeadlock "P :\[ deadlock free\]"} 1
+test test-isDeadlock-2 {Test of recognizing deadlock assertions} {isDeadlock "P :\[ isdeadlockfree\]"} 1
+test test-isDeadlock-3 {Test of recognizing deadlock assertions} {isDeadlock "P :\[ isdead lockicfree\]"} 0
+test test-isDeadlock-4 {Test of recognizing deadlock assertions} {isDeadlock "deadlockProcess :\[ ***\]"} 0
+test test-isDeadlock-5 {Test of recognizing deadlock assertions} {isDeadlock "a?x:Set -> STOP :\[ deadlock-free\]"} 1
+
+test test-isLivelock-1 {Test of recognizing livelock assertions} {isLivelock "P :\[ livelock free\]"} 1
+test test-isLivelock-2 {Test of recognizing livelock assertions} {isLivelock "P :\[ divergence free\]"} 1
+test test-isLivelock-3 {Test of recognizing livelock assertions} {isLivelock "P(0,Mx) :\[ livelock-free\]"} 1
+test test-isLivelock-4 {Test of recognizing livelock assertions} {isLivelock "livelock_pp :\[ diverge isticfree\]"} 0
+test test-isLivelock-5 {Test of recognizing livelock assertions} {isLivelock "livelock_pp_divergence :\[ **ddcafl\]"} 0
+
+test test-makePrettyTimeFormat-1 {Test of returning the correct time} {makePrettyTimeFormat 0} "0m00.000s"
+test test-makePrettyTimeFormat-2 {Test of returning the correct time} {makePrettyTimeFormat 999} "0m00.001s"
+test test-makePrettyTimeFormat-3 {Test of returning the correct time} {makePrettyTimeFormat 23} "0m00.000s"
+test test-makePrettyTimeFormat-4 {Test of returning the correct time} {makePrettyTimeFormat 499} "0m00.000s"
+test test-makePrettyTimeFormat-5 {Test of returning the correct time} {makePrettyTimeFormat 1500} "0m00.002s"
+test test-makePrettyTimeFormat-6 {Test of returning the correct time} {makePrettyTimeFormat 1499} "0m00.001s"
+test test-makePrettyTimeFormat-7 {Test of returning the correct time} {makePrettyTimeFormat 1000000} "0m01.000s"
+test test-makePrettyTimeFormat-8 {Test of returning the correct time} {makePrettyTimeFormat 1025000} "0m01.025s"
+test test-makePrettyTimeFormat-9 {Test of returning the correct time} {makePrettyTimeFormat 60000000} "1m00.000s"
+test test-makePrettyTimeFormat-10 {Test of returning the correct time} {makePrettyTimeFormat 69900000} "1m09.900s"
+test test-makePrettyTimeFormat-11 {Test of returning the correct time} {makePrettyTimeFormat 70000000} "1m10.000s"
+
+test test-timeInSecondsOnly-1 {Test of returning the correct time} {timeInSecondsOnly 0} "0.0"
+test test-timeInSecondsOnly-2 {Test of returning the correct time} {timeInSecondsOnly 999} "0.000999"
+test test-timeInSecondsOnly-3 {Test of returning the correct time} {timeInSecondsOnly 23}  "2.3e-5"
+test test-timeInSecondsOnly-4 {Test of returning the correct time} {timeInSecondsOnly 6500000} "6.5"
+test test-timeInSecondsOnly-5 {Test of returning the correct time} {timeInSecondsOnly 578556844687} "578556.844687"
+test test-timeInSecondsOnly-5 {Test of returning the correct time} {timeInSecondsOnly 8347811.086} "8.347811086"
+
+test test-summarizeTime-1 {Test for correct summerizing and outputing of the summ-time} {summarizeTime {101 102 103 104 105 106 107 108 109 110}} "0m00.001s"
+test test-summarizeTime-2 {Test for correct summerizing and outputing of the summ-time} {summarizeTime {1101 1102 1103 1104 1105 1106 1107 1108 1109 1110}} "0m00.011s"
+test test-summarizeTime-3 {Test for correct summerizing and outputing of the summ-time} {summarizeTime {}} "0m00.000s"
+test test-summarizeTime-4 {Test for correct summerizing and outputing of the summ-time} {summarizeTime {70000000 70000000 70000000 70000000 70000000}} "5m50.000s"
+test test-summarizeTime-5 {Test for correct summerizing and outputing of the summ-time} {summarizeTime {70000000}} "1m10.000s"
+
+test test-collectAllAssertionsFromFile-1 {Testing collecting of assertions from a .csp file.} -setup {
+     tcltest::makeFile "" empty.csp
+ } -body {
+     collectAllAssertionsFromFile empty.csp
+ } -cleanup {
+     tcltest::removeFile empty.csp
+ } -result {}
+
+test test-collectAllAssertionsFromFile-2 {Testing collecting of assertions from a .csp file.} -setup {
+     tcltest::makeFile "channel a\nP = a -> STOP\n" file1.csp
+ } -body {
+     collectAllAssertionsFromFile file1.csp
+ } -cleanup {
+     tcltest::removeFile file1.csp
+ } -result {}
+
+test test-collectAllAssertionsFromFile-3 {Testing collecting of assertions from a .csp file.} -setup {
+     tcltest::makeFile "channel a\nP = a -> STOP\n     assert P \[T= STOP\n       assert P :\[deadlock free \[FD\]\]" file1.csp
+ } -body {
+     collectAllAssertionsFromFile file1.csp
+ } -cleanup {
+     tcltest::removeFile file1.csp
+ } -result {{P [T= STOP} {P :[deadlock free [FD]]}}
+
+test test-collectAllAssertionsFromFile-4 {Testing collecting of assertions from a .csp file.} -setup {
+     tcltest::makeFile "channel out\nchannel a\nP = a -> STOP\nassert P \[T= STOP\nassert P :\[deadlock free \[FD\]\]\n\
+                        --assert STOP \[FD= SKIP" file1.csp
+ } -body {
+     collectAllAssertionsFromFile file1.csp
+ } -cleanup {
+     tcltest::removeFile file1.csp
+ } -result {{P [T= STOP} {P :[deadlock free [FD]]}}
+
+test test-collectAllAssertionsFromFile-5 {Testing collecting of assertions from a .csp file.} -setup {
+     tcltest::makeFile "channel out\nchannel a\nP = a -> STOP\nassert P \[T= STOP\nassert P :\[deadlock free \[FD\]\]\n\
+                                  --assert STOP \[FD= SKIP -- assert STOP:\[livelock free\]" file1.csp
+ } -body {
+     collectAllAssertionsFromFile file1.csp
+ } -cleanup {
+     tcltest::removeFile file1.csp
+ } -result {{P [T= STOP} {P :[deadlock free [FD]]}}
+
+test test-collectAllAssertionsFromFile-6 {Testing collecting of assertions from a .csp file.} -setup {
+     tcltest::makeFile "channel out\nchannel a\nP = a -> STOP\nassert P \[T= STOP\nassert P :\[deadlock free \[FD\]\]\n\
+                                  assert STOP  \[FD= SKIP    -- assert STOP:\[livelock free\]\n\
+                                  assert SKIP :\[deterministic \[F\]\]--assert P \[T= P" file1.csp
+ } -body {
+     collectAllAssertionsFromFile file1.csp
+ } -cleanup {
+     tcltest::removeFile file1.csp
+ } -result {{P [T= STOP} {P :[deadlock free [FD]]} {STOP  [FD= SKIP    } {SKIP :[deterministic [F]]}}
+
+test test-collectAllAssertionsFromFile-7 {Testing collecting of assertions from a .csp file.} -setup {
+     tcltest::makeFile "channel out\nchannel a\nP = a -> STOP\nassert P \[T= STOP\nassert P :\[deadlock free \[FD\]\]\n \
+                        assert PS_2_Mx \[| \{|out|\} |\] PS_1_Mx \[T= PS_1_Mx\nassert not PS_2_Mx \[T= PS(3,Mx,<>)\n\
+                        assert PS_2_Mx \[| \{|out|\} |\] P(0,Mx) \[T= P(0,Mx)\n\
+                        assert P(0,Mx) :\[livelock free\]\n" file1.csp
+ } -body {
+     collectAllAssertionsFromFile file1.csp
+ } -cleanup {
+     tcltest::removeFile file1.csp
+ } -result {{P [T= STOP} {P :[deadlock free [FD]]} {PS_2_Mx [| {|out|} |] PS_1_Mx [T= PS_1_Mx}\
+            {not PS_2_Mx [T= PS(3,Mx,<>)} {PS_2_Mx [| {|out|} |] P(0,Mx) [T= P(0,Mx)}\
+            {P(0,Mx) :[livelock free]}}
+
+test test-collectAllAssertionsFromFile-7 {Testing behaviour of collectAllAssertionsFromFile when no .csp file is inputed.} -setup {
+     tcltest::makeFile "" empty.txt
+ } -body {
+     if [catch {collectAllAssertionsFromFile empty.txt} result] {
+          set done $result
+     } else {
+          set done "No error appeared by calling 'collectAllAssertionsFromFile'."
+     }
+ } -cleanup {
+     tcltest::removeFile empty.txt
+ } -result {No .csp file inputed!}
+
+test test-collectAllAssertionsFromFile-8 {Testing behaviour of collectAllAssertionsFromFile when the .csp file does not exist.} -setup {
+
+ } -body {
+     if [catch {collectAllAssertionsFromFile file.csp} result] {
+          set done $result
+     } else {
+          set done "No error appeared by calling 'collectAllAssertionsFromFile'."
+     }
+ } -cleanup {
+
+ } -result {File does not exist!}
+
+test test-MultipleProcCalls-1 {Testing multiple proc calls.} -setup {
+     tcltest::makeFile "channel out\nchannel a\nP = a -> STOP\n\
+                        assert PS_2_Mx \[| \{|out|\} |\] PS_1_Mx \[T= PS_1_Mx\nassert P(0,Mx) :\[livelock free\]" file1.csp
+ } -body {
+     set Ass [lindex [collectAllAssertionsFromFile file1.csp] 0]
+     if [isRefinement $Ass] {
+          set done [splitRefinementAssertionString $Ass]
+     } else {
+          set done "Test failed!"
+     } 
+ } -cleanup {
+     tcltest::removeFile file1.csp
+ } -result {PS_2_Mx[|{|out|}|]PS_1_Mx T PS_1_Mx}
+
+test test-MultipleProcCalls-2 {Testing multiple proc calls from TestScriptProcedures.tcl.} -setup {
+     tcltest::makeFile "channel out\nchannel a\nP = a -> STOP\n\
+                        assert PS_2_Mx \[| \{|out|\} |\] PS_1_Mx \[T= PS_1_Mx\nassert P(0,Mx) :\[livelock free\]" file1.csp
+ } -body {
+     set Ass [lindex [collectAllAssertionsFromFile file1.csp] 1]
+     if [isRefinement $Ass] {
+          set done [splitRefinementAssertionString $Ass]
+     } elseif [isDeterminism $Ass] {
+          set done [splitDAssertion $Ass]
+     } elseif [isDeadlock $Ass] {
+          set done [splitDAssertion $Ass]
+     } elseif [isLivelock $Ass] {
+          set done [splitLivelockAssertion $Ass]
+     } else {
+          set done "Test failed!"
+     } 
+ } -cleanup {
+     tcltest::removeFile file1.csp
+ } -result {P(0,Mx)}
+
+test test-MultipleProcCalls-3 {Testing multiple proc calls from TestScriptProcedures.tcl.} -setup {
+     tcltest::makeFile "channel out\nchannel a\nP = a -> STOP\n\
+                        assert PS_2_Mx \[| \{|out|\} |\] PS_1_Mx \[T= PS_1_Mx\nassert P(0,Mx) :\[livelock free\]\n\
+                           assert PS_2_Mx :\[deadlock free\]" file1.csp
+ } -body {
+     set Ass [lindex [collectAllAssertionsFromFile file1.csp] 2]
+     if [isRefinement $Ass] {
+          set done [splitRefinementAssertionString $Ass]
+     } elseif [isDeterminism $Ass] {
+          set done [splitDAssertion $Ass]
+     } elseif [isDeadlock $Ass] {
+          set done [splitDAssertion $Ass]
+     } elseif [isLivelock $Ass] {
+          set done [splitLivelockAssertion $Ass]
+     } else {
+          set done "Test failed!"
+     } 
+ } -cleanup {
+     tcltest::removeFile file1.csp
+ } -result {PS_2_Mx FD}
+
+test test-MultipleProcCalls-4 {Testing multiple proc calls from TestScriptProcedures.tcl.} -setup {
+     tcltest::makeFile "channel out\nchannel a\nP = a -> STOP\n\
+                        assert PS_2_Mx \[| \{|out|\} |\] PS_1_Mx \[T= PS_1_Mx\nassert P(0,Mx) :\[livelock free\]\n\
+                           assert PS_2_Mx :\[deadlock free \[F\]\]" file1.csp
+ } -body {
+     set Ass [lindex [collectAllAssertionsFromFile file1.csp] 2]
+     if [isRefinement $Ass] {
+          set done [splitRefinementAssertionString $Ass]
+     } elseif [isDeterminism $Ass] {
+          set done [splitDAssertion $Ass]
+     } elseif [isDeadlock $Ass] {
+          set done [splitDAssertion $Ass]
+     } elseif [isLivelock $Ass] {
+          set done [splitLivelockAssertion $Ass]
+     } else {
+          set done "Test failed!"
+     } 
+ } -cleanup {
+     tcltest::removeFile file1.csp
+ } -result {PS_2_Mx F}
+
+test test-DeleteTemporaryTxtFiles-1 {Testing if DeleteTemporaryTxtFiles deletes temporary files.} -setup {
+     tcltest::makeFile "FDR2 result temporary file" result.txt
+ } -body {
+     DeleteTemporaryTxtFiles {result.txt}
+     if [file exists result.txt] {
+         set done "Temporary file result.txt must not exist.:("
+     } else {
+         set done "Temporary file result.txt deleted."
+     }
+ } -result {Temporary file result.txt deleted.}
+
+
+test test-DeleteTemporaryTxtFiles-2 {Testing if DeleteTemporaryTxtFiles deletes temporary files.} -setup {
+     tcltest::makeFile "ProB result temporary file" result_prob.txt
+     tcltest::makeFile "FDR2 result temporary file" result.txt
+     tcltest::makeFile "ProB error temporary file" error_occurred.txt 
+     tcltest::makeFile "ProB error temporary file 2" error_occurred_1.txt
+ } -body {
+     set TemporaryFiles {result_prob.txt result.txt error_occurred.txt error_occurred_1.txt}
+     DeleteTemporaryTxtFiles $TemporaryFiles
+     set deleted 1
+     foreach file $TemporaryFiles { 
+         if [file exists result.txt] {
+            set deleted 0
+            break
+         }
+     }
+     set done "All temporary files were erased."
+ } -result {All temporary files were erased.}
+
+test test-getFDR2Result-1 {Test if procedure catches the right result from the output file.} -setup {
+     tcltest::makeFile "String P F Q\ntrue" result.txt
+ } -body {
+     set done [getFDR2Result result.txt "no"]
+ } -cleanup {
+     tcltest::removeFile result.txt
+ } -result {true}
+
+test test-getFDR2Result-2 {Test if procedure catches the right result from the output file.} -setup {
+     tcltest::makeFile "String P F Q\nfalse" result.txt
+ } -body {
+     set done [getFDR2Result result.txt "yes"]
+ } -cleanup {
+     tcltest::removeFile result.txt
+ } -result {true}
+
+test test-getFDR2Result-3 {Test if procedure catches the right result from the output file.} -setup {
+     tcltest::makeFile "String P F Q\nxfalse" result.txt
+ } -body {
+     set done [getFDR2Result result.txt "no"]
+ } -cleanup {
+     tcltest::removeFile result.txt
+ } -result {false}
+
+test test-getFDR2Result-4 {Test if procedure catches the right result from the output file.} -setup {
+     tcltest::makeFile "String P F Q\nxtrue\n\nsome other input" result.txt
+ } -body {
+     set done [getFDR2Result result.txt "yes"]
+ } -cleanup {
+     tcltest::removeFile result.txt
+ } -result {false}
+
+test test-getFDR2Result-5 {Test if procedure catches the right result from the output file.} -setup {
+     tcltest::makeFile "String P F Q\n   true" result.txt
+ } -body {
+     set done [getFDR2Result result.txt "no"]
+ } -cleanup {
+     tcltest::removeFile result.txt
+ } -result {true}
+
+test test-getFDR2Result-6 {Test if procedure catches the right result from the output file.} -setup {
+     tcltest::makeFile "String P F Q\n nonsense" result.txt
+ } -body {
+     set done [getFDR2Result result.txt "no"]
+ } -cleanup {
+     tcltest::removeFile result.txt
+ } -result {nonsense}
+
+test test-getFDR2Result-7 {Test if procedure catches the right result from the output file.} -setup {
+     tcltest::makeFile "String P F Q\n nonsense" result.txt
+ } -body {
+     set done [getFDR2Result result.txt "yes"]
+ } -cleanup {
+     tcltest::removeFile result.txt
+ } -result {nonsense}
+
+test test-falselyCspAssertionErrorOnly-1 {Test if procedure catches the right error from the output file.} -setup {
+     tcltest::makeFile "*** error occurred ***\nmodel_check_fails" result.txt
+ } -body {
+     set done [falselyCspAssertionErrorOnly result.txt]
+ } -cleanup {
+     tcltest::removeFile result.txt
+ } -result {true}
+
+test test-falselyCspAssertionErrorOnly-2 {Test if procedure catches the right error from the output file.} -setup {
+     tcltest::makeFile "*** error occurred ***\ncheck refinement ok\n! time_out" result.txt
+ } -body {
+     set done [falselyCspAssertionErrorOnly result.txt]
+ } -cleanup {
+     tcltest::removeFile result.txt
+ } -result {Timeout Error!!!}
+
+test test-falselyCspAssertionErrorOnly-3 {Test if procedure catches the right error from the output file.} -setup {
+     tcltest::makeFile "*** error occurred ***\n! Not an animatable CSP Process: \nSpecification\nother strings" result.txt
+ } -body {
+     set done [falselyCspAssertionErrorOnly result.txt]
+ } -cleanup {
+     tcltest::removeFile result.txt
+ } -result {Not an animatable CSP Process: Specification.}
+
+test test-falselyCspAssertionErrorOnly-4 {Test if procedure catches the right error from the output file.} -setup {
+     tcltest::makeFile "channel a\nP(1) = a -> STOP\nP(n) = a -> P(n-1)\nQ = P(100)\n R = a -> R\\ \{a\}\nP_99 = P(99)\nassert Q \[T= P_99"\
+                simple.csp
+ } -body {
+     set cmd {exec probcli simple.csp -cspref R "\[T=" Q --timeout 1000 >> result.txt}
+     catch {eval $cmd}
+     set done [falselyCspAssertionErrorOnly result.txt]
+ } -cleanup {
+     tcltest::removeFile result.txt
+     tcltest::removeFile simple.csp
+     tcltest::removeFile simple.csp.pl
+ } -result {Forced Timeout Error!!!}
+
+test test-falselyCspAssertionErrorOnly-4 {Test if procedure catches the right error from the output file.} -setup {
+     tcltest::makeFile "*** Refinement Check Failed *** \n! *** error occurred ***\n! refinement_check_fails"\
+                result.txt
+ } -body {
+     set done [falselyCspAssertionErrorOnly result.txt]
+ } -cleanup {
+     tcltest::removeFile result.txt
+ } -result {true}
+
+test test-getProBResult-1 {Test if procedure interpretes the right result from the output file.} -setup {
+     set result [exec ls 2>> error.txt] 
+ } -body {
+     set done [getProBResult error.txt "no"]
+ } -cleanup {
+     tcltest::removeFile error.txt
+ } -result {true}
+
+test test-getProBResult-2 {Test if procedure interpretes the right result from the output file.} -setup {
+     set result [exec ls 2>> error.txt] 
+ } -body {
+     set done [getProBResult error.txt "yes"]
+ } -cleanup {
+     tcltest::removeFile error.txt
+ } -result {false}
+
+test test-getProBResult-3 {Test if procedure interpretes the right result/error from the output file.} -setup {
+     tcltest::makeFile "MAIN=STOP" simple.csp
+     set res [catch {exec probcli simple.csp -cspref P "\[T=" P 2>> error.txt} result] 
+ } -body {
+     set done [getProBResult error.txt "yes"]
+ } -cleanup {
+     tcltest::removeFile error.txt
+     tcltest::removeFile simple.csp
+ } -result {Not an animatable CSP Process: ! P.}
+
+test test-getProBResult-4 {Test if procedure interpretes the right result/error from the output file.} -setup {
+     tcltest::makeFile "MAIN=STOP" simple.csp
+     set res [catch {exec probcli simple.csp -cspref MAIN "\[T=" MAIN 2>> error.txt} result] 
+ } -body {
+     set done [getProBResult error.txt "no"]
+ } -cleanup {
+     tcltest::removeFile error.txt
+     tcltest::removeFile simple.csp
+ } -result {true}
+
+test test-getProBResult-5 {Test if procedure interpretes the right result/error from the output file (result must be parseError).} -setup {
+     tcltest::makeFile "MAIN=STO" simple.csp
+     set res [catch {exec probcli simple.csp -cspref MAIN "\[T=" MAIN 2>> error.txt} result] 
+ } -body {
+     set done [getProBResult error.txt "no"]
+ } -cleanup {
+     tcltest::removeFile error.txt
+     tcltest::removeFile simple.csp
+ } -result {Parse Error!!!}
+
+test test-getProBResult-6 {Test if procedure interpretes the right result/error from the output file (result must be parseError).} -setup {
+     tcltest::makeFile "MAIN=STO" simple.csp
+     set res [catch {exec probcli simple.csp -cspref MAIN "\[T=" MAIN 2>> error.txt} result] 
+ } -body {
+     set done [getProBResult error.txt "yes"]
+ } -cleanup {
+     tcltest::removeFile error.txt
+     tcltest::removeFile simple.csp
+ } -result {Parse Error!!!}
+
+test test-getCheckAssertionTime-7 {Test if procedure takes the right time from the result file.} -setup {
+     tcltest::makeFile "channel a\nP(1) = a -> STOP\nP(n) = a -> P(n-1)\nQ = P(100)\nP_99 = P(99)\nassert Q \[T= P_99\
+                        \nassert Q \[FD= P_99" simple.csp
+     set res [catch {exec probcli simple.csp -cspref Q "\[FD=" P_99 >> result.txt 2>> error.txt} result] 
+ } -body {
+     set done [getProBResult error.txt "yes"]
+ } -cleanup {
+     tcltest::removeFile result.txt
+     tcltest::removeFile simple.csp
+     tcltest::removeFile error.txt
+ } -result {true}
+
+test test-getCheckAssertionTime-1 {Test if procedure takes the right time from the result file.} -setup {
+     tcltest::makeFile "channel a\nP(1) = a -> STOP\nP(n) = a -> P(n-1)\nQ = P(100)\nP_99 = P(99)\nassert Q \[T= P_99"\
+                simple.csp
+     set res [catch {exec probcli simple.csp -cspref Q "\[T=" P_99 >> result.txt 2>> error.txt} result] 
+ } -body {
+     set done [expr {[getCheckAssertionTime result.txt] >= 0}]
+ } -cleanup {
+     tcltest::removeFile result.txt
+     tcltest::removeFile simple.csp
+     tcltest::removeFile error.txt
+ } -result {1}
+
+test test-getCheckAssertionTime-2 {Test if procedure takes the right time from the result file.} -setup {
+     tcltest::makeFile "channel a\nP(1) = a -> STOP\nP(n) = a -> P(n-1)\nQ = P(100)\nP_99 = P(99)\nassert Q \[T= P_99"\
+                simple.csp
+     set res [catch {exec probcli simple.csp -cspref MAIN "\[T=" P_99 >> result.txt 2>> error.txt} result]
+ } -body {
+     # error catched done must be 1
+     set done [getCheckAssertionTime result.txt]
+ } -cleanup {
+     tcltest::removeFile result.txt
+     tcltest::removeFile simple.csp
+     tcltest::removeFile error.txt
+ } -result {0}
+
+## unstable test case, we assume that the check assertion time 0 ms because of the trivial refinement assertion
+## in this example.
+test test-getCheckAssertionTime-3 {Test if procedure takes the right time from the result file.} -setup {
+     tcltest::makeFile "channel a\nP(1) = a -> STOP\nP(n) = a -> P(n-1)\nQ = P(100)\nP_99 = P(99)\nassert Q \[T= P_99"\
+                simple.csp
+     set res [catch {exec probcli simple.csp -cspref STOP "\[T=" STOP >> result.txt 2>> error.txt} result] 
+ } -body {
+     # error catched done must be 1
+     set done [getCheckAssertionTime result.txt]
+ } -cleanup {
+     tcltest::removeFile result.txt
+     tcltest::removeFile simple.csp
+     tcltest::removeFile simple.csp.pl
+     tcltest::removeFile error.txt
+ } -result {0}
+
+test test-standardDeviation-1 {Testing standard deviation procedure} {standardDeviation 5 {2 4 4 4 5 5 7 9}} 2.138089935299395
+test test-standardDeviation-2 {Testing standard deviation procedure} {standardDeviation 5 {5 5 5 5 5 5 5 5 5 5}} 0.0
+test test-standardDeviation-3 {Testing standard deviation procedure} {standardDeviation 5 {10}} 0.0
+test test-standardDeviation-4 {Testing standard deviation procedure} {standardDeviation 5 {}} 0.0
+
+test test-readTQuantilsTable-1 {see output of table} {getTQuantilFromTable 50 1} 1.000
+test test-readTQuantilsTable-2 {see output of table} {getTQuantilFromTable 75 1} 2.414
+test test-readTQuantilsTable-3 {see output of table} {getTQuantilFromTable 80 1} 3.078
+test test-readTQuantilsTable-4 {see output of table} {getTQuantilFromTable 90 1} 6.314
+test test-readTQuantilsTable-5 {see output of table} {getTQuantilFromTable 95 infinity} 1.960
+test test-readTQuantilsTable-5 {see output of table} {getTQuantilFromTable 95 30} 2.042
+test test-readTQuantilsTable-6 {see output of table} {getTQuantilFromTable 98 1} 31.821
+test test-readTQuantilsTable-7 {see output of table} {getTQuantilFromTable 99 26} 2.779
+test test-readTQuantilsTable-8 {see output of table} {getTQuantilFromTable 98 13} 2.650
+test test-readTQuantilsTable-9 {see output of table} {getTQuantilFromTable 99_8 20} 3.552
+test test-readTQuantilsTable-10 {see output of table} {getTQuantilFromTable 75 8} 1.240
+test test-readTQuantilsTable-11 {see output of table} {getTQuantilFromTable 99 31} 2.576
+test test-readTQuantilsTable-12 {see output of table} {getTQuantilFromTable 89 690} 1.645
+test test-readTQuantilsTable-13 {see output of table} {getTQuantilFromTable 10 8} 0.706
+test test-readTQuantilsTable-14 {see output of table} {getTQuantilFromTable abs 2} 1.960
+test test-readTQuantilsTable-15 {see output of table} {getTQuantilFromTable 99.9 20} 3.552
+
+test test-getConfidenceInterval-1 {Testing the confidence interval} {getConfindenceInterval 95 {10 9 8 11 12}} [list 8.182028465569386\
+      11.817971534430614]
+test test-getConfidenceInterval-2 {Testing the confidence interval} {getConfindenceInterval 40 {10 9 8 11 12 7 13 9 9 12}} [list \
+          9.569754591992998 10.430245408007002]
+
+cleanupTests

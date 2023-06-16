@@ -1,0 +1,195 @@
+// TODO: use remaining variables
+machine(name, parameters, constraints, sets, constants, concrete_constants, properties, definitions, variables, concrete_variables, invariant, assertions, initialization, operations, whileDefinitions, quantifierDefinitions) ::= <<
+:- use_module(btypes).
+
+<if(sets)>
+<sets; separator=".\n\n">.
+<endif>
+
+init_constants :-
+    <if(concrete_constants)><concrete_constants; separator=",\n"><else>!<endif>.
+
+<initialization>
+
+% Transitions
+<if(operations)><operations; separator="\n\n"><else>trans(skip, empty, done).<endif>
+
+% Invariant
+<invariant>
+<if(whileDefinitions)>
+% While definitions
+<whileDefinitions; separator="\n\n"><endif>
+
+<if(quantifierDefinitions)>
+% Quantifier
+<quantifierDefinitions; separator="\n\n"><endif>
+>>
+
+// TODO: improve return values
+operation(name, parameters, returnValues, body, bodyWithOutput, resultStateCount, resultStateCountWithOutput) ::= <<
+<if(body)>
+trans('<name>'<if(parameters)>(<parameters :{ p | <p>=Expr_<p>}; separator=", ">)<endif>, State_0, State_<resultStateCount>) :-
+    <body>.<else>
+trans('<name>'<if(parameters)>(<parameters :{ p | <p>=Expr_<p>}; separator=", ">)<endif>, State, State).<endif>
+<if(returnValues)>
+out(State_0, '<name>'<if(parameters)>(<parameters :{ p | <p>=Expr_<p>}; separator=", ">)<endif>, Values) :-
+    <bodyWithOutput>,
+    findall((X/Value), (member(X, [<returnValues :{r | '<r>'}; separator=", ">]), get(State_<resultStateCountWithOutput>, X, Value)), Values).<endif>
+>>
+
+// TODO: use type and mapType
+function(lhs, rhs, type, mapType) ::= <<
+function(<lhs>, <rhs>)
+>>
+
+binaryFunctionExpression(lhs, rhs, operator, exprCount) ::= <<
+<operator>(<lhs>, <rhs>, Expr_<exprCount>)
+>>
+
+callFunctionAccess(expression, parameters) ::= <<
+<expression>(<parameters; separator="-">)
+>>
+
+callFunction(expression, parameters, exprCount, expectSingleValue) ::= <<
+mppcg_callFunction(<expression>, <parameters>, Expr_<exprCount>)
+>>
+
+concreteIdentifierDeclaration(name, before, value, inline, exprCount, interval) ::= <<
+retractall(<name>(_)),
+<if(inline)>
+assert((<name>(<value>)))<else>
+<if(interval)>assert((<name>(<value>) :- <before>))<else>
+<value>,
+ordsets:list_to_ord_set(Expr_<exprCount>, Ord_<exprCount>),
+assert((<name>(Ord_<exprCount>)))<endif><endif>
+>>
+
+concreteIdentifier(name, exprCount) ::= <<
+<name>(Expr_<exprCount>)
+>>
+
+couple(from, to) ::= <<
+<from>-<to>
+>>
+
+unaryFunctionExpression(expression, operator, exprCount) ::= <<
+<operator>(<expression>, Expr_<exprCount>)
+>>
+
+invariant(body, idx) ::= <<
+check_inv_<idx>(State_0) :-
+    <body>,
+    !.
+>>
+
+invariants(list) ::= <<
+<list; separator="\n\n">
+>>
+
+quantifierPredicate(name, count, parameters, predicate, quantification, universalQuantifier, stateCount) ::= <<
+<if(universalQuantifier)>\+ universal_quantifier_<name>_<count>(State_<stateCount><if(parameters)>, <parameters; separator=", "><endif>)<else>
+% exist quantifier
+<predicate><if(quantification)>,
+<quantification><endif><endif>
+>>
+
+quantifierDefinition(name, count, parameters, predicate, quantification) ::= <<
+universal_quantifier_<name>_<count>(State_0<if(parameters)>, <parameters; separator=", "><endif>) :-
+    <predicate><if(quantification)>,
+    \+ (
+            <quantification>
+        )<endif>.
+>>
+
+lambdaExpression(identifier, predicate, expression, value, exprCount) ::= <<
+findall(
+    (<identifier>-<value>),
+    (
+        <predicate>,
+        <expression>
+    ),
+    Expr_<exprCount>
+)
+>>
+
+initialization(body, resultStateCount) ::= <<
+start(State_<resultStateCount>) :-
+    init_constants,
+    empty(State_0)<if(body)>,
+    <body; separator=",\n"><endif>.
+>>
+
+// TODO: make parallel
+parallelSubstitution(tempVars, substitutions) ::= <<
+% Parallel Substitution:
+<if(tempVars)><tempVars; separator=",\n">,<endif>
+<substitutions; separator=",\n">
+>>
+
+precondition(predicate, substitution) ::= <<
+<if(substitution)>
+<predicate>,
+<substitution><else>
+<predicate><endif>
+>>
+
+// TODO: add else, when
+select(condition, then, elseSubstitution, when) ::= <<
+% Select
+<condition>,
+
+% Then
+<if(then)><then><else>true<endif>
+>>
+
+comprehensionSetExpression(identifiers, predicates, exprCount) ::= <<
+findall(
+    (<identifiers>),
+    (
+        <predicates; separator=",\n">
+    ),
+    Expr_<exprCount>
+)
+>>
+
+
+/* XTL */
+props(invariants, indices) ::= <<
+prop(State, unsafe) :-
+    \+ check_inv(State),
+    !.
+prop(State, State) :- !.
+
+check_inv(State) :-
+    <indices :{ idx | check_inv_<idx>(State)}; separator=", !, \n">.
+
+<invariants>
+>>
+
+updateStateCount(newCount, oldCount) ::= <<
+State_<newCount> = State_<oldCount>
+>>
+
+updateExprCount(newCount, oldCount) ::= <<
+Expr_<newCount> = Expr_<oldCount>
+>>
+
+infiniteSetExpression(type) ::= <<
+<type>
+>>
+
+sequence(elements) ::= <<
+[<elements; separator=", ">]
+>>
+
+unarySequenceExpression(sequence, operator, exprCount) ::= <<
+<operator>(<sequence>, Expr_<exprCount>)
+>>
+
+binarySequenceExpression(lhs, rhs, operator, exprCount) ::= <<
+<operator>(<lhs>, <rhs>, Expr_<exprCount>)
+>>
+
+comprehensionSetIdentifier(first, second) ::= <<
+<first> - <second>
+>>

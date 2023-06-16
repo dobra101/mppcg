@@ -1,0 +1,588 @@
+:- use_module(btypes).
+
+s_INTERCONNECTNODE(['node1', 'node2']).
+
+s_SOCKET(['socket1', 'socket2']).
+
+s_SERVICE(['service1', 'service2']).
+
+s_RESOURCEMANAGER(['resource1', 'resource2']).
+
+s_SID(['SID1', 'SID2']).
+
+s_RM_ERROR_CODES(['RM_SERVICE_FOUND', 'RM_SERVICE_NOT_FOUND']).
+
+s_IN_ERROR_CODES(['IN_REGISTRATION_OK', 'IN_REGISTRATION_FAILED', 'IN_DEREGISTRATION_OK', 'IN_DEREGISTRATION_FAILED', 'IN_NO_SOCKET_CONNECTION', 'IN_SOCKET_CONNECTION_OK', 'IN_NO_AVAILABLE_SERVICE', 'IN_SERVICE_AVAILABLE', 'IN_TARGET_SOCKET_GRANTED', 'IN_TARGET_SOCKET_NOT_GRANTED']).
+
+init_constants :-
+    !.
+
+start(State_16) :-
+    init_constants,
+    empty(State_0),
+    % Parallel Substitution:
+    update('interconnectNodes', [], State_0, State_1),
+    update('sockets', [], State_1, State_2),
+    update('services', [], State_2, State_3),
+    update('resourceManagers', [], State_3, State_4),
+    update('sids', [], State_4, State_5),
+    update('rm_services', [], State_5, State_6),
+    update('rm_sids', [], State_6, State_7),
+    update('in_localServices', [], State_7, State_8),
+    update('in_sockets', [], State_8, State_9),
+    update('in_resourceManager', [], State_9, State_10),
+    update('soc_to', [], State_10, State_11),
+    update('soc_from', [], State_11, State_12),
+    update('svc_serviceID', [], State_12, State_13),
+    update('svc_sockets', [], State_13, State_14),
+    update('svc_ICNode', [], State_14, State_15),
+    update('svc_registered', [], State_15, State_16).
+
+% Transitions
+trans('constructor_interconnectNode'(newic=Expr_newic), State_0, State_2) :-
+    % Select
+    s_INTERCONNECTNODE(Expr_0),
+    get(State_0, 'interconnectNodes', Expr_1),
+    mppcg_setSubtraction(Expr_0, Expr_1, Expr_2),
+    mppcg_member(Expr_newic, Expr_2),
+
+    % Then
+    % Parallel Substitution:
+    mppcg_setUnion(Expr_1, [Expr_newic], Expr_3),
+    update('interconnectNodes', Expr_3, State_0, State_1),
+    update(in_resourceManager(Expr_newic), [], State_1, State_2),
+    true.
+out(State_0, 'constructor_interconnectNode'(newic=Expr_newic), Values) :-
+    % Select
+    s_INTERCONNECTNODE(Expr_0),
+    get(State_0, 'interconnectNodes', Expr_1),
+    mppcg_setSubtraction(Expr_0, Expr_1, Expr_2),
+    mppcg_member(Expr_newic, Expr_2),
+
+    % Then
+    % Parallel Substitution:
+    mppcg_setUnion(Expr_1, [Expr_newic], Expr_3),
+    update('interconnectNodes', Expr_3, State_0, State_1),
+    update(in_resourceManager(Expr_newic), [], State_1, State_2),
+    update('oid', Expr_newic, State_2, State_3),
+    findall((X/Value), (member(X, ['oid']), get(State_3, X, Value)), Values).
+
+trans('constructor_resourceManager'(newrm=Expr_newrm), State_0, State_2) :-
+    s_RESOURCEMANAGER(Expr_0),
+    get(State_0, 'resourceManagers', Expr_1),
+    mppcg_setSubtraction(Expr_0, Expr_1, Expr_2),
+    mppcg_member(Expr_newrm, Expr_2), 
+    get(State_0, 'rm_services', Expr_3),
+    mppcg_domain(Expr_3, Expr_4),
+    \+ mppcg_member(Expr_newrm, Expr_4), 
+    get(State_0, 'resourceManagers', Expr_5),
+    mppcg_equal(Expr_5, []),
+    % Parallel Substitution:
+    get(State_0, 'resourceManagers', Expr_6),
+    mppcg_setUnion(Expr_6, [Expr_newrm], Expr_7),
+    update('resourceManagers', Expr_7, State_0, State_1),
+    update(rm_services(Expr_newrm), [], State_1, State_2),
+    true.
+out(State_0, 'constructor_resourceManager'(newrm=Expr_newrm), Values) :-
+    s_RESOURCEMANAGER(Expr_0),
+    get(State_0, 'resourceManagers', Expr_1),
+    mppcg_setSubtraction(Expr_0, Expr_1, Expr_2),
+    mppcg_member(Expr_newrm, Expr_2), 
+    get(State_0, 'rm_services', Expr_3),
+    mppcg_domain(Expr_3, Expr_4),
+    \+ mppcg_member(Expr_newrm, Expr_4), 
+    get(State_0, 'resourceManagers', Expr_5),
+    mppcg_equal(Expr_5, []),
+    % Parallel Substitution:
+    get(State_0, 'resourceManagers', Expr_6),
+    mppcg_setUnion(Expr_6, [Expr_newrm], Expr_7),
+    update('resourceManagers', Expr_7, State_0, State_1),
+    update(rm_services(Expr_newrm), [], State_1, State_2),
+    update('oid', Expr_newrm, State_2, State_3),
+    findall((X/Value), (member(X, ['oid']), get(State_3, X, Value)), Values).
+
+trans('constructor_service'(ii=Expr_ii, newsvc=Expr_newsvc), State_0, State_5) :-
+    get(State_0, 'interconnectNodes', Expr_0),
+    mppcg_member(Expr_ii, Expr_0), 
+    s_SERVICE(Expr_1),
+    get(State_0, 'services', Expr_2),
+    mppcg_setSubtraction(Expr_1, Expr_2, Expr_3),
+    mppcg_member(Expr_newsvc, Expr_3),
+    % Parallel Substitution:
+    get(State_0, 'services', Expr_4),
+    mppcg_setUnion(Expr_4, [Expr_newsvc], Expr_5),
+    update('services', Expr_5, State_0, State_1),
+    update(svc_registered(Expr_newsvc), false, State_1, State_2),
+    update(svc_sockets(Expr_newsvc), [], State_2, State_3),
+    update(svc_ICNode(Expr_newsvc), Expr_ii, State_3, State_4),
+    update('svc_serviceID', [], State_4, State_5),
+    true.
+out(State_0, 'constructor_service'(ii=Expr_ii, newsvc=Expr_newsvc), Values) :-
+    get(State_0, 'interconnectNodes', Expr_0),
+    mppcg_member(Expr_ii, Expr_0), 
+    s_SERVICE(Expr_1),
+    get(State_0, 'services', Expr_2),
+    mppcg_setSubtraction(Expr_1, Expr_2, Expr_3),
+    mppcg_member(Expr_newsvc, Expr_3),
+    % Parallel Substitution:
+    get(State_0, 'services', Expr_4),
+    mppcg_setUnion(Expr_4, [Expr_newsvc], Expr_5),
+    update('services', Expr_5, State_0, State_1),
+    update(svc_registered(Expr_newsvc), false, State_1, State_2),
+    update(svc_sockets(Expr_newsvc), [], State_2, State_3),
+    update(svc_ICNode(Expr_newsvc), Expr_ii, State_3, State_4),
+    update('svc_serviceID', [], State_4, State_5),
+    update('oid', Expr_newsvc, State_5, State_6),
+    findall((X/Value), (member(X, ['oid']), get(State_6, X, Value)), Values).
+
+trans('constructor_socket'(ii=Expr_ii, srcsid=Expr_srcsid, targsid=Expr_targsid, newsoc=Expr_newsoc), State_0, State_4) :-
+    get(State_0, 'interconnectNodes', Expr_0),
+    mppcg_member(Expr_ii, Expr_0), 
+    get(State_0, 'sids', Expr_1),
+    mppcg_member(Expr_srcsid, Expr_1), 
+    get(State_0, 'sids', Expr_2),
+    mppcg_member(Expr_targsid, Expr_2), 
+    s_SOCKET(Expr_3),
+    get(State_0, 'sockets', Expr_4),
+    mppcg_setSubtraction(Expr_3, Expr_4, Expr_5),
+    mppcg_member(Expr_newsoc, Expr_5),
+    % Parallel Substitution:
+    get(State_0, 'sockets', Expr_6),
+    mppcg_setUnion(Expr_6, [Expr_newsoc], Expr_7),
+    update('sockets', Expr_7, State_0, State_1),
+    true,
+    update(in_sockets(Expr_newsoc), Expr_ii, State_1, State_2),
+    update(soc_to(Expr_newsoc), Expr_srcsid, State_2, State_3),
+    update(soc_from(Expr_newsoc), Expr_targsid, State_3, State_4).
+out(State_0, 'constructor_socket'(ii=Expr_ii, srcsid=Expr_srcsid, targsid=Expr_targsid, newsoc=Expr_newsoc), Values) :-
+    get(State_0, 'interconnectNodes', Expr_0),
+    mppcg_member(Expr_ii, Expr_0), 
+    get(State_0, 'sids', Expr_1),
+    mppcg_member(Expr_srcsid, Expr_1), 
+    get(State_0, 'sids', Expr_2),
+    mppcg_member(Expr_targsid, Expr_2), 
+    s_SOCKET(Expr_3),
+    get(State_0, 'sockets', Expr_4),
+    mppcg_setSubtraction(Expr_3, Expr_4, Expr_5),
+    mppcg_member(Expr_newsoc, Expr_5),
+    % Parallel Substitution:
+    get(State_0, 'sockets', Expr_6),
+    mppcg_setUnion(Expr_6, [Expr_newsoc], Expr_7),
+    update('sockets', Expr_7, State_0, State_1),
+    update('oid', Expr_newsoc, State_1, State_2),
+    update(in_sockets(Expr_newsoc), Expr_ii, State_2, State_3),
+    update(soc_to(Expr_newsoc), Expr_srcsid, State_3, State_4),
+    update(soc_from(Expr_newsoc), Expr_targsid, State_4, State_5),
+    findall((X/Value), (member(X, ['oid']), get(State_5, X, Value)), Values).
+
+trans('rm_register'(self=Expr_self, ss=Expr_ss, ii=Expr_ii), State_0, State_0) :-
+    get(State_0, 'resourceManagers', Expr_0),
+    mppcg_member(Expr_self, Expr_0), 
+    get(State_0, 'services', Expr_1),
+    mppcg_member(Expr_ss, Expr_1), 
+    get(State_0, 'interconnectNodes', Expr_2),
+    mppcg_member(Expr_ii, Expr_2).
+
+trans('rm_deregister'(self=Expr_self, ss=Expr_ss, ii=Expr_ii), State_0, State_0) :-
+    get(State_0, 'resourceManagers', Expr_0),
+    mppcg_member(Expr_self, Expr_0), 
+    get(State_0, 'services', Expr_1),
+    mppcg_member(Expr_ss, Expr_1), 
+    get(State_0, 'interconnectNodes', Expr_2),
+    mppcg_member(Expr_ii, Expr_2).
+
+trans('rm_getSid'(self=Expr_self, ss=Expr_ss), State_0, State_0) :-
+    get(State_0, 'resourceManagers', Expr_0),
+    mppcg_member(Expr_self, Expr_0), 
+    get(State_0, 'services', Expr_1),
+    mppcg_member(Expr_ss, Expr_1), 
+    get(State_0, 'rm_sids', Expr_2),
+    mppcg_domain(Expr_2, Expr_3),
+    mppcg_member(Expr_ss, Expr_3),
+    % Parallel Substitution:
+    true,
+    true.
+out(State_0, 'rm_getSid'(self=Expr_self, ss=Expr_ss), Values) :-
+    get(State_0, 'resourceManagers', Expr_0),
+    mppcg_member(Expr_self, Expr_0), 
+    get(State_0, 'services', Expr_1),
+    mppcg_member(Expr_ss, Expr_1), 
+    get(State_0, 'rm_sids', Expr_2),
+    mppcg_domain(Expr_2, Expr_3),
+    mppcg_member(Expr_ss, Expr_3),
+    % Parallel Substitution:
+    update('err', 'RM_SERVICE_FOUND', State_0, State_1),
+    get(State_1, 'rm_sids', Expr_4),
+    mppcg_callFunction(Expr_4, Expr_ss, Expr_5),
+    update('sid', [Expr_5], State_1, State_2),
+    findall((X/Value), (member(X, ['sid', 'err']), get(State_2, X, Value)), Values).
+
+trans('rm_getSid_Not_Found'(self=Expr_self, ss=Expr_ss), State_0, State_0) :-
+    get(State_0, 'resourceManagers', Expr_0),
+    mppcg_member(Expr_self, Expr_0), 
+    get(State_0, 'services', Expr_1),
+    mppcg_member(Expr_ss, Expr_1),
+    % Parallel Substitution:
+    true,
+    true.
+out(State_0, 'rm_getSid_Not_Found'(self=Expr_self, ss=Expr_ss), Values) :-
+    get(State_0, 'resourceManagers', Expr_0),
+    mppcg_member(Expr_self, Expr_0), 
+    get(State_0, 'services', Expr_1),
+    mppcg_member(Expr_ss, Expr_1),
+    % Parallel Substitution:
+    s_SID(Expr_2),
+    mppcg_setSubtraction(Expr_2, Expr_2, Expr_3),
+    update('sid', Expr_3, State_0, State_1),
+    update('err', 'RM_SERVICE_NOT_FOUND', State_1, State_2),
+    findall((X/Value), (member(X, ['sid', 'err']), get(State_2, X, Value)), Values).
+
+trans('in_announceResourceManager'(self=Expr_self, rm=Expr_rm), State_0, State_1) :-
+    get(State_0, 'interconnectNodes', Expr_0),
+    mppcg_member(Expr_self, Expr_0), 
+    get(State_0, 'resourceManagers', Expr_1),
+    mppcg_member(Expr_rm, Expr_1), 
+    get(State_0, 'in_resourceManager', Expr_2),
+    mppcg_callFunction(Expr_2, Expr_self, Expr_3),
+    mppcg_equal(Expr_3, []),
+    get(State_0, 'in_resourceManager', Expr_4),
+    mppcg_callFunction(Expr_4, Expr_self, Expr_5),
+    mppcg_setUnion(Expr_5, [Expr_rm], Expr_6),
+    update(in_resourceManager(Expr_self), Expr_6, State_0, State_1).
+
+trans('in_register_success'(self=Expr_self, ss=Expr_ss, si=Expr_si), State_0, State_2) :-
+    get(State_0, 'interconnectNodes', Expr_0),
+    mppcg_member(Expr_self, Expr_0), 
+    get(State_0, 'services', Expr_1),
+    mppcg_member(Expr_ss, Expr_1), 
+    s_SID(Expr_2),
+    get(State_0, 'sids', Expr_3),
+    mppcg_setSubtraction(Expr_2, Expr_3, Expr_4),
+    mppcg_member(Expr_si, Expr_4), 
+    \+ (get(State_0, 'in_localServices', Expr_5),
+    mppcg_domain(Expr_5, Expr_6),
+    mppcg_member(Expr_si, Expr_6)),
+    % Parallel Substitution:
+    get(State_0, 'sids', Expr_7),
+    mppcg_setUnion(Expr_7, [Expr_si], Expr_8),
+    update('sids', Expr_8, State_0, State_1),
+    get(State_1, 'in_localServices', Expr_9),
+    mppcg_setUnion(Expr_9, [Expr_si-Expr_self], Expr_10),
+    update('in_localServices', Expr_10, State_1, State_2),
+    true,
+    true.
+out(State_0, 'in_register_success'(self=Expr_self, ss=Expr_ss, si=Expr_si), Values) :-
+    get(State_0, 'interconnectNodes', Expr_0),
+    mppcg_member(Expr_self, Expr_0), 
+    get(State_0, 'services', Expr_1),
+    mppcg_member(Expr_ss, Expr_1), 
+    s_SID(Expr_2),
+    get(State_0, 'sids', Expr_3),
+    mppcg_setSubtraction(Expr_2, Expr_3, Expr_4),
+    mppcg_member(Expr_si, Expr_4), 
+    \+ (get(State_0, 'in_localServices', Expr_5),
+    mppcg_domain(Expr_5, Expr_6),
+    mppcg_member(Expr_si, Expr_6)),
+    % Parallel Substitution:
+    get(State_0, 'sids', Expr_7),
+    mppcg_setUnion(Expr_7, [Expr_si], Expr_8),
+    update('sids', Expr_8, State_0, State_1),
+    get(State_1, 'in_localServices', Expr_9),
+    mppcg_setUnion(Expr_9, [Expr_si-Expr_self], Expr_10),
+    update('in_localServices', Expr_10, State_1, State_2),
+    update('err', 'IN_REGISTRATION_OK', State_2, State_3),
+    update('sid', [Expr_si], State_3, State_4),
+    findall((X/Value), (member(X, ['sid', 'err']), get(State_4, X, Value)), Values).
+
+trans('in_register_failed'(self=Expr_self, ss=Expr_ss), State_0, State_0) :-
+    get(State_0, 'interconnectNodes', Expr_0),
+    mppcg_member(Expr_self, Expr_0), 
+    get(State_0, 'services', Expr_1),
+    mppcg_member(Expr_ss, Expr_1),
+    % Parallel Substitution:
+    true,
+    true.
+out(State_0, 'in_register_failed'(self=Expr_self, ss=Expr_ss), Values) :-
+    get(State_0, 'interconnectNodes', Expr_0),
+    mppcg_member(Expr_self, Expr_0), 
+    get(State_0, 'services', Expr_1),
+    mppcg_member(Expr_ss, Expr_1),
+    % Parallel Substitution:
+    s_SID(Expr_2),
+    mppcg_setSubtraction(Expr_2, Expr_2, Expr_3),
+    update('sid', Expr_3, State_0, State_1),
+    update('err', 'IN_REGISTRATION_FAILED', State_1, State_2),
+    findall((X/Value), (member(X, ['sid', 'err']), get(State_2, X, Value)), Values).
+
+trans('in_requestTargetSocket_Granted'(self=Expr_self, ii=Expr_ii, srcsoc=Expr_srcsoc, srcsid=Expr_srcsid, targsid=Expr_targsid, newsoc=Expr_newsoc), State_0, State_4) :-
+    get(State_0, 'interconnectNodes', Expr_0),
+    mppcg_member(Expr_self, Expr_0), 
+    get(State_0, 'interconnectNodes', Expr_1),
+    mppcg_member(Expr_ii, Expr_1), 
+    get(State_0, 'sockets', Expr_2),
+    mppcg_member(Expr_srcsoc, Expr_2), 
+    get(State_0, 'sids', Expr_3),
+    mppcg_member(Expr_srcsid, Expr_3), 
+    get(State_0, 'sids', Expr_4),
+    mppcg_member(Expr_targsid, Expr_4), 
+    s_SOCKET(Expr_5),
+    get(State_0, 'sockets', Expr_6),
+    mppcg_setSubtraction(Expr_5, Expr_6, Expr_7),
+    mppcg_member(Expr_newsoc, Expr_7), 
+    mppcg_notEqual(Expr_self, Expr_ii), 
+    get(State_0, 'in_sockets', Expr_8),
+    mppcg_callFunction(Expr_8, Expr_srcsoc, Expr_9),
+    mppcg_equal(Expr_9, Expr_ii),
+    % Parallel Substitution:
+    get(State_0, 'sockets', Expr_10),
+    mppcg_setUnion(Expr_10, [Expr_newsoc], Expr_11),
+    update('sockets', Expr_11, State_0, State_1),
+    true,
+    true,
+    get(State_1, 'in_sockets', Expr_12),
+    mppcg_setUnion(Expr_12, [Expr_newsoc-Expr_self], Expr_13),
+    update('in_sockets', Expr_13, State_1, State_2),
+    update(soc_to(Expr_newsoc), Expr_srcsid, State_2, State_3),
+    update(soc_from(Expr_newsoc), Expr_targsid, State_3, State_4).
+out(State_0, 'in_requestTargetSocket_Granted'(self=Expr_self, ii=Expr_ii, srcsoc=Expr_srcsoc, srcsid=Expr_srcsid, targsid=Expr_targsid, newsoc=Expr_newsoc), Values) :-
+    get(State_0, 'interconnectNodes', Expr_0),
+    mppcg_member(Expr_self, Expr_0), 
+    get(State_0, 'interconnectNodes', Expr_1),
+    mppcg_member(Expr_ii, Expr_1), 
+    get(State_0, 'sockets', Expr_2),
+    mppcg_member(Expr_srcsoc, Expr_2), 
+    get(State_0, 'sids', Expr_3),
+    mppcg_member(Expr_srcsid, Expr_3), 
+    get(State_0, 'sids', Expr_4),
+    mppcg_member(Expr_targsid, Expr_4), 
+    s_SOCKET(Expr_5),
+    get(State_0, 'sockets', Expr_6),
+    mppcg_setSubtraction(Expr_5, Expr_6, Expr_7),
+    mppcg_member(Expr_newsoc, Expr_7), 
+    mppcg_notEqual(Expr_self, Expr_ii), 
+    get(State_0, 'in_sockets', Expr_8),
+    mppcg_callFunction(Expr_8, Expr_srcsoc, Expr_9),
+    mppcg_equal(Expr_9, Expr_ii),
+    % Parallel Substitution:
+    get(State_0, 'sockets', Expr_10),
+    mppcg_setUnion(Expr_10, [Expr_newsoc], Expr_11),
+    update('sockets', Expr_11, State_0, State_1),
+    update('soc', [Expr_newsoc], State_1, State_2),
+    update('err', 'IN_TARGET_SOCKET_GRANTED', State_2, State_3),
+    get(State_3, 'in_sockets', Expr_12),
+    mppcg_setUnion(Expr_12, [Expr_newsoc-Expr_self], Expr_13),
+    update('in_sockets', Expr_13, State_3, State_4),
+    update(soc_to(Expr_newsoc), Expr_srcsid, State_4, State_5),
+    update(soc_from(Expr_newsoc), Expr_targsid, State_5, State_6),
+    findall((X/Value), (member(X, ['soc', 'err']), get(State_6, X, Value)), Values).
+
+trans('in_requestTargetSocket_NotGranted'(self=Expr_self, ii=Expr_ii, srcsoc=Expr_srcsoc, srcsid=Expr_srcsid, targsid=Expr_targsid), State_0, State_0) :-
+    get(State_0, 'interconnectNodes', Expr_0),
+    mppcg_member(Expr_self, Expr_0), 
+    get(State_0, 'interconnectNodes', Expr_1),
+    mppcg_member(Expr_ii, Expr_1), 
+    get(State_0, 'sockets', Expr_2),
+    mppcg_member(Expr_srcsoc, Expr_2), 
+    get(State_0, 'sids', Expr_3),
+    mppcg_member(Expr_srcsid, Expr_3), 
+    get(State_0, 'sids', Expr_4),
+    mppcg_member(Expr_targsid, Expr_4), 
+    mppcg_notEqual(Expr_self, Expr_ii), 
+    get(State_0, 'in_sockets', Expr_5),
+    mppcg_callFunction(Expr_5, Expr_srcsoc, Expr_6),
+    mppcg_equal(Expr_6, Expr_ii),
+    % Parallel Substitution:
+    true,
+    true.
+out(State_0, 'in_requestTargetSocket_NotGranted'(self=Expr_self, ii=Expr_ii, srcsoc=Expr_srcsoc, srcsid=Expr_srcsid, targsid=Expr_targsid), Values) :-
+    get(State_0, 'interconnectNodes', Expr_0),
+    mppcg_member(Expr_self, Expr_0), 
+    get(State_0, 'interconnectNodes', Expr_1),
+    mppcg_member(Expr_ii, Expr_1), 
+    get(State_0, 'sockets', Expr_2),
+    mppcg_member(Expr_srcsoc, Expr_2), 
+    get(State_0, 'sids', Expr_3),
+    mppcg_member(Expr_srcsid, Expr_3), 
+    get(State_0, 'sids', Expr_4),
+    mppcg_member(Expr_targsid, Expr_4), 
+    mppcg_notEqual(Expr_self, Expr_ii), 
+    get(State_0, 'in_sockets', Expr_5),
+    mppcg_callFunction(Expr_5, Expr_srcsoc, Expr_6),
+    mppcg_equal(Expr_6, Expr_ii),
+    % Parallel Substitution:
+    s_SOCKET(Expr_7),
+    mppcg_setSubtraction(Expr_7, Expr_7, Expr_8),
+    update('soc', Expr_8, State_0, State_1),
+    update('err', 'IN_TARGET_SOCKET_NOT_GRANTED', State_1, State_2),
+    findall((X/Value), (member(X, ['soc', 'err']), get(State_2, X, Value)), Values).
+
+trans('svc_register'(self=Expr_self), State_0, State_1) :-
+    get(State_0, 'services', Expr_0),
+    mppcg_member(Expr_self, Expr_0), 
+    get(State_0, 'svc_registered', Expr_1),
+    mppcg_callFunction(Expr_1, Expr_self, Expr_2),
+    mppcg_equal(Expr_2, false),
+    update(svc_registered(Expr_self), true, State_0, State_1).
+
+% Invariant
+prop(State, unsafe) :-
+    \+ check_inv(State),
+    !.
+prop(State, State) :- !.
+
+check_inv(State) :-
+    check_inv_0(State), !, 
+    check_inv_1(State), !, 
+    check_inv_2(State), !, 
+    check_inv_3(State), !, 
+    check_inv_4(State), !, 
+    check_inv_5(State), !, 
+    check_inv_6(State), !, 
+    check_inv_7(State), !, 
+    check_inv_8(State), !, 
+    check_inv_9(State), !, 
+    check_inv_10(State), !, 
+    check_inv_11(State), !, 
+    check_inv_12(State), !, 
+    check_inv_13(State), !, 
+    check_inv_14(State), !, 
+    check_inv_15(State), !, 
+    check_inv_16(State), !, 
+    check_inv_17(State).
+
+check_inv_0(State_0) :-
+    get(State_0, 'interconnectNodes', Expr_0),
+    s_INTERCONNECTNODE(Expr_1),
+    mppcg_subset(Expr_0, Expr_1),
+    !.
+
+check_inv_1(State_0) :-
+    get(State_0, 'sockets', Expr_0),
+    s_SOCKET(Expr_1),
+    mppcg_subset(Expr_0, Expr_1),
+    !.
+
+check_inv_2(State_0) :-
+    get(State_0, 'services', Expr_0),
+    s_SERVICE(Expr_1),
+    mppcg_subset(Expr_0, Expr_1),
+    !.
+
+check_inv_3(State_0) :-
+    get(State_0, 'resourceManagers', Expr_0),
+    s_RESOURCEMANAGER(Expr_1),
+    mppcg_subset(Expr_0, Expr_1),
+    !.
+
+check_inv_4(State_0) :-
+    get(State_0, 'sids', Expr_0),
+    s_SID(Expr_1),
+    mppcg_subset(Expr_0, Expr_1),
+    !.
+
+check_inv_5(State_0) :-
+    get(State_0, 'rm_services', Expr_0),
+    get(State_0, 'resourceManagers', Expr_1),
+    get(State_0, 'services', Expr_2),
+    mppcg_powerSet(Expr_2, Expr_3),
+    mppcg_member(Expr_0, function(Expr_1, Expr_3)),
+    !.
+
+check_inv_6(State_0) :-
+    \+ universal_quantifier__0(State_0),
+    !.
+
+check_inv_7(State_0) :-
+    get(State_0, 'rm_sids', Expr_0),
+    get(State_0, 'services', Expr_1),
+    get(State_0, 'sids', Expr_2),
+    mppcg_member(Expr_0, function(Expr_1, Expr_2)),
+    !.
+
+check_inv_8(State_0) :-
+    get(State_0, 'in_localServices', Expr_0),
+    get(State_0, 'sids', Expr_1),
+    get(State_0, 'interconnectNodes', Expr_2),
+    mppcg_member(Expr_0, function(Expr_1, Expr_2)),
+    !.
+
+check_inv_9(State_0) :-
+    get(State_0, 'in_sockets', Expr_0),
+    get(State_0, 'sockets', Expr_1),
+    get(State_0, 'interconnectNodes', Expr_2),
+    mppcg_member(Expr_0, function(Expr_1, Expr_2)),
+    !.
+
+check_inv_10(State_0) :-
+    get(State_0, 'in_resourceManager', Expr_0),
+    get(State_0, 'interconnectNodes', Expr_1),
+    get(State_0, 'resourceManagers', Expr_2),
+    mppcg_powerSet(Expr_2, Expr_3),
+    mppcg_member(Expr_0, function(Expr_1, Expr_3)),
+    !.
+
+check_inv_11(State_0) :-
+    get(State_0, 'soc_to', Expr_0),
+    get(State_0, 'sockets', Expr_1),
+    get(State_0, 'sids', Expr_2),
+    mppcg_member(Expr_0, function(Expr_1, Expr_2)),
+    !.
+
+check_inv_12(State_0) :-
+    get(State_0, 'soc_from', Expr_0),
+    get(State_0, 'sockets', Expr_1),
+    get(State_0, 'sids', Expr_2),
+    mppcg_member(Expr_0, function(Expr_1, Expr_2)),
+    !.
+
+check_inv_13(State_0) :-
+    get(State_0, 'svc_serviceID', Expr_0),
+    get(State_0, 'services', Expr_1),
+    get(State_0, 'sids', Expr_2),
+    mppcg_member(Expr_0, function(Expr_1, Expr_2)),
+    !.
+
+check_inv_14(State_0) :-
+    get(State_0, 'svc_sockets', Expr_0),
+    get(State_0, 'services', Expr_1),
+    get(State_0, 'sockets', Expr_2),
+    mppcg_powerSet(Expr_2, Expr_3),
+    mppcg_member(Expr_0, function(Expr_1, Expr_3)),
+    !.
+
+check_inv_15(State_0) :-
+    get(State_0, 'svc_ICNode', Expr_0),
+    get(State_0, 'services', Expr_1),
+    get(State_0, 'interconnectNodes', Expr_2),
+    mppcg_member(Expr_0, function(Expr_1, Expr_2)),
+    !.
+
+check_inv_16(State_0) :-
+    get(State_0, 'svc_registered', Expr_0),
+    get(State_0, 'services', Expr_1),
+    mppcg_member(Expr_0, function(Expr_1, 'BOOL')),
+    !.
+
+check_inv_17(State_0) :-
+    ((\+ (get(State_0, 'resourceManagers', Expr_0),
+    mppcg_equal(Expr_0, []))) ->
+    (get(State_0, 'resourceManagers', Expr_1),
+    mppcg_card(Expr_1, Expr_2),
+    mppcg_equal(Expr_2, 1)); true),
+    !.
+% Quantifier
+universal_quantifier__0(State_0) :-
+    get(State_0, 'rm_services', Expr_0),
+    mppcg_domain(Expr_0, Expr_1),
+    mppcg_member(Expr_q_a1, Expr_1), 
+    get(State_0, 'rm_services', Expr_2),
+    mppcg_domain(Expr_2, Expr_3),
+    mppcg_member(Expr_q_a2, Expr_3), 
+    mppcg_notEqual(Expr_q_a1, Expr_q_a2),
+    \+ (
+            get(State_0, 'rm_services', Expr_4),
+            mppcg_callFunction(Expr_4, Expr_q_a1, Expr_5),
+            mppcg_callFunction(Expr_4, Expr_q_a2, Expr_6),
+            mppcg_setIntersection(Expr_5, Expr_6, Expr_7),
+            mppcg_equal(Expr_7, [])
+        ).

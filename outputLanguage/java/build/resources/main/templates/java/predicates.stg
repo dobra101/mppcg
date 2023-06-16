@@ -1,0 +1,23 @@
+binaryPredicate(lhs, operator, rhs, isMethodCall) ::= <<
+<if(isMethodCall)><rhs>.<operator>(<lhs>)<else>
+<lhs> <operator> <rhs><endif>
+>>
+
+binaryPredicateMember(entry, set) ::= <<
+<set>.contains(<entry>)
+>>
+
+// TODO: add parenthesis
+binaryLogicPredicate(lhs, operator, rhs, parenthesis, implication) ::= <<
+<if(implication)>!(<lhs>) || <rhs><else>
+<if(parenthesis)>(<lhs>) <operator> (<rhs>)<else>
+<lhs> <operator> <rhs><endif><endif>
+>>
+
+unaryLogicPredicate(predicate, operator) ::= <<
+<operator>(<predicate>)
+>>
+
+valuePredicate(value) ::= <<
+<value>
+>>

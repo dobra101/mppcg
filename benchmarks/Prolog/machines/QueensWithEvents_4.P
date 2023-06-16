@@ -1,0 +1,99 @@
+:- use_module(btypes).
+
+init_constants :-
+    retractall(c_n(_)),
+    assert((c_n(4))),
+    retractall(c_interval(_)),
+    assert((c_interval((1, Expr_0)) :- c_n(Expr_0))),
+    retractall(c_allFields(_)),
+    c_interval(Expr_1),
+    mppcg_mult(Expr_1, Expr_1, Expr_2),
+    mppcg_powerSet(Expr_2, Expr_3),
+    ordsets:list_to_ord_set(Expr_3, Ord_3),
+    assert((c_allFields(Ord_3))).
+
+start(State_1) :-
+    init_constants,
+    empty(State_0),
+    update('queens', [], State_0, State_1).
+
+% Transitions
+trans('Solve'(solution=Expr_solution), State_0, State_1) :-
+    % Select
+    c_allFields(Expr_0),
+    mppcg_member(Expr_solution, Expr_0), 
+    mppcg_domain(Expr_solution, Expr_1),
+    c_interval(Expr_2),
+    mppcg_equal(Expr_1, Expr_2), 
+    mppcg_range(Expr_solution, Expr_3),
+    c_interval(Expr_4),
+    mppcg_equal(Expr_3, Expr_4), 
+    \+ universal_quantifier_Solve_0(State_0, Expr_solution), 
+    \+ universal_quantifier_Solve_3(State_0, Expr_solution), 
+    \+ universal_quantifier_Solve_4(State_0, Expr_solution),
+
+    % Then
+    update('queens', Expr_solution, State_0, State_1).
+
+% Invariant
+prop(State, unsafe) :-
+    \+ check_inv(State),
+    !.
+prop(State, State) :- !.
+
+check_inv(State) :-
+    check_inv_0(State).
+
+check_inv_0(State_0) :-
+    get(State_0, 'queens', Expr_0),
+    c_interval(Expr_1),
+    mppcg_member(Expr_0, function(Expr_1, Expr_1)),
+    !.
+% Quantifier
+universal_quantifier_Solve_0(State_0, Expr_solution) :-
+    c_interval(Expr_0),
+    mppcg_member(Expr_q_x, Expr_0), 
+    c_interval(Expr_1),
+    mppcg_member(Expr_q_y, Expr_1), 
+    mppcg_member(Expr_q_x-Expr_q_y, Expr_solution),
+    \+ (
+            \+ universal_quantifier_Solve_1(State_0, Expr_solution, Expr_q_x, Expr_q_y)
+        ).
+
+universal_quantifier_Solve_3(State_0, Expr_solution) :-
+    c_interval(Expr_0),
+    mppcg_member(Expr_q_q1, Expr_0), 
+    c_interval(Expr_1),
+    mppcg_setSubtraction(Expr_1, [1], Expr_2),
+    mppcg_member(Expr_q_q2, Expr_2), 
+    Expr_q_q2 > Expr_q_q1,
+    \+ (
+            mppcg_callFunction(Expr_solution, Expr_q_q1, Expr_3),
+            Expr_4 is Expr_3 + Expr_q_q2,
+            Expr_5 is Expr_4 - Expr_q_q1,
+            mppcg_callFunction(Expr_solution, Expr_q_q2, Expr_6),
+            mppcg_notEqual(Expr_5, Expr_6), 
+            mppcg_callFunction(Expr_solution, Expr_q_q1, Expr_7),
+            Expr_8 is Expr_7 - Expr_q_q2,
+            Expr_9 is Expr_8 + Expr_q_q1,
+            mppcg_callFunction(Expr_solution, Expr_q_q2, Expr_10),
+            mppcg_notEqual(Expr_9, Expr_10)
+        ).
+
+universal_quantifier_Solve_4(State_0, Expr_solution) :-
+    get(State_0, 'queens', Expr_0),
+    mppcg_domain(Expr_0, Expr_1),
+    mppcg_member(Expr_q_x, Expr_1),
+    \+ (
+            mppcg_callFunction(Expr_solution, Expr_q_x, Expr_2),
+            mppcg_callFunction(Expr_0, Expr_q_x, Expr_3),
+            mppcg_equal(Expr_2, Expr_3)
+        ).
+
+universal_quantifier_Solve_1(State_0, Expr_solution, Expr_q_x, Expr_q_y) :-
+    c_interval(Expr_0),
+    mppcg_member(Expr_q_z, Expr_0), 
+    mppcg_member(Expr_q_x-Expr_q_z, Expr_solution),
+    \+ (
+            mppcg_equal(Expr_q_y, Expr_q_z)
+        ).

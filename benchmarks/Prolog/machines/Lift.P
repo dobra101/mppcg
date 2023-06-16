@@ -1,0 +1,42 @@
+:- use_module(btypes).
+
+init_constants :-
+    !.
+
+start(State_1) :-
+    init_constants,
+    empty(State_0),
+    update('level', 0, State_0, State_1).
+
+% Transitions
+trans('inc', State_0, State_1) :-
+    get(State_0, 'level', Expr_0),
+    Expr_0 < 1000000,
+    Expr_1 is Expr_0 + 1,
+    update('level', Expr_1, State_0, State_1).
+
+trans('dec', State_0, State_1) :-
+    get(State_0, 'level', Expr_0),
+    Expr_0 > 0,
+    Expr_1 is Expr_0 - 1,
+    update('level', Expr_1, State_0, State_1).
+
+% Invariant
+prop(State, unsafe) :-
+    \+ check_inv(State),
+    !.
+prop(State, State) :- !.
+
+check_inv(State) :-
+    check_inv_0(State), !, 
+    check_inv_1(State).
+
+check_inv_0(State_0) :-
+    get(State_0, 'level', Expr_0),
+    Expr_0 >= 0,
+    !.
+
+check_inv_1(State_0) :-
+    get(State_0, 'level', Expr_0),
+    Expr_0 =< 1000000,
+    !.

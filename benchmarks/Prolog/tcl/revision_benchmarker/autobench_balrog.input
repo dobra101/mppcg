@@ -1,0 +1,45 @@
+./../../examples/B/Benchmarks/Cruise_finite1.mch@-mc 1600@Cruise_finite1
+./../../examples/B/PerformanceTests/ModelChecking/CountToMAXINT.mch@-mc 500000 -p MAXINT 50000 -nodead@MC_CountToMAXINT_50000
+./../../examples/B/PerformanceTests/SATLIB/flat200-90.mch@-t -p CLPFD TRUE -p STATIC_ORDERING TRUE -strict -p TIME_OUT 60000 @SATLIB_flat200-90
+./../../examples/B/Puzzles/NQueens50.mch@-t -p CLPFD TRUE -strict -p TIME_OUT 60000 @NQueens50
+./../../examples/B/Puzzles/NQueens60.mch@-t -p CLPFD TRUE -strict -p TIME_OUT 60000 @NQueens60
+./../../examples/B/Puzzles/NQueens40.mch@-init -p CLPFD TRUE -p SMT TRUE -strict -p TIME_OUT 60000 @NQueens40_SMT
+./../../examples/B/Puzzles/TwoQueensSevenKnights.mch@-t -p CLPFD TRUE -strict -p TIME_OUT 60000 @TwoQueensSevenKnights
+./../../examples/B/Puzzles/SudokuHexAsConstant.mch@-t -p CLPFD TRUE -strict -p TIME_OUT 60000 @SudokuHexAsConstant
+./../../examples/B/Demo/RussianPostalPuzzle.mch@-mc 2000 -strict -nodead -expcterr goal_found@RussianPostalPuzzle
+./../../examples/EventBPrologPackages/SET_Game/SET_GAM_Sym_NoSet20_mch.eventb@-mc 10000000 -expcterr goal_found -p SYMMETRY_MODE hash -p TIME_OUT 7000 -p CLPFD TRUE -df -goal "n=18" -p MAX_OPERATIONS 82@SET_GAM_Sym_18
+./../../examples/EventBPrologPackages/BPEL2B_PurchaseOrder/Model_Machine_4_NoDeadlock_v5.eventb@ -cbc_deadlock -expcterr cbc_deadlock_check -p DEFAULT_SETSIZE 2 -p SMT TRUE@BPEL_v5_Deadlock
+./../../examples/EventBPrologPackages/BPEL2B_PurchaseOrder/Model_Machine_4_NoDeadlock_v6.eventb@ -cbc_deadlock  -p DEFAULT_SETSIZE 2 -p SMT TRUE@BPEL_v6_Deadlock
+./../../../prob_examples/examples/RodinModels/Bosch/CrCtl_0.5.0_v6/CrCtl_Comb2_Final_mch.eventb@ -cbc_deadlock_pred "Counter=10" -p SMT TRUE -p CLPFD TRUE -p USE_RECORD_CONSTRUCTION TRUE -p MAXINT 2 -p DEFAULT_SETSIZE 1  -strict -expcterr cbc_deadlock_check -p MAX_INITIALISATIONS 0@Bosch_Deadlock_Comb2_v6
+./../../../prob_examples/examples/RodinModels/Bosch/CrCtl_0.5.0_v9/CrCtl_Comb2_Final_mch.eventb@ -cbc_deadlock_pred "Counter=10" -p SMT TRUE -p CLPFD TRUE -p USE_RECORD_CONSTRUCTION TRUE -p MAXINT 2 -p DEFAULT_SETSIZE 1  -strict -expcterr cbc_deadlock_check -p MAX_INITIALISATIONS 0@Bosch_Deadlock_Comb2_v9
+./../../../prob_examples/examples/B/Siemens/AdaptedBModelPropCheck/acs_as_env_cfg_ipart.mch@ -t -strict -p CLPFD TRUE -aa 144 4 0@Siemens_SanJuan_ipart
+./../../../prob_examples/examples/B/Siemens/Canarsie_PAR1_PAL/cbtc_mes_as_env_inv_easitf_bs.mch@ -t -strict -p CLPFD TRUE -assertions -p MAX_OPERATIONS 1@Siemens_Canarsie_easitf_bs
+./../../../prob_examples/examples/B/Siemens/Canarsie_PAR1_PAL/cbtc_mes_as_env_inv_easitf_bs.mch@ -strict -p CLPFD TRUE -main_assertions -p MAX_OPERATIONS 1@Siemens_Canarsie_easitf_bs_main
+./../../../prob_examples/examples/B/Siemens/Canarsie_PAR1_PAL/par1_pans_as_env_inv_stors_bs.mch@ -t -strict -p CLPFD TRUE -assertions -p MAX_OPERATIONS 1@Siemens_Canarsie_inv_stors_bs
+./../../../prob_examples/examples/B/Siemens/Canarsie_PAR1_PAL/par1_pans_as_env_inv_stors_bs.mch@ -strict -p CLPFD TRUE -main_assertions -p MAX_OPERATIONS 1@Siemens_Canarsie_inv_stors_bs_main
+./../../../prob_examples/examples/B/Siemens/BAC9_ZC/pas_as_env_inv_ld.mch@ -t -strict -p CLPFD TRUE -assertions -p MAX_OPERATIONS 1 -p WARN_IF_DEFINITION_HIDES_VARIABLE FALSE@Siemens_Barcelona9_ZC_inv_ld
+./../../../prob_examples/examples/B/Siemens/BAC9_ZC/pas_as_env_inv_ld.mch@ -init -strict -p CLPFD TRUE -main_assertions -p MAX_OPERATIONS 1 -p WARN_IF_DEFINITION_HIDES_VARIABLE FALSE@Siemens_Barcelona9_ZC_inv_ld_main
+./../../../prob_examples/examples/B/Alstom/ixl/lausanne.mch@ -t -strict -p CLPFD TRUE@Alstom_lausanne
+./../../../prob_examples/examples/B/Alstom/axl3/axl3.mch@ -t -strict -p CLPFD TRUE@Alstom_axl3
+./../../../prob_examples/examples/B/Alstom/cbtc/actions_cbtc.mch@ -t -strict -p CLPFD TRUE@Alstom_actions_cbtc
+./../../../prob_examples/examples/B/Alstom/sgd_Jun11/vital_gradient_v3/vital_gradient_optimized.mch@ -t -strict -p CLPFD TRUE -p MAXINT 2147483647 -p MININT -2147483648 -t -p TIME_OUT 30000@Alstom_gradient_v3
+./../../../prob_examples/examples/B/Alstom/DataValidationProject/Rule_TMS_Route_0006.mch@-mc 1000 -p MAXINT 10000000 -p MININT -10000000 -p SHOW_EVENTB_ANY_VALUES true -p TIME_OUT 60000 -nodead -p CLPFD FALSE -expcterr invariant_violation@ClearSy_RuleTMS_R0006
+./../../../prob_examples/examples/B/Alstom/DataValidationProject/Rule_TMS_Route_0006.mch@-mc 1000 -p MAXINT 10000000 -p MININT -10000000 -p SHOW_EVENTB_ANY_VALUES true -p TIME_OUT 60000 -nodead -p CLPFD TRUE -expcterr invariant_violation@ClearSy_RuleTMS_R0006_CLPFD
+./../../../prob_examples/examples/B/Alstom/Boucles_Jul11/essai2_boucle1.mch@-t -strict -expcterr invariant_violation -p MAXINT 10000000 -p MININT -10000000 -p TIME_OUT 8000 -p CLPFD TRUE@Alstom_essai2_boucle1
+./../../examples/CSP/mydemos/demo/crossing.csp@-mc 10000 -strict@Crossing_CSP
+./../../examples/CSP/mydemos/demo//basin_olderog_bank.csp@-mc 10000 -strict@Basin_Bank_CSP
+./../../examples/B/SymmetryReduction/Fraikin/Library.mch@-p IGNORE_HASH_COLLISIONS TRUE -p FORGET_STATE_SPACE TRUE -p SYMMETRY_MODE hash -mc 999999@Library_hash
+./../../examples/B/SymmetryReduction/USB_4Endpoints.mch@-mc 10000 -p DEFAULT_SETSIZE 3 -p SYMMETRY_MODE hash -cc 3013 97730 -strict@USB_4Endpoints_hash
+./../../examples/B/Puzzles/CrewAllocationConstants.mch@-t -p TIME_OUT 8000 -p CLPFD TRUE@CrewAllocation
+./../../examples/B/BZTT/TestBZTT_Data.mch@-t -p TIME_OUT 8000 -p CLPFD TRUE@BZTT_Data
+./../../examples/B/PerformanceTests/EnumerateFunctionTests.mch@-t -p TIME_OUT 8000 -p CLPFD TRUE@EnumerateFunctionTests
+./../../examples/B/PerformanceTests/conc_seq_test.mch@-t -p TIME_OUT 18000 -p CLPFD TRUE@ConcTest
+./../../examples/B/PerformanceTests/DirectProductPerformance.mch@-init -p TIME_OUT 38000 -p CLPFD TRUE@DirectProductPerformance
+./../../examples/B/Tickets/184/ModeProtocolMachine_mch.eventb@ -mc 20000 -noass -card MANAGERS 1 -p MAX_INITIALISATIONS 10 -p CLPFD TRUE -strict@SSF_ModeProtocol_MC1
+./../../examples/B/Tickets/184/ModeProtocolMachine_mch.eventb@  -mc 200000 -noass  -p MAX_INITIALISATIONS 10 -c --goal "card(incoming(MnAOC))>0 & card(outgoing(MnAOC))>0"  -strict -expcterr goal_found@SSF_ModeProtocol_GOAL2 
+./../../examples/CSP/ref_benchmarks/abp_chapter5_roscoe_bench.csp@ -assertions -strict@RoscoeABP_ref
+./../../../prob_examples/examples/B/Alstom/vesg_Aug11/gradient_train_altitude.mch@-animate 5 -p TIME_OUT 300000000 -p MAXINT 2147483647 -p MININT -2147483647@Alstom_vesg_animate5
+./../../../prob_examples/examples/B/Alstom/vesg_Aug11/gradient_train_altitude.mch@-animate 5 -p TIME_OUT 300000000 -p MAXINT 2147483647 -p MININT -2147483647 -his gradient.his@Alstom_vesg_animate5_his
+./../../../prob_examples/examples/B/Alstom/vesg_Aug11/gradient_train_altitude.mch@-animate 5 -p TIME_OUT 300000000 -p MAXINT 2147483647 -p MININT -2147483647 -p CLPFD TRUE@Alstom_vesg_animate5_CLP
+./../../../prob_examples/examples/B/Alstom/vesg_Aug11/gradient_train_altitude.mch@-animate 10 -p TIME_OUT 300000000 -p MAXINT 2147483647 -p MININT -2147483647 -p CLPFD TRUE@Alstom_vesg_animate10_CLP
+./../../../prob_examples/examples/B/Alstom/DataValidationProject/Tickets/Burdy3/Rule_DB_General_0006.mch@-t -p TIME_OUT 30000 -p MAXINT 2147483647 -p MININT -2147483647 -p CLPFD TRUE@AlstomBurdy_Rule6_CLP

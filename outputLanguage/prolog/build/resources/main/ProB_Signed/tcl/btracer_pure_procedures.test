@@ -1,0 +1,73 @@
+# To run the unit tests from this file just execute "tclsh btracer_pure_procedures.test" on your command line.
+
+package require tcltest
+namespace import tcltest::*
+source btracer_pure_procedures.tcl
+
+test isRefinementAssertion-1 {Testing if the given string is a proper refinement assertion} {
+     isRefinementAssertion "P \[T= Q" } true
+test isRefinementAssertion-2 {Testing if the given string is a proper refinement assertion} {
+     isRefinementAssertion "P \[F= Q" } true
+test isRefinementAssertion-3 {Testing if the given string is a proper refinement assertion} {
+     isRefinementAssertion "P \[FD= Q" } true
+test isRefinementAssertion-4 {Testing if the given string is a proper refinement assertion} {
+     isRefinementAssertion "P \[R= Q" } true
+test isRefinementAssertion-5 {Testing if the given string is a proper refinement assertion} {
+     isRefinementAssertion "P \[RD= Q" } true
+test isRefinementAssertion-6 {Testing if the given string is a proper refinement assertion} {
+     isRefinementAssertion "P \[QQ= Q" } false
+test isRefinementAssertion-7 {Testing if the given string is a proper refinement assertion} {
+     isRefinementAssertion "unknown assertion" } false
+test isRefinementAssertion-8 {Testing if the given string is a proper refinement assertion} {
+     isRefinementAssertion "P :\[livelock free\]" } false
+test isRefinementAssertion-9 {Testing if the given string is a proper refinement assertion} {
+     isRefinementAssertion "P :\[deterministic \[FD\]\]" } false
+test isRefinementAssertion-10 {Testing if the given string is a proper refinement assertion} {
+     isRefinementAssertion "P :\[deterministic \[F\]\]" } false
+
+test SwapProcesses-1 {Testing for proper switching of the processes around the refinement operator} {
+     SwapProcesses "P \[T= Q" } "Q \[T= P"
+test SwapProcesses-2 {Testing for proper switching of the processes around the refinement operator} {
+     SwapProcesses "P \[F= Q" } "Q \[F= P"
+test SwapProcesses-3 {Testing for proper switching of the processes around the refinement operator} {
+     SwapProcesses "P \[FD= Q" } "Q \[FD= P"
+test SwapProcesses-4 {Testing for proper switching of the processes around the refinement operator} {
+     SwapProcesses "P \[R= Q" } "Q \[R= P"
+test SwapProcesses-5 {Testing for proper switching of the processes around the refinement operator} {
+     SwapProcesses "P \[RD= Q" } "Q \[RD= P"
+test SwapProcesses-6 {Testing for proper switching of the processes around the refinement operator} {
+     SwapProcesses "P \|~\| R \[T= Q" } "Q \[T= P \|~\| R"
+test SwapProcesses-7 {Testing for proper switching of the processes around the refinement operator} {
+     SwapProcesses "a -> b -> SKIP \[T= Q" } "Q \[T= a -> b -> SKIP"
+
+
+test procGetModelStringForTheTraceDebuggerTitle-1 {Testing procGetModelStringForTheTraceDebuggerTitle procedure} {
+     procGetModelStringForTheTraceDebuggerTitle "P \[T= Q" } "Trace Refinement"
+test procGetModelStringForTheTraceDebuggerTitle-2 {Testing procGetModelStringForTheTraceDebuggerTitle procedure} {
+     procGetModelStringForTheTraceDebuggerTitle "P \[F= Q" } "Failures Refinement"
+test procGetModelStringForTheTraceDebuggerTitle-3 {Testing procGetModelStringForTheTraceDebuggerTitle procedure} {
+     procGetModelStringForTheTraceDebuggerTitle "P \[FD= Q" } "Failures-divergence Refinement"
+test procGetModelStringForTheTraceDebuggerTitle-4 {Testing procGetModelStringForTheTraceDebuggerTitle procedure} {
+     procGetModelStringForTheTraceDebuggerTitle "P \[R= Q" } "Refusals Refinement"
+test procGetModelStringForTheTraceDebuggerTitle-5 {Testing procGetModelStringForTheTraceDebuggerTitle procedure} {
+     procGetModelStringForTheTraceDebuggerTitle "P \[RD= Q" } "Refusals-divergence Refinement"
+test procGetModelStringForTheTraceDebuggerTitle-6 {Testing procGetModelStringForTheTraceDebuggerTitle procedure} {
+     procGetModelStringForTheTraceDebuggerTitle "P :\[deadlock free \[F\]\]" } "Deadlock Free"
+test procGetModelStringForTheTraceDebuggerTitle-7 {Testing procGetModelStringForTheTraceDebuggerTitle procedure} {
+     procGetModelStringForTheTraceDebuggerTitle "P :\[livelock free\]" } "Livelock Free"
+test procGetModelStringForTheTraceDebuggerTitle-8 {Testing procGetModelStringForTheTraceDebuggerTitle procedure} {
+     procGetModelStringForTheTraceDebuggerTitle "P :\[deterministic \[FD\]\]" } "Deterministic"
+test procGetModelStringForTheTraceDebuggerTitle-9 {Testing procGetModelStringForTheTraceDebuggerTitle procedure} {
+     procGetModelStringForTheTraceDebuggerTitle "P" } "Unknown"
+
+test procPrettyPrintCSPTrace-1 {Testing procPrettyPrintCSPTrace} {
+     procPrettyPrintCSPTrace "go: a go: b"} "a b"
+test procPrettyPrintCSPTrace-2 {Testing procPrettyPrintCSPTrace} {
+     procPrettyPrintCSPTrace "go: a refuse: b c d"} "a \{\{b,c,d\}\}"
+test procPrettyPrintCSPTrace-3 {Testing procPrettyPrintCSPTrace} {
+     procPrettyPrintCSPTrace "DIVERGENCE"} "DIVERGENCE"
+test procPrettyPrintCSPTrace-4 {Testing procPrettyPrintCSPTrace} {
+     procPrettyPrintCSPTrace "refuse: bullet go: a refuse: b c d go: d refuse: Sigma"} "\u25CF a \{\{b,c,d\}\} d \u03A3"
+
+# running the tests
+cleanupTests

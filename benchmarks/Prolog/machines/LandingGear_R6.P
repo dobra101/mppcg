@@ -1,0 +1,970 @@
+:- use_module(btypes).
+
+s_DOOR_STATE(['open', 'closed', 'door_moving']).
+
+s_GEAR_STATE(['retracted', 'extended', 'gear_moving']).
+
+s_HANDLE_STATE(['up', 'down']).
+
+s_POSITION(['fr', 'lt', 'rt']).
+
+s_SWITCH_STATE(['switch_open', 'switch_closed']).
+
+s_PLANE_STATE(['ground', 'flight']).
+
+s_VALVE_STATE(['valve_open', 'valve_closed']).
+
+init_constants :-
+    !.
+
+start(State_18) :-
+    init_constants,
+    empty(State_0),
+    % Parallel Substitution:
+    s_POSITION(Expr_0),
+    mppcg_mult(Expr_0, ['extended'], Expr_1),
+    update('gears', Expr_1, State_0, State_1),
+    mppcg_mult(Expr_0, ['closed'], Expr_2),
+    update('doors', Expr_2, State_1, State_2),
+    update('handle', 'down', State_2, State_3),
+    update('valve_extend_gear', 'valve_closed', State_3, State_4),
+    update('valve_retract_gear', 'valve_closed', State_4, State_5),
+    update('valve_open_door', 'valve_closed', State_5, State_6),
+    update('valve_close_door', 'valve_closed', State_6, State_7),
+    update('open_EV', false, State_7, State_8),
+    update('close_EV', false, State_8, State_9),
+    update('retract_EV', false, State_9, State_10),
+    update('extend_EV', false, State_10, State_11),
+    update('shock_absorber', 'ground', State_11, State_12),
+    update('general_EV', false, State_12, State_13),
+    update('general_valve', 'valve_closed', State_13, State_14),
+    update('analogical_switch', 'switch_open', State_14, State_15),
+    update('handle_move', false, State_15, State_16),
+    update('gear', 'extended', State_16, State_17),
+    update('door', 'closed', State_17, State_18).
+
+% Transitions
+trans('begin_flying', State_0, State_1) :-
+    % Select
+    get(State_0, 'shock_absorber', 'ground'),
+
+    % Then
+    update('shock_absorber', 'flight', State_0, State_1).
+
+trans('land_plane', State_0, State_1) :-
+    % Select
+    get(State_0, 'shock_absorber', 'flight'),
+
+    % Then
+    update('shock_absorber', 'ground', State_0, State_1).
+
+trans('open_valve_door_open', State_0, State_1) :-
+    % Select
+    get(State_0, 'valve_open_door', 'valve_closed'), 
+    get(State_0, 'open_EV', true),
+
+    % Then
+    update('valve_open_door', 'valve_open', State_0, State_1).
+
+trans('close_valve_door_open', State_0, State_1) :-
+    % Select
+    get(State_0, 'valve_open_door', 'valve_open'), 
+    get(State_0, 'open_EV', false),
+
+    % Then
+    update('valve_open_door', 'valve_closed', State_0, State_1).
+
+trans('open_valve_door_close', State_0, State_1) :-
+    % Select
+    get(State_0, 'valve_close_door', 'valve_closed'), 
+    get(State_0, 'close_EV', true),
+
+    % Then
+    update('valve_close_door', 'valve_open', State_0, State_1).
+
+trans('close_valve_door_close', State_0, State_1) :-
+    % Select
+    get(State_0, 'valve_close_door', 'valve_open'), 
+    get(State_0, 'close_EV', false),
+
+    % Then
+    update('valve_close_door', 'valve_closed', State_0, State_1).
+
+trans('open_valve_retract_gear', State_0, State_1) :-
+    % Select
+    get(State_0, 'valve_retract_gear', 'valve_closed'), 
+    get(State_0, 'retract_EV', true),
+
+    % Then
+    update('valve_retract_gear', 'valve_open', State_0, State_1).
+
+trans('close_valve_retract_gear', State_0, State_1) :-
+    % Select
+    get(State_0, 'valve_retract_gear', 'valve_open'), 
+    get(State_0, 'retract_EV', false),
+
+    % Then
+    update('valve_retract_gear', 'valve_closed', State_0, State_1).
+
+trans('open_valve_extend_gear', State_0, State_1) :-
+    % Select
+    get(State_0, 'valve_extend_gear', 'valve_closed'), 
+    get(State_0, 'extend_EV', true),
+
+    % Then
+    update('valve_extend_gear', 'valve_open', State_0, State_1).
+
+trans('close_valve_extend_gear', State_0, State_1) :-
+    % Select
+    get(State_0, 'valve_extend_gear', 'valve_open'), 
+    get(State_0, 'extend_EV', false),
+
+    % Then
+    update('valve_extend_gear', 'valve_closed', State_0, State_1).
+
+trans('con_stimulate_open_door_valve', State_0, State_1) :-
+    % Select
+    get(State_0, 'open_EV', false), 
+    get(State_0, 'close_EV', false), 
+    (get(State_0, 'handle', 'down'), 
+    \+ (get(State_0, 'gears', Expr_0),
+    mppcg_range(Expr_0, Expr_1),
+    mppcg_equal(Expr_1, ['extended'])); 
+    get(State_0, 'handle', 'up'), 
+    \+ (get(State_0, 'gears', Expr_2),
+    mppcg_range(Expr_2, Expr_3),
+    mppcg_equal(Expr_3, ['retracted'])), 
+    \+ (get(State_0, 'doors', Expr_4),
+    mppcg_range(Expr_4, Expr_5),
+    mppcg_equal(Expr_5, ['open']), 
+    get(State_0, 'shock_absorber', 'ground'))), 
+    get(State_0, 'general_EV', true),
+
+    % Then
+    update('open_EV', true, State_0, State_1).
+
+trans('con_stop_stimulate_open_door_valve', State_0, State_1) :-
+    % Select
+    get(State_0, 'open_EV', true), 
+    get(State_0, 'extend_EV', false), 
+    get(State_0, 'retract_EV', false), 
+    (get(State_0, 'handle', 'down'), 
+    get(State_0, 'gears', Expr_0),
+    mppcg_range(Expr_0, Expr_1),
+    mppcg_equal(Expr_1, ['extended']); 
+    get(State_0, 'handle', 'up'), 
+    (get(State_0, 'gears', Expr_2),
+    mppcg_range(Expr_2, Expr_3),
+    mppcg_equal(Expr_3, ['retracted']); 
+    get(State_0, 'shock_absorber', 'ground')), 
+    get(State_0, 'doors', Expr_4),
+    mppcg_range(Expr_4, Expr_5),
+    mppcg_equal(Expr_5, ['open'])), 
+    get(State_0, 'general_EV', true),
+
+    % Then
+    update('open_EV', false, State_0, State_1).
+
+trans('con_stimulate_close_door_valve', State_0, State_1) :-
+    % Select
+    get(State_0, 'close_EV', false), 
+    get(State_0, 'open_EV', false), 
+    get(State_0, 'extend_EV', false), 
+    get(State_0, 'retract_EV', false), 
+    (get(State_0, 'handle', 'down'), 
+    get(State_0, 'gears', Expr_0),
+    mppcg_range(Expr_0, Expr_1),
+    mppcg_equal(Expr_1, ['extended']); 
+    get(State_0, 'handle', 'up'), 
+    (get(State_0, 'gears', Expr_2),
+    mppcg_range(Expr_2, Expr_3),
+    mppcg_equal(Expr_3, ['retracted']); 
+    get(State_0, 'shock_absorber', 'ground'))), 
+    \+ (get(State_0, 'doors', Expr_4),
+    mppcg_range(Expr_4, Expr_5),
+    mppcg_equal(Expr_5, ['closed'])), 
+    get(State_0, 'general_EV', true),
+
+    % Then
+    update('close_EV', true, State_0, State_1).
+
+trans('con_stop_stimulate_close_door_valve', State_0, State_1) :-
+    % Select
+    get(State_0, 'close_EV', true), 
+    (get(State_0, 'handle', 'down'), 
+    get(State_0, 'gears', Expr_0),
+    mppcg_range(Expr_0, Expr_1),
+    mppcg_equal(Expr_1, ['extended']), 
+    get(State_0, 'doors', Expr_2),
+    mppcg_range(Expr_2, Expr_3),
+    mppcg_equal(Expr_3, ['closed']); 
+    get(State_0, 'handle', 'up'), 
+    (get(State_0, 'gears', Expr_4),
+    mppcg_range(Expr_4, Expr_5),
+    mppcg_equal(Expr_5, ['retracted']); 
+    get(State_0, 'shock_absorber', 'ground')), 
+    get(State_0, 'doors', Expr_6),
+    mppcg_range(Expr_6, Expr_7),
+    mppcg_equal(Expr_7, ['closed'])), 
+    get(State_0, 'general_EV', true),
+
+    % Then
+    update('close_EV', false, State_0, State_1).
+
+trans('con_stimulate_retract_gear_valve', State_0, State_1) :-
+    % Select
+    get(State_0, 'retract_EV', false), 
+    get(State_0, 'extend_EV', false), 
+    get(State_0, 'open_EV', true), 
+    get(State_0, 'handle', 'up'), 
+    \+ (get(State_0, 'gears', Expr_0),
+    mppcg_range(Expr_0, Expr_1),
+    mppcg_equal(Expr_1, ['retracted'])), 
+    get(State_0, 'shock_absorber', 'flight'), 
+    get(State_0, 'doors', Expr_2),
+    mppcg_range(Expr_2, Expr_3),
+    mppcg_equal(Expr_3, ['open']), 
+    get(State_0, 'general_EV', true),
+
+    % Then
+    update('retract_EV', true, State_0, State_1).
+
+trans('con_stop_stimulate_retract_gear_valve', State_0, State_1) :-
+    % Select
+    get(State_0, 'retract_EV', true), 
+    (get(State_0, 'handle', 'down'); 
+    get(State_0, 'gears', Expr_0),
+    mppcg_range(Expr_0, Expr_1),
+    mppcg_equal(Expr_1, ['retracted'])), 
+    get(State_0, 'general_EV', true),
+
+    % Then
+    update('retract_EV', false, State_0, State_1).
+
+trans('con_stimulate_extend_gear_valve', State_0, State_1) :-
+    % Select
+    get(State_0, 'extend_EV', false), 
+    get(State_0, 'retract_EV', false), 
+    get(State_0, 'open_EV', true), 
+    get(State_0, 'handle', 'down'), 
+    \+ (get(State_0, 'gears', Expr_0),
+    mppcg_range(Expr_0, Expr_1),
+    mppcg_equal(Expr_1, ['extended'])), 
+    get(State_0, 'doors', Expr_2),
+    mppcg_range(Expr_2, Expr_3),
+    mppcg_equal(Expr_3, ['open']), 
+    get(State_0, 'general_EV', true),
+
+    % Then
+    update('extend_EV', true, State_0, State_1).
+
+trans('con_stop_stimulate_extend_gear_valve', State_0, State_1) :-
+    % Select
+    get(State_0, 'extend_EV', true), 
+    (get(State_0, 'handle', 'up'); 
+    get(State_0, 'gears', Expr_0),
+    mppcg_range(Expr_0, Expr_1),
+    mppcg_equal(Expr_1, ['extended'])), 
+    get(State_0, 'general_EV', true),
+
+    % Then
+    update('extend_EV', false, State_0, State_1).
+
+trans('env_start_retracting_first'(gr=Expr_gr), State_0, State_2) :-
+    % Select
+    get(State_0, 'gears', Expr_0),
+    mppcg_domain(Expr_0, Expr_1),
+    mppcg_member(Expr_gr, Expr_1), 
+    get(State_0, 'doors', Expr_2),
+    mppcg_range(Expr_2, Expr_3),
+    mppcg_equal(Expr_3, ['open']), 
+    get(State_0, 'handle', 'up'), 
+    get(State_0, 'gears', Expr_4),
+    mppcg_callFunction(Expr_4, Expr_gr, Expr_5),
+    mppcg_equal(Expr_5, 'extended'), 
+    get(State_0, 'valve_retract_gear', 'valve_open'), 
+    get(State_0, 'general_valve', 'valve_open'), 
+    get(State_0, 'gear', Expr_6),
+    mppcg_member(Expr_6, ['extended', 'gear_moving']), 
+    get(State_0, 'door', 'open'),
+
+    % Then
+    % Parallel Substitution:
+    get(State_0, 'gears', Expr_7),
+    mppcg_override(Expr_7, [Expr_gr-'gear_moving'], Expr_8),
+    update('gears', Expr_8, State_0, State_1),
+    update('gear', 'gear_moving', State_1, State_2).
+
+trans('env_retract_gear_skip'(gr=Expr_gr), State_0, State_1) :-
+    % Select
+    get(State_0, 'gears', Expr_0),
+    mppcg_domain(Expr_0, Expr_1),
+    mppcg_member(Expr_gr, Expr_1), 
+    get(State_0, 'doors', Expr_2),
+    mppcg_range(Expr_2, Expr_3),
+    mppcg_equal(Expr_3, ['open']), 
+    get(State_0, 'gears', Expr_4),
+    s_POSITION(Expr_5),
+    mppcg_setSubtraction(Expr_5, [Expr_gr], Expr_6),
+    mppcg_image(Expr_4, Expr_6, Expr_7),
+    mppcg_notEqual(Expr_7, ['retracted']), 
+    get(State_0, 'handle', 'up'), 
+    get(State_0, 'gears', Expr_8),
+    mppcg_callFunction(Expr_8, Expr_gr, Expr_9),
+    mppcg_equal(Expr_9, 'gear_moving'), 
+    get(State_0, 'general_valve', 'valve_open'),
+
+    % Then
+    get(State_0, 'gears', Expr_10),
+    mppcg_override(Expr_10, [Expr_gr-'retracted'], Expr_11),
+    update('gears', Expr_11, State_0, State_1).
+
+trans('env_retract_gear_last'(gr=Expr_gr), State_0, State_2) :-
+    % Select
+    get(State_0, 'gears', Expr_0),
+    mppcg_domain(Expr_0, Expr_1),
+    mppcg_member(Expr_gr, Expr_1), 
+    get(State_0, 'doors', Expr_2),
+    mppcg_range(Expr_2, Expr_3),
+    mppcg_equal(Expr_3, ['open']), 
+    get(State_0, 'gears', Expr_4),
+    s_POSITION(Expr_5),
+    mppcg_setSubtraction(Expr_5, [Expr_gr], Expr_6),
+    mppcg_image(Expr_4, Expr_6, Expr_7),
+    mppcg_equal(Expr_7, ['retracted']), 
+    get(State_0, 'handle', 'up'), 
+    get(State_0, 'gears', Expr_8),
+    mppcg_callFunction(Expr_8, Expr_gr, Expr_9),
+    mppcg_equal(Expr_9, 'gear_moving'), 
+    get(State_0, 'general_valve', 'valve_open'), 
+    get(State_0, 'gear', 'gear_moving'), 
+    get(State_0, 'door', 'open'),
+
+    % Then
+    % Parallel Substitution:
+    get(State_0, 'gears', Expr_10),
+    mppcg_override(Expr_10, [Expr_gr-'retracted'], Expr_11),
+    update('gears', Expr_11, State_0, State_1),
+    update('gear', 'retracted', State_1, State_2).
+
+trans('env_start_extending'(gr=Expr_gr), State_0, State_2) :-
+    % Select
+    get(State_0, 'gears', Expr_0),
+    mppcg_domain(Expr_0, Expr_1),
+    mppcg_member(Expr_gr, Expr_1), 
+    get(State_0, 'doors', Expr_2),
+    mppcg_range(Expr_2, Expr_3),
+    mppcg_equal(Expr_3, ['open']), 
+    get(State_0, 'handle', 'down'), 
+    get(State_0, 'gears', Expr_4),
+    mppcg_callFunction(Expr_4, Expr_gr, Expr_5),
+    mppcg_equal(Expr_5, 'retracted'), 
+    get(State_0, 'valve_extend_gear', 'valve_open'), 
+    get(State_0, 'general_valve', 'valve_open'), 
+    get(State_0, 'gear', Expr_6),
+    mppcg_member(Expr_6, ['gear_moving', 'retracted']), 
+    get(State_0, 'door', 'open'),
+
+    % Then
+    % Parallel Substitution:
+    get(State_0, 'gears', Expr_7),
+    mppcg_override(Expr_7, [Expr_gr-'gear_moving'], Expr_8),
+    update('gears', Expr_8, State_0, State_1),
+    update('gear', 'gear_moving', State_1, State_2).
+
+trans('env_extend_gear_last'(gr=Expr_gr), State_0, State_2) :-
+    % Select
+    get(State_0, 'gears', Expr_0),
+    mppcg_domain(Expr_0, Expr_1),
+    mppcg_member(Expr_gr, Expr_1), 
+    get(State_0, 'doors', Expr_2),
+    mppcg_range(Expr_2, Expr_3),
+    mppcg_equal(Expr_3, ['open']), 
+    get(State_0, 'handle', 'down'), 
+    get(State_0, 'gears', Expr_4),
+    s_POSITION(Expr_5),
+    mppcg_setSubtraction(Expr_5, [Expr_gr], Expr_6),
+    mppcg_image(Expr_4, Expr_6, Expr_7),
+    mppcg_equal(Expr_7, ['extended']), 
+    get(State_0, 'gears', Expr_8),
+    mppcg_callFunction(Expr_8, Expr_gr, Expr_9),
+    mppcg_equal(Expr_9, 'gear_moving'), 
+    get(State_0, 'general_valve', 'valve_open'), 
+    get(State_0, 'gear', 'gear_moving'), 
+    get(State_0, 'door', 'open'),
+
+    % Then
+    % Parallel Substitution:
+    get(State_0, 'gears', Expr_10),
+    mppcg_override(Expr_10, [Expr_gr-'extended'], Expr_11),
+    update('gears', Expr_11, State_0, State_1),
+    update('gear', 'extended', State_1, State_2).
+
+trans('env_extend_gear_skip'(gr=Expr_gr), State_0, State_1) :-
+    % Select
+    get(State_0, 'gears', Expr_0),
+    mppcg_domain(Expr_0, Expr_1),
+    mppcg_member(Expr_gr, Expr_1), 
+    get(State_0, 'doors', Expr_2),
+    mppcg_range(Expr_2, Expr_3),
+    mppcg_equal(Expr_3, ['open']), 
+    get(State_0, 'handle', 'down'), 
+    get(State_0, 'gears', Expr_4),
+    s_POSITION(Expr_5),
+    mppcg_setSubtraction(Expr_5, [Expr_gr], Expr_6),
+    mppcg_image(Expr_4, Expr_6, Expr_7),
+    mppcg_notEqual(Expr_7, ['extended']), 
+    get(State_0, 'gears', Expr_8),
+    mppcg_callFunction(Expr_8, Expr_gr, Expr_9),
+    mppcg_equal(Expr_9, 'gear_moving'), 
+    get(State_0, 'general_valve', 'valve_open'),
+
+    % Then
+    get(State_0, 'gears', Expr_10),
+    mppcg_override(Expr_10, [Expr_gr-'extended'], Expr_11),
+    update('gears', Expr_11, State_0, State_1).
+
+trans('env_start_open_door'(gr=Expr_gr), State_0, State_2) :-
+    % Select
+    get(State_0, 'gears', Expr_0),
+    mppcg_domain(Expr_0, Expr_1),
+    mppcg_member(Expr_gr, Expr_1), 
+    get(State_0, 'doors', Expr_2),
+    mppcg_callFunction(Expr_2, Expr_gr, Expr_3),
+    mppcg_equal(Expr_3, 'closed'), 
+    get(State_0, 'gears', Expr_4),
+    mppcg_callFunction(Expr_4, Expr_gr, Expr_5),
+    mppcg_notEqual(Expr_5, 'gear_moving'), 
+    get(State_0, 'gears', Expr_6),
+    mppcg_range(Expr_6, Expr_7),
+    \+ mppcg_member('gear_moving', Expr_7), 
+    (get(State_0, 'handle', 'down'), 
+    get(State_0, 'gears', Expr_8),
+    mppcg_range(Expr_8, Expr_9),
+    mppcg_equal(Expr_9, ['retracted']); 
+    get(State_0, 'handle', 'up'), 
+    get(State_0, 'gears', Expr_10),
+    mppcg_range(Expr_10, Expr_11),
+    mppcg_equal(Expr_11, ['extended'])), 
+    get(State_0, 'valve_open_door', 'valve_open'), 
+    get(State_0, 'general_valve', 'valve_open'), 
+    get(State_0, 'door', Expr_12),
+    mppcg_member(Expr_12, ['closed', 'door_moving']), 
+    \+ get(State_0, 'gear', 'gear_moving'), 
+    (get(State_0, 'handle', 'down'), 
+    get(State_0, 'gear', 'retracted'); 
+    get(State_0, 'handle', 'up'), 
+    get(State_0, 'gear', 'extended')),
+
+    % Then
+    % Parallel Substitution:
+    get(State_0, 'doors', Expr_13),
+    mppcg_override(Expr_13, [Expr_gr-'door_moving'], Expr_14),
+    update('doors', Expr_14, State_0, State_1),
+    update('door', 'door_moving', State_1, State_2).
+
+trans('env_open_door_last'(gr=Expr_gr), State_0, State_2) :-
+    % Select
+    get(State_0, 'gears', Expr_0),
+    mppcg_domain(Expr_0, Expr_1),
+    mppcg_member(Expr_gr, Expr_1), 
+    get(State_0, 'doors', Expr_2),
+    mppcg_callFunction(Expr_2, Expr_gr, Expr_3),
+    mppcg_equal(Expr_3, 'door_moving'), 
+    get(State_0, 'gears', Expr_4),
+    mppcg_callFunction(Expr_4, Expr_gr, Expr_5),
+    mppcg_notEqual(Expr_5, 'gear_moving'), 
+    get(State_0, 'gears', Expr_6),
+    mppcg_range(Expr_6, Expr_7),
+    \+ mppcg_member('gear_moving', Expr_7), 
+    get(State_0, 'doors', Expr_8),
+    s_POSITION(Expr_9),
+    mppcg_setSubtraction(Expr_9, [Expr_gr], Expr_10),
+    mppcg_image(Expr_8, Expr_10, Expr_11),
+    mppcg_equal(Expr_11, ['open']), 
+    (get(State_0, 'handle', 'down'), 
+    get(State_0, 'gears', Expr_12),
+    mppcg_range(Expr_12, Expr_13),
+    mppcg_equal(Expr_13, ['retracted']); 
+    get(State_0, 'handle', 'up'), 
+    get(State_0, 'gears', Expr_14),
+    mppcg_range(Expr_14, Expr_15),
+    mppcg_equal(Expr_15, ['extended'])), 
+    get(State_0, 'valve_open_door', 'valve_open'), 
+    get(State_0, 'general_valve', 'valve_open'), 
+    get(State_0, 'door', 'door_moving'), 
+    \+ get(State_0, 'gear', 'gear_moving'), 
+    (get(State_0, 'handle', 'down'), 
+    get(State_0, 'gear', 'retracted'); 
+    get(State_0, 'handle', 'up'), 
+    get(State_0, 'gear', 'extended')),
+
+    % Then
+    % Parallel Substitution:
+    get(State_0, 'doors', Expr_16),
+    mppcg_override(Expr_16, [Expr_gr-'open'], Expr_17),
+    update('doors', Expr_17, State_0, State_1),
+    update('door', 'open', State_1, State_2).
+
+trans('env_open_door_skip'(gr=Expr_gr), State_0, State_1) :-
+    % Select
+    get(State_0, 'gears', Expr_0),
+    mppcg_domain(Expr_0, Expr_1),
+    mppcg_member(Expr_gr, Expr_1), 
+    get(State_0, 'doors', Expr_2),
+    mppcg_callFunction(Expr_2, Expr_gr, Expr_3),
+    mppcg_equal(Expr_3, 'door_moving'), 
+    get(State_0, 'gears', Expr_4),
+    mppcg_callFunction(Expr_4, Expr_gr, Expr_5),
+    mppcg_notEqual(Expr_5, 'gear_moving'), 
+    get(State_0, 'gears', Expr_6),
+    mppcg_range(Expr_6, Expr_7),
+    \+ mppcg_member('gear_moving', Expr_7), 
+    get(State_0, 'doors', Expr_8),
+    s_POSITION(Expr_9),
+    mppcg_setSubtraction(Expr_9, [Expr_gr], Expr_10),
+    mppcg_image(Expr_8, Expr_10, Expr_11),
+    mppcg_notEqual(Expr_11, ['open']), 
+    (get(State_0, 'handle', 'down'), 
+    get(State_0, 'gears', Expr_12),
+    mppcg_range(Expr_12, Expr_13),
+    mppcg_equal(Expr_13, ['retracted']); 
+    get(State_0, 'handle', 'up'), 
+    get(State_0, 'gears', Expr_14),
+    mppcg_range(Expr_14, Expr_15),
+    mppcg_equal(Expr_15, ['extended'])), 
+    get(State_0, 'valve_open_door', 'valve_open'), 
+    get(State_0, 'general_valve', 'valve_open'),
+
+    % Then
+    get(State_0, 'doors', Expr_16),
+    mppcg_override(Expr_16, [Expr_gr-'open'], Expr_17),
+    update('doors', Expr_17, State_0, State_1).
+
+trans('env_start_close_door'(gr=Expr_gr), State_0, State_2) :-
+    % Select
+    get(State_0, 'gears', Expr_0),
+    mppcg_domain(Expr_0, Expr_1),
+    mppcg_member(Expr_gr, Expr_1), 
+    get(State_0, 'doors', Expr_2),
+    mppcg_callFunction(Expr_2, Expr_gr, Expr_3),
+    mppcg_equal(Expr_3, 'open'), 
+    get(State_0, 'gears', Expr_4),
+    mppcg_callFunction(Expr_4, Expr_gr, Expr_5),
+    mppcg_notEqual(Expr_5, 'gear_moving'), 
+    (get(State_0, 'handle', 'up'), 
+    (get(State_0, 'gears', Expr_6),
+    mppcg_range(Expr_6, Expr_7),
+    mppcg_equal(Expr_7, ['retracted']); 
+    get(State_0, 'gears', Expr_8),
+    mppcg_range(Expr_8, Expr_9),
+    mppcg_equal(Expr_9, ['extended'])); 
+    get(State_0, 'handle', 'down'), 
+    get(State_0, 'gears', Expr_10),
+    mppcg_range(Expr_10, Expr_11),
+    mppcg_equal(Expr_11, ['extended'])), 
+    get(State_0, 'valve_close_door', 'valve_open'), 
+    get(State_0, 'general_valve', 'valve_open'), 
+    get(State_0, 'door', Expr_12),
+    mppcg_member(Expr_12, ['door_moving', 'open']), 
+    \+ get(State_0, 'gear', 'gear_moving'), 
+    (get(State_0, 'handle', 'down'), 
+    get(State_0, 'gear', 'extended'); 
+    get(State_0, 'handle', 'up'), 
+    get(State_0, 'gear', Expr_13),
+    mppcg_member(Expr_13, ['extended', 'retracted'])),
+
+    % Then
+    % Parallel Substitution:
+    get(State_0, 'doors', Expr_14),
+    mppcg_override(Expr_14, [Expr_gr-'door_moving'], Expr_15),
+    update('doors', Expr_15, State_0, State_1),
+    update('door', 'door_moving', State_1, State_2).
+
+trans('env_close_door'(gr=Expr_gr), State_0, State_2) :-
+    % Select
+    get(State_0, 'gears', Expr_0),
+    mppcg_domain(Expr_0, Expr_1),
+    mppcg_member(Expr_gr, Expr_1), 
+    get(State_0, 'doors', Expr_2),
+    mppcg_callFunction(Expr_2, Expr_gr, Expr_3),
+    mppcg_equal(Expr_3, 'door_moving'), 
+    get(State_0, 'gears', Expr_4),
+    mppcg_callFunction(Expr_4, Expr_gr, Expr_5),
+    mppcg_notEqual(Expr_5, 'gear_moving'), 
+    get(State_0, 'gears', Expr_6),
+    mppcg_range(Expr_6, Expr_7),
+    \+ mppcg_member('gear_moving', Expr_7), 
+    get(State_0, 'doors', Expr_8),
+    s_POSITION(Expr_9),
+    mppcg_setSubtraction(Expr_9, [Expr_gr], Expr_10),
+    mppcg_image(Expr_8, Expr_10, Expr_11),
+    mppcg_equal(Expr_11, ['closed']), 
+    (get(State_0, 'handle', 'up'), 
+    (get(State_0, 'gears', Expr_12),
+    mppcg_range(Expr_12, Expr_13),
+    mppcg_equal(Expr_13, ['retracted']); 
+    get(State_0, 'gears', Expr_14),
+    mppcg_range(Expr_14, Expr_15),
+    mppcg_equal(Expr_15, ['extended'])); 
+    get(State_0, 'handle', 'down'), 
+    get(State_0, 'gears', Expr_16),
+    mppcg_range(Expr_16, Expr_17),
+    mppcg_equal(Expr_17, ['extended'])), 
+    get(State_0, 'valve_close_door', 'valve_open'), 
+    ((get(State_0, 'handle', 'up'), 
+    get(State_0, 'gears', Expr_18),
+    mppcg_range(Expr_18, Expr_19),
+    mppcg_equal(Expr_19, ['extended'])) ->
+    (get(State_0, 'shock_absorber', 'ground')); true), 
+    get(State_0, 'general_valve', 'valve_open'), 
+    get(State_0, 'door', 'door_moving'), 
+    \+ get(State_0, 'gear', 'gear_moving'), 
+    (get(State_0, 'handle', 'down'), 
+    get(State_0, 'gear', 'extended'); 
+    get(State_0, 'handle', 'up'), 
+    get(State_0, 'gear', Expr_20),
+    mppcg_member(Expr_20, ['extended', 'retracted'])),
+
+    % Then
+    % Parallel Substitution:
+    get(State_0, 'doors', Expr_21),
+    mppcg_override(Expr_21, [Expr_gr-'closed'], Expr_22),
+    update('doors', Expr_22, State_0, State_1),
+    update('door', 'closed', State_1, State_2).
+
+trans('env_close_door_skip'(gr=Expr_gr), State_0, State_1) :-
+    % Select
+    get(State_0, 'gears', Expr_0),
+    mppcg_domain(Expr_0, Expr_1),
+    mppcg_member(Expr_gr, Expr_1), 
+    get(State_0, 'doors', Expr_2),
+    mppcg_callFunction(Expr_2, Expr_gr, Expr_3),
+    mppcg_equal(Expr_3, 'door_moving'), 
+    get(State_0, 'gears', Expr_4),
+    mppcg_callFunction(Expr_4, Expr_gr, Expr_5),
+    mppcg_notEqual(Expr_5, 'gear_moving'), 
+    get(State_0, 'gears', Expr_6),
+    mppcg_range(Expr_6, Expr_7),
+    \+ mppcg_member('gear_moving', Expr_7), 
+    get(State_0, 'doors', Expr_8),
+    s_POSITION(Expr_9),
+    mppcg_setSubtraction(Expr_9, [Expr_gr], Expr_10),
+    mppcg_image(Expr_8, Expr_10, Expr_11),
+    mppcg_notEqual(Expr_11, ['closed']), 
+    (get(State_0, 'handle', 'up'), 
+    (get(State_0, 'gears', Expr_12),
+    mppcg_range(Expr_12, Expr_13),
+    mppcg_equal(Expr_13, ['retracted']); 
+    get(State_0, 'gears', Expr_14),
+    mppcg_range(Expr_14, Expr_15),
+    mppcg_equal(Expr_15, ['extended'])); 
+    get(State_0, 'handle', 'down'), 
+    get(State_0, 'gears', Expr_16),
+    mppcg_range(Expr_16, Expr_17),
+    mppcg_equal(Expr_17, ['extended'])), 
+    get(State_0, 'valve_close_door', 'valve_open'), 
+    ((get(State_0, 'handle', 'up'), 
+    get(State_0, 'gears', Expr_18),
+    mppcg_range(Expr_18, Expr_19),
+    mppcg_equal(Expr_19, ['extended'])) ->
+    (get(State_0, 'shock_absorber', 'ground')); true), 
+    get(State_0, 'general_valve', 'valve_open'),
+
+    % Then
+    get(State_0, 'doors', Expr_20),
+    mppcg_override(Expr_20, [Expr_gr-'closed'], Expr_21),
+    update('doors', Expr_21, State_0, State_1).
+
+trans('toggle_handle_up', State_0, State_2) :-
+    % Select
+    get(State_0, 'handle', 'down'),
+
+    % Then
+    % Parallel Substitution:
+    update('handle', 'up', State_0, State_1),
+    update('handle_move', true, State_1, State_2).
+
+trans('toggle_handle_down', State_0, State_2) :-
+    % Select
+    get(State_0, 'handle', 'up'),
+
+    % Then
+    % Parallel Substitution:
+    update('handle', 'down', State_0, State_1),
+    update('handle_move', true, State_1, State_2).
+
+trans('con_stimulate_general_valve', State_0, State_1) :-
+    % Select
+    get(State_0, 'general_EV', false), 
+    get(State_0, 'handle_move', true),
+
+    % Then
+    update('general_EV', true, State_0, State_1).
+
+trans('con_stop_stimulate_general_valve', State_0, State_2) :-
+    % Select
+    get(State_0, 'general_EV', true), 
+    get(State_0, 'open_EV', false), 
+    get(State_0, 'close_EV', false), 
+    get(State_0, 'retract_EV', false), 
+    get(State_0, 'extend_EV', false), 
+    get(State_0, 'close_EV', false), 
+    ((get(State_0, 'handle', 'up'), 
+    get(State_0, 'gears', Expr_0),
+    mppcg_range(Expr_0, Expr_1),
+    mppcg_equal(Expr_1, ['retracted']), 
+    get(State_0, 'doors', Expr_2),
+    mppcg_range(Expr_2, Expr_3),
+    mppcg_equal(Expr_3, ['closed']), 
+    get(State_0, 'open_EV', false); 
+    get(State_0, 'handle', 'down'), 
+    get(State_0, 'gears', Expr_4),
+    mppcg_range(Expr_4, Expr_5),
+    mppcg_equal(Expr_5, ['extended']), 
+    get(State_0, 'doors', Expr_6),
+    mppcg_range(Expr_6, Expr_7),
+    mppcg_equal(Expr_7, ['closed']), 
+    get(State_0, 'open_EV', false)); 
+    get(State_0, 'handle', 'up'), 
+    get(State_0, 'gears', Expr_8),
+    mppcg_range(Expr_8, Expr_9),
+    mppcg_equal(Expr_9, ['extended']), 
+    get(State_0, 'doors', Expr_10),
+    mppcg_range(Expr_10, Expr_11),
+    mppcg_equal(Expr_11, ['closed']), 
+    get(State_0, 'open_EV', false)),
+
+    % Then
+    % Parallel Substitution:
+    update('general_EV', false, State_0, State_1),
+    update('handle_move', false, State_1, State_2).
+
+trans('evn_open_general_valve', State_0, State_1) :-
+    % Select
+    get(State_0, 'general_EV', true), 
+    get(State_0, 'general_valve', 'valve_closed'), 
+    get(State_0, 'analogical_switch', 'switch_closed'),
+
+    % Then
+    update('general_valve', 'valve_open', State_0, State_1).
+
+trans('evn_close_general_valve', State_0, State_1) :-
+    % Select
+    (get(State_0, 'general_EV', false); get(State_0, 'analogical_switch', 'switch_open')), 
+    get(State_0, 'general_valve', 'valve_open'),
+
+    % Then
+    update('general_valve', 'valve_closed', State_0, State_1).
+
+trans('env_close_analogical_switch', State_0, State_1) :-
+    % Select
+    get(State_0, 'analogical_switch', 'switch_open'), 
+    get(State_0, 'handle_move', true),
+
+    % Then
+    update('analogical_switch', 'switch_closed', State_0, State_1).
+
+trans('env_open_analogical_switch', State_0, State_1) :-
+    % Select
+    get(State_0, 'analogical_switch', 'switch_closed'),
+
+    % Then
+    update('analogical_switch', 'switch_open', State_0, State_1).
+
+% Invariant
+prop(State, unsafe) :-
+    \+ check_inv(State),
+    !.
+prop(State, State) :- !.
+
+check_inv(State) :-
+    check_inv_0(State), !, 
+    check_inv_1(State), !, 
+    check_inv_2(State), !, 
+    check_inv_3(State), !, 
+    check_inv_4(State), !, 
+    check_inv_5(State), !, 
+    check_inv_6(State), !, 
+    check_inv_7(State), !, 
+    check_inv_8(State), !, 
+    check_inv_9(State), !, 
+    check_inv_10(State), !, 
+    check_inv_11(State), !, 
+    check_inv_12(State), !, 
+    check_inv_13(State), !, 
+    check_inv_14(State), !, 
+    check_inv_15(State), !, 
+    check_inv_16(State), !, 
+    check_inv_17(State), !, 
+    check_inv_18(State), !, 
+    check_inv_19(State), !, 
+    check_inv_20(State), !, 
+    check_inv_21(State), !, 
+    check_inv_22(State), !, 
+    check_inv_23(State), !, 
+    check_inv_24(State).
+
+check_inv_0(State_0) :-
+    get(State_0, 'analogical_switch', Expr_0),
+    s_SWITCH_STATE(Expr_1),
+    mppcg_member(Expr_0, Expr_1),
+    !.
+
+check_inv_1(State_0) :-
+    get(State_0, 'general_EV', Expr_0),
+    mppcg_member(Expr_0, 'BOOL'),
+    !.
+
+check_inv_2(State_0) :-
+    get(State_0, 'general_valve', Expr_0),
+    s_VALVE_STATE(Expr_1),
+    mppcg_member(Expr_0, Expr_1),
+    !.
+
+check_inv_3(State_0) :-
+    get(State_0, 'handle_move', Expr_0),
+    mppcg_member(Expr_0, 'BOOL'),
+    !.
+
+check_inv_4(State_0) :-
+    get(State_0, 'close_EV', Expr_0),
+    mppcg_member(Expr_0, 'BOOL'),
+    !.
+
+check_inv_5(State_0) :-
+    get(State_0, 'extend_EV', Expr_0),
+    mppcg_member(Expr_0, 'BOOL'),
+    !.
+
+check_inv_6(State_0) :-
+    get(State_0, 'open_EV', Expr_0),
+    mppcg_member(Expr_0, 'BOOL'),
+    !.
+
+check_inv_7(State_0) :-
+    get(State_0, 'retract_EV', Expr_0),
+    mppcg_member(Expr_0, 'BOOL'),
+    !.
+
+check_inv_8(State_0) :-
+    get(State_0, 'shock_absorber', Expr_0),
+    s_PLANE_STATE(Expr_1),
+    mppcg_member(Expr_0, Expr_1),
+    !.
+
+check_inv_9(State_0) :-
+    get(State_0, 'valve_close_door', Expr_0),
+    s_VALVE_STATE(Expr_1),
+    mppcg_member(Expr_0, Expr_1),
+    !.
+
+check_inv_10(State_0) :-
+    get(State_0, 'valve_extend_gear', Expr_0),
+    s_VALVE_STATE(Expr_1),
+    mppcg_member(Expr_0, Expr_1),
+    !.
+
+check_inv_11(State_0) :-
+    get(State_0, 'valve_open_door', Expr_0),
+    s_VALVE_STATE(Expr_1),
+    mppcg_member(Expr_0, Expr_1),
+    !.
+
+check_inv_12(State_0) :-
+    get(State_0, 'valve_retract_gear', Expr_0),
+    s_VALVE_STATE(Expr_1),
+    mppcg_member(Expr_0, Expr_1),
+    !.
+
+check_inv_13(State_0) :-
+    get(State_0, 'handle', Expr_0),
+    s_HANDLE_STATE(Expr_1),
+    mppcg_member(Expr_0, Expr_1),
+    !.
+
+check_inv_14(State_0) :-
+    get(State_0, 'door', Expr_0),
+    s_DOOR_STATE(Expr_1),
+    mppcg_member(Expr_0, Expr_1),
+    !.
+
+check_inv_15(State_0) :-
+    get(State_0, 'gear', Expr_0),
+    s_GEAR_STATE(Expr_1),
+    mppcg_member(Expr_0, Expr_1),
+    !.
+
+check_inv_16(State_0) :-
+    (((((get(State_0, 'open_EV', true); get(State_0, 'close_EV', true)); 
+    get(State_0, 'retract_EV', true)); 
+    get(State_0, 'extend_EV', true))) ->
+    (get(State_0, 'general_EV', true)); true),
+    !.
+
+check_inv_17(State_0) :-
+    \+ (get(State_0, 'open_EV', true), 
+    get(State_0, 'close_EV', true)),
+    !.
+
+check_inv_18(State_0) :-
+    get(State_0, 'gears', Expr_0),
+    s_POSITION(Expr_1),
+    s_GEAR_STATE(Expr_2),
+    mppcg_member(Expr_0, function(Expr_1, Expr_2)),
+    !.
+
+check_inv_19(State_0) :-
+    get(State_0, 'doors', Expr_0),
+    s_POSITION(Expr_1),
+    s_DOOR_STATE(Expr_2),
+    mppcg_member(Expr_0, function(Expr_1, Expr_2)),
+    !.
+
+check_inv_20(State_0) :-
+    ((get(State_0, 'door', 'closed'),
+    get(State_0, 'doors', Expr_0),
+    mppcg_range(Expr_0, Expr_1),
+    mppcg_equal(Expr_1, ['closed']));
+    (\+ (get(State_0, 'door', 'closed')),
+    \+ (get(State_0, 'doors', Expr_0),
+    mppcg_range(Expr_0, Expr_1),
+    mppcg_equal(Expr_1, ['closed'])))),
+    !.
+
+check_inv_21(State_0) :-
+    ((get(State_0, 'door', 'open'),
+    get(State_0, 'doors', Expr_0),
+    mppcg_range(Expr_0, Expr_1),
+    mppcg_equal(Expr_1, ['open']));
+    (\+ (get(State_0, 'door', 'open')),
+    \+ (get(State_0, 'doors', Expr_0),
+    mppcg_range(Expr_0, Expr_1),
+    mppcg_equal(Expr_1, ['open'])))),
+    !.
+
+check_inv_22(State_0) :-
+    ((get(State_0, 'gear', 'extended'),
+    get(State_0, 'gears', Expr_0),
+    mppcg_range(Expr_0, Expr_1),
+    mppcg_equal(Expr_1, ['extended']));
+    (\+ (get(State_0, 'gear', 'extended')),
+    \+ (get(State_0, 'gears', Expr_0),
+    mppcg_range(Expr_0, Expr_1),
+    mppcg_equal(Expr_1, ['extended'])))),
+    !.
+
+check_inv_23(State_0) :-
+    ((get(State_0, 'gear', 'retracted'),
+    get(State_0, 'gears', Expr_0),
+    mppcg_range(Expr_0, Expr_1),
+    mppcg_equal(Expr_1, ['retracted']));
+    (\+ (get(State_0, 'gear', 'retracted')),
+    \+ (get(State_0, 'gears', Expr_0),
+    mppcg_range(Expr_0, Expr_1),
+    mppcg_equal(Expr_1, ['retracted'])))),
+    !.
+
+check_inv_24(State_0) :-
+    (get(State_0, 'gear', 'gear_moving') -> get(State_0, 'door', 'open'); true),
+    !.

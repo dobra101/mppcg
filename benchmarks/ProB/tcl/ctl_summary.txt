@@ -1,0 +1,25 @@
+Summary of CTL Syntax supported by ProB
+---------------------------------------
+CTL formulas f can be constructed from:
+
+- atomic propositions:
+   { Pred } to check if a B predicate Pred holds in the current state
+   e(op)    to check if an operation op is enabled
+
+- propositional logic operators:
+   not f
+   f or g
+   f & g
+   f => g
+
+- temporal operators:
+   EX f     there is a next state satisfying f
+   EX[Op] f there is a next state via Op satisfying f, e.g. EX[reset]{db={}}
+   AX f     all next states satisfy f
+   EF f     there exists a path where f holds in the future
+   EG f     there exists a path where f holds globally
+   AF f     for all paths f holds in the future
+   AG f     for all paths f holds globally
+   E f U g  there exists a path where f holds until g
+
+Note: a model satisfies a CTL formula iff the formula holds in all initial states.

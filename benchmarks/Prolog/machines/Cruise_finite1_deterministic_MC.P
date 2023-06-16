@@ -1,0 +1,741 @@
+:- use_module(btypes).
+
+s_RSset(['RSnone', 'RSpos', 'RSneg', 'RSequal']).
+
+s_ODset(['ODnone', 'ODclose', 'ODveryclose']).
+
+init_constants :-
+    !.
+
+start(State_15) :-
+    init_constants,
+    empty(State_0),
+    % Parallel Substitution:
+    update('CruiseAllowed', true, State_0, State_1),
+    update('CruiseActive', false, State_1, State_2),
+    update('VehicleAtCruiseSpeed', false, State_2, State_3),
+    update('VehicleCanKeepSpeed', false, State_3, State_4),
+    update('VehicleTryKeepSpeed', false, State_4, State_5),
+    update('SpeedAboveMax', false, State_5, State_6),
+    update('VehicleTryKeepTimeGap', false, State_6, State_7),
+    update('NumberOfSetCruise', 0, State_7, State_8),
+    update('CruiseSpeedAtMax', false, State_8, State_9),
+    update('ObstacleDistance', 'ODnone', State_9, State_10),
+    update('ObstacleStatusJustChanged', false, State_10, State_11),
+    update('CCInitialisationInProgress', false, State_11, State_12),
+    update('CruiseSpeedChangeInProgress', false, State_12, State_13),
+    update('ObstaclePresent', false, State_13, State_14),
+    update('ObstacleRelativeSpeed', 'RSnone', State_14, State_15).
+
+% Transitions
+trans('CruiseBecomesNotAllowed', State_0, State_12) :-
+    % Select
+    get(State_0, 'CruiseAllowed', true),
+
+    % Then
+    % Parallel Substitution:
+    update('CruiseAllowed', false, State_0, State_1),
+    update('CruiseActive', false, State_1, State_2),
+    update('VehicleCanKeepSpeed', false, State_2, State_3),
+    update('VehicleTryKeepSpeed', false, State_3, State_4),
+    update('VehicleAtCruiseSpeed', false, State_4, State_5),
+    update('VehicleTryKeepTimeGap', false, State_5, State_6),
+    update('CruiseSpeedAtMax', false, State_6, State_7),
+    update('ObstacleDistance', 'ODnone', State_7, State_8),
+    update('NumberOfSetCruise', 0, State_8, State_9),
+    update('ObstacleStatusJustChanged', false, State_9, State_10),
+    update('CCInitialisationInProgress', false, State_10, State_11),
+    update('CruiseSpeedChangeInProgress', false, State_11, State_12).
+
+trans('CruiseBecomesAllowed', State_0, State_1) :-
+    % Select
+    get(State_0, 'CruiseAllowed', false),
+
+    % Then
+    update('CruiseAllowed', true, State_0, State_1).
+
+trans('SetCruiseSpeed'(vcks=Expr_vcks, csam=Expr_csam), State_0, State_7) :-
+    mppcg_member(Expr_vcks, 'BOOL'), 
+    mppcg_member(Expr_csam, 'BOOL'), 
+    get(State_0, 'CruiseAllowed', true),
+    % Parallel Substitution:
+    update('CruiseActive', true, State_0, State_1),
+    update('VehicleCanKeepSpeed', Expr_vcks, State_1, State_2),
+    ((get(State_2, 'SpeedAboveMax', false)) ->
+    (% Parallel Substitution:
+    update('VehicleAtCruiseSpeed', true, State_2, State_3),
+    update('CruiseSpeedAtMax', Expr_csam, State_3, State_4))
+    ;
+    (update('CruiseSpeedAtMax', true, State_2, State_3),
+    State_4 = State_3)),
+    update('ObstacleStatusJustChanged', true, State_4, State_5),
+    ((get(State_0, 'CruiseActive', Expr_tmp_CruiseActive),
+    mppcg_equal(Expr_tmp_CruiseActive, true)) ->
+    (update('CruiseSpeedChangeInProgress', true, State_5, State_6))
+    ;
+    (update('CCInitialisationInProgress', true, State_5, State_6))),
+    ((get(State_6, 'NumberOfSetCruise', Expr_0),
+    Expr_0 < 1) ->
+    (get(State_6, 'NumberOfSetCruise', Expr_1),
+    Expr_2 is Expr_1 + 1,
+    update('NumberOfSetCruise', Expr_2, State_6, State_7))
+    ;
+    (State_7 = State_6,
+    Expr_3 = Expr_1)).
+
+trans('CCInitialisationFinished'(vtks=Expr_vtks, vtktg=Expr_vtktg), State_0, State_2) :-
+    mppcg_member(Expr_vtks, 'BOOL'), 
+    mppcg_member(Expr_vtktg, 'BOOL'), 
+    (((mppcg_equal(Expr_vtks, true); mppcg_equal(Expr_vtktg, true)); 
+    get(State_0, 'ObstacleStatusJustChanged', true)); 
+    get(State_0, 'CruiseSpeedChangeInProgress', true)), 
+    (get(State_0, 'ObstaclePresent', false) -> mppcg_equal(Expr_vtktg, false); true), 
+    (get(State_0, 'ObstacleDistance', 'ODnone') -> mppcg_equal(Expr_vtks, true); true), 
+    ((get(State_0, 'ObstacleDistance', 'ODclose'), 
+    \+ get(State_0, 'ObstacleRelativeSpeed', 'RSpos'), 
+    get(State_0, 'ObstacleStatusJustChanged', false), 
+    get(State_0, 'CruiseSpeedChangeInProgress', false)) ->
+    (mppcg_equal(Expr_vtktg, true)); true), 
+    ((get(State_0, 'ObstacleDistance', 'ODveryclose'), 
+    get(State_0, 'ObstacleStatusJustChanged', false), 
+    get(State_0, 'CruiseSpeedChangeInProgress', false)) ->
+    (mppcg_equal(Expr_vtktg, true)); true), 
+    ((get(State_0, 'ObstacleRelativeSpeed', 'RSpos'), 
+    \+ get(State_0, 'ObstacleDistance', 'ODveryclose'), 
+    get(State_0, 'ObstacleStatusJustChanged', false), 
+    get(State_0, 'CruiseSpeedChangeInProgress', false)) ->
+    (mppcg_equal(Expr_vtks, true)); true), 
+    ((get(State_0, 'ObstacleRelativeSpeed', 'RSequal'), 
+    get(State_0, 'ObstacleDistance', 'ODnone')) ->
+    (mppcg_equal(Expr_vtktg, false)); true), 
+    ((get(State_0, 'ObstacleRelativeSpeed', 'RSneg'), 
+    get(State_0, 'ObstacleDistance', 'ODnone')) ->
+    (mppcg_equal(Expr_vtktg, false)); true), 
+    ((get(State_0, 'ObstacleRelativeSpeed', 'RSpos'), 
+    \+ get(State_0, 'ObstacleDistance', 'ODveryclose')) ->
+    (mppcg_equal(Expr_vtktg, false)); true), 
+    get(State_0, 'CCInitialisationInProgress', true),
+    % Parallel Substitution:
+    update('VehicleTryKeepTimeGap', Expr_vtktg, State_0, State_1),
+    update('VehicleTryKeepSpeed', Expr_vtks, State_1, State_2).
+
+trans('CCInitialisationDelayFinished', State_0, State_1) :-
+    % Select
+    get(State_0, 'CCInitialisationInProgress', true), 
+    (((get(State_0, 'VehicleTryKeepSpeed', true); get(State_0, 'VehicleTryKeepTimeGap', true)); 
+    get(State_0, 'ObstacleStatusJustChanged', true)); 
+    get(State_0, 'CruiseSpeedChangeInProgress', true)), 
+    (get(State_0, 'ObstacleDistance', 'ODnone') -> get(State_0, 'VehicleTryKeepSpeed', true); true), 
+    ((get(State_0, 'ObstacleDistance', 'ODclose'), 
+    \+ get(State_0, 'ObstacleRelativeSpeed', 'RSpos'), 
+    get(State_0, 'ObstacleStatusJustChanged', false), 
+    get(State_0, 'CruiseSpeedChangeInProgress', false)) ->
+    (get(State_0, 'VehicleTryKeepTimeGap', true)); true), 
+    ((get(State_0, 'ObstacleDistance', 'ODveryclose'), 
+    get(State_0, 'ObstacleStatusJustChanged', false), 
+    get(State_0, 'CruiseSpeedChangeInProgress', false)) ->
+    (get(State_0, 'VehicleTryKeepTimeGap', true)); true), 
+    ((get(State_0, 'ObstacleRelativeSpeed', 'RSpos'), 
+    \+ get(State_0, 'ObstacleDistance', 'ODveryclose'), 
+    get(State_0, 'ObstacleStatusJustChanged', false), 
+    get(State_0, 'CruiseSpeedChangeInProgress', false)) ->
+    (get(State_0, 'VehicleTryKeepSpeed', true)); true),
+
+    % Then
+    update('CCInitialisationInProgress', true, State_0, State_1).
+
+trans('CruiseSpeedChangeFinished'(vtks=Expr_vtks, vtktg=Expr_vtktg), State_0, State_2) :-
+    % Select
+    mppcg_member(Expr_vtks, 'BOOL'), 
+    mppcg_member(Expr_vtktg, 'BOOL'), 
+    (((mppcg_equal(Expr_vtks, true); mppcg_equal(Expr_vtktg, true)); 
+    get(State_0, 'ObstacleStatusJustChanged', true)); 
+    get(State_0, 'CCInitialisationInProgress', true)), 
+    (get(State_0, 'ObstaclePresent', false) -> mppcg_equal(Expr_vtktg, false); true), 
+    (get(State_0, 'ObstacleDistance', 'ODnone') -> mppcg_equal(Expr_vtks, true); true), 
+    ((get(State_0, 'ObstacleDistance', 'ODclose'), 
+    \+ get(State_0, 'ObstacleRelativeSpeed', 'RSpos'), 
+    get(State_0, 'ObstacleStatusJustChanged', false), 
+    get(State_0, 'CCInitialisationInProgress', false)) ->
+    (mppcg_equal(Expr_vtktg, true)); true), 
+    ((get(State_0, 'ObstacleDistance', 'ODveryclose'), 
+    get(State_0, 'ObstacleStatusJustChanged', false), 
+    get(State_0, 'CCInitialisationInProgress', false)) ->
+    (mppcg_equal(Expr_vtktg, true)); true), 
+    ((get(State_0, 'ObstacleRelativeSpeed', 'RSpos'), 
+    \+ get(State_0, 'ObstacleDistance', 'ODveryclose'), 
+    get(State_0, 'ObstacleStatusJustChanged', false), 
+    get(State_0, 'CCInitialisationInProgress', false)) ->
+    (mppcg_equal(Expr_vtks, true)); true), 
+    ((get(State_0, 'ObstacleRelativeSpeed', 'RSequal'), 
+    get(State_0, 'ObstacleDistance', 'ODnone')) ->
+    (mppcg_equal(Expr_vtktg, false)); true), 
+    ((get(State_0, 'ObstacleRelativeSpeed', 'RSneg'), 
+    get(State_0, 'ObstacleDistance', 'ODnone')) ->
+    (mppcg_equal(Expr_vtktg, false)); true), 
+    ((get(State_0, 'ObstacleRelativeSpeed', 'RSpos'), 
+    \+ get(State_0, 'ObstacleDistance', 'ODveryclose')) ->
+    (mppcg_equal(Expr_vtktg, false)); true), 
+    get(State_0, 'CruiseSpeedChangeInProgress', true),
+
+    % Then
+    % Parallel Substitution:
+    update('VehicleTryKeepTimeGap', Expr_vtktg, State_0, State_1),
+    update('VehicleTryKeepSpeed', Expr_vtks, State_1, State_2).
+
+trans('CruiseSpeedChangeDelayFinished', State_0, State_1) :-
+    % Select
+    get(State_0, 'CruiseSpeedChangeInProgress', true), 
+    (((get(State_0, 'VehicleTryKeepSpeed', true); get(State_0, 'VehicleTryKeepTimeGap', true)); 
+    get(State_0, 'ObstacleStatusJustChanged', true)); 
+    get(State_0, 'CCInitialisationInProgress', true)), 
+    (get(State_0, 'ObstacleDistance', 'ODnone') -> get(State_0, 'VehicleTryKeepSpeed', true); true), 
+    ((get(State_0, 'ObstacleDistance', 'ODclose'), 
+    \+ get(State_0, 'ObstacleRelativeSpeed', 'RSpos'), 
+    get(State_0, 'ObstacleStatusJustChanged', false), 
+    get(State_0, 'CCInitialisationInProgress', false)) ->
+    (get(State_0, 'VehicleTryKeepTimeGap', true)); true), 
+    ((get(State_0, 'ObstacleDistance', 'ODveryclose'), 
+    get(State_0, 'ObstacleStatusJustChanged', false), 
+    get(State_0, 'CCInitialisationInProgress', false)) ->
+    (get(State_0, 'VehicleTryKeepTimeGap', true)); true), 
+    ((get(State_0, 'ObstacleRelativeSpeed', 'RSpos'), 
+    \+ get(State_0, 'ObstacleDistance', 'ODveryclose'), 
+    get(State_0, 'ObstacleStatusJustChanged', false), 
+    get(State_0, 'CCInitialisationInProgress', false)) ->
+    (get(State_0, 'VehicleTryKeepSpeed', true)); true),
+
+    % Then
+    update('CruiseSpeedChangeInProgress', true, State_0, State_1).
+
+trans('CruiseOff', State_0, State_11) :-
+    % Select
+    get(State_0, 'CruiseActive', true),
+
+    % Then
+    % Parallel Substitution:
+    update('CruiseActive', false, State_0, State_1),
+    update('VehicleCanKeepSpeed', false, State_1, State_2),
+    update('VehicleTryKeepSpeed', false, State_2, State_3),
+    update('VehicleAtCruiseSpeed', false, State_3, State_4),
+    update('VehicleTryKeepTimeGap', false, State_4, State_5),
+    update('CruiseSpeedAtMax', false, State_5, State_6),
+    update('ObstacleDistance', 'ODnone', State_6, State_7),
+    update('NumberOfSetCruise', 0, State_7, State_8),
+    update('ObstacleStatusJustChanged', false, State_8, State_9),
+    update('CCInitialisationInProgress', false, State_9, State_10),
+    update('CruiseSpeedChangeInProgress', false, State_10, State_11).
+
+trans('ExternalForcesBecomesExtreme', State_0, State_1) :-
+    % Select
+    get(State_0, 'VehicleCanKeepSpeed', true),
+
+    % Then
+    update('VehicleCanKeepSpeed', false, State_0, State_1).
+
+trans('ExternalForcesBecomesNormal', State_0, State_1) :-
+    % Select
+    get(State_0, 'CruiseActive', true), 
+    get(State_0, 'VehicleCanKeepSpeed', false),
+
+    % Then
+    update('VehicleCanKeepSpeed', true, State_0, State_1).
+
+trans('VehicleLeavesCruiseSpeed', State_0, State_1) :-
+    % Select
+    (get(State_0, 'VehicleAtCruiseSpeed', true), 
+    get(State_0, 'VehicleCanKeepSpeed', false), 
+    get(State_0, 'VehicleTryKeepSpeed', true); 
+    get(State_0, 'VehicleTryKeepSpeed', false)),
+
+    % Then
+    update('VehicleAtCruiseSpeed', false, State_0, State_1).
+
+trans('VehicleReachesCruiseSpeed', State_0, State_1) :-
+    % Select
+    get(State_0, 'CruiseActive', true), 
+    get(State_0, 'VehicleAtCruiseSpeed', false), 
+    get(State_0, 'SpeedAboveMax', false),
+
+    % Then
+    update('VehicleAtCruiseSpeed', true, State_0, State_1).
+
+trans('VehicleExceedsMaxCruiseSpeed', State_0, State_2) :-
+    % Select
+    get(State_0, 'SpeedAboveMax', false), 
+    ((get(State_0, 'CruiseActive', false); get(State_0, 'VehicleCanKeepSpeed', false)); 
+    get(State_0, 'ObstacleStatusJustChanged', false), 
+    get(State_0, 'CCInitialisationInProgress', false), 
+    get(State_0, 'CruiseSpeedChangeInProgress', false)),
+
+    % Then
+    % Parallel Substitution:
+    update('SpeedAboveMax', true, State_0, State_1),
+    update('VehicleAtCruiseSpeed', false, State_1, State_2).
+
+trans('VehicleFallsBelowMaxCruiseSpeed', State_0, State_2) :-
+    % Select
+    get(State_0, 'SpeedAboveMax', true),
+
+    % Then
+    % Parallel Substitution:
+    update('SpeedAboveMax', false, State_0, State_1),
+    ((get(State_1, 'CruiseActive', true), 
+    get(State_1, 'CruiseSpeedAtMax', true)) ->
+    (update('VehicleAtCruiseSpeed', true, State_1, State_2))
+    ;
+    (State_2 = State_1)).
+
+trans('ObstacleDistanceBecomesVeryClose', State_0, State_2) :-
+    % Select
+    get(State_0, 'ObstacleDistance', 'ODclose'), 
+    get(State_0, 'ObstacleRelativeSpeed', 'RSneg'),
+
+    % Then
+    % Parallel Substitution:
+    update('ObstacleDistance', 'ODveryclose', State_0, State_1),
+    update('ObstacleStatusJustChanged', true, State_1, State_2).
+
+trans('ObstacleDistanceBecomesClose', State_0, State_3) :-
+    % Select
+    get(State_0, 'ObstaclePresent', true), 
+    get(State_0, 'CruiseActive', true), 
+    (get(State_0, 'ObstacleDistance', 'ODveryclose'), 
+    get(State_0, 'ObstacleRelativeSpeed', 'RSpos'); 
+    get(State_0, 'ObstacleDistance', 'ODnone'), 
+    get(State_0, 'ObstacleRelativeSpeed', 'RSneg')),
+
+    % Then
+    % Parallel Substitution:
+    update('ObstacleDistance', 'ODclose', State_0, State_1),
+    update('ObstacleStatusJustChanged', true, State_1, State_2),
+    ((get(State_2, 'ObstacleRelativeSpeed', 'RSpos')) ->
+    (update('VehicleTryKeepTimeGap', false, State_2, State_3))
+    ;
+    (State_3 = State_2)).
+
+trans('ObstacleDistanceBecomesBig', State_0, State_3) :-
+    % Select
+    get(State_0, 'ObstacleDistance', 'ODclose'), 
+    get(State_0, 'ObstacleRelativeSpeed', 'RSpos'),
+
+    % Then
+    % Parallel Substitution:
+    update('ObstacleStatusJustChanged', true, State_0, State_1),
+    update('ObstacleDistance', 'ODnone', State_1, State_2),
+    update('VehicleTryKeepTimeGap', false, State_2, State_3).
+
+trans('ObstacleStartsTravelFaster', State_0, State_3) :-
+    % Select
+    get(State_0, 'ObstaclePresent', true), 
+    get(State_0, 'ObstacleRelativeSpeed', 'RSequal'),
+
+    % Then
+    % Parallel Substitution:
+    update('ObstacleRelativeSpeed', 'RSpos', State_0, State_1),
+    ((get(State_1, 'CruiseActive', true)) ->
+    (update('ObstacleStatusJustChanged', true, State_1, State_2))
+    ;
+    (State_2 = State_1)),
+    ((\+ get(State_2, 'ObstacleDistance', 'ODveryclose')) ->
+    (update('VehicleTryKeepTimeGap', false, State_2, State_3))
+    ;
+    (State_3 = State_2)).
+
+trans('ObstacleStopsTravelFaster', State_0, State_2) :-
+    % Select
+    get(State_0, 'ObstacleRelativeSpeed', 'RSpos'),
+
+    % Then
+    % Parallel Substitution:
+    update('ObstacleRelativeSpeed', 'RSequal', State_0, State_1),
+    ((get(State_1, 'CruiseActive', true)) ->
+    (update('ObstacleStatusJustChanged', true, State_1, State_2))
+    ;
+    (State_2 = State_1)).
+
+trans('ObstacleStartsTravelSlower', State_0, State_2) :-
+    % Select
+    get(State_0, 'ObstacleRelativeSpeed', 'RSequal'),
+
+    % Then
+    % Parallel Substitution:
+    update('ObstacleRelativeSpeed', 'RSneg', State_0, State_1),
+    ((get(State_1, 'CruiseActive', true)) ->
+    (update('ObstacleStatusJustChanged', true, State_1, State_2))
+    ;
+    (State_2 = State_1)).
+
+trans('ObstacleStopsTravelSlower', State_0, State_2) :-
+    % Select
+    get(State_0, 'ObstacleRelativeSpeed', 'RSneg'),
+
+    % Then
+    % Parallel Substitution:
+    update('ObstacleRelativeSpeed', 'RSequal', State_0, State_1),
+    ((get(State_1, 'CruiseActive', true)) ->
+    (update('ObstacleStatusJustChanged', true, State_1, State_2))
+    ;
+    (State_2 = State_1)).
+
+trans('ObstacleAppearsWhenCruiseActive'(ors=Expr_ors, od=Expr_od), State_0, State_4) :-
+    s_RSset(Expr_0),
+    mppcg_setSubtraction(Expr_0, ['RSnone'], Expr_1),
+    mppcg_member(Expr_ors, Expr_1), 
+    s_ODset(Expr_2),
+    mppcg_setSubtraction(Expr_2, ['ODnone'], Expr_3),
+    mppcg_member(Expr_od, Expr_3), 
+    get(State_0, 'ObstaclePresent', false), 
+    get(State_0, 'CruiseActive', true),
+    % Parallel Substitution:
+    update('ObstaclePresent', true, State_0, State_1),
+    update('ObstacleStatusJustChanged', true, State_1, State_2),
+    update('ObstacleRelativeSpeed', Expr_ors, State_2, State_3),
+    update('ObstacleDistance', Expr_od, State_3, State_4).
+
+trans('ObstacleAppearsWhenCruiseInactive'(ors=Expr_ors), State_0, State_3) :-
+    s_RSset(Expr_0),
+    mppcg_setSubtraction(Expr_0, ['RSnone'], Expr_1),
+    mppcg_member(Expr_ors, Expr_1), 
+    get(State_0, 'ObstaclePresent', false), 
+    get(State_0, 'CruiseActive', false),
+    % Parallel Substitution:
+    update('ObstaclePresent', true, State_0, State_1),
+    update('ObstacleRelativeSpeed', Expr_ors, State_1, State_2),
+    update('ObstacleDistance', 'ODnone', State_2, State_3).
+
+trans('ObstacleDisappears', State_0, State_5) :-
+    % Select
+    get(State_0, 'ObstaclePresent', true),
+
+    % Then
+    % Parallel Substitution:
+    update('ObstaclePresent', false, State_0, State_1),
+    update('ObstacleRelativeSpeed', 'RSnone', State_1, State_2),
+    ((get(State_2, 'CruiseActive', true)) ->
+    (update('ObstacleStatusJustChanged', true, State_2, State_3))
+    ;
+    (State_3 = State_2)),
+    update('ObstacleDistance', 'ODnone', State_3, State_4),
+    update('VehicleTryKeepTimeGap', false, State_4, State_5).
+
+trans('VehicleManageObstacle'(vtks=Expr_vtks, vtktg=Expr_vtktg), State_0, State_2) :-
+    % Select
+    mppcg_member(Expr_vtks, 'BOOL'), 
+    mppcg_member(Expr_vtktg, 'BOOL'), 
+    (((mppcg_equal(Expr_vtks, true); mppcg_equal(Expr_vtktg, true)); 
+    get(State_0, 'CCInitialisationInProgress', true)); 
+    get(State_0, 'CruiseSpeedChangeInProgress', true)), 
+    (get(State_0, 'ObstaclePresent', false) -> mppcg_equal(Expr_vtktg, false); true), 
+    (get(State_0, 'ObstacleDistance', 'ODnone') -> mppcg_equal(Expr_vtks, true); true), 
+    ((get(State_0, 'ObstacleDistance', 'ODclose'), 
+    \+ get(State_0, 'ObstacleRelativeSpeed', 'RSpos'), 
+    get(State_0, 'CCInitialisationInProgress', false), 
+    get(State_0, 'CruiseSpeedChangeInProgress', false)) ->
+    (mppcg_equal(Expr_vtktg, true)); true), 
+    ((get(State_0, 'ObstacleDistance', 'ODveryclose'), 
+    get(State_0, 'CCInitialisationInProgress', false), 
+    get(State_0, 'CruiseSpeedChangeInProgress', false)) ->
+    (mppcg_equal(Expr_vtktg, true)); true), 
+    ((get(State_0, 'ObstacleRelativeSpeed', 'RSpos'), 
+    \+ get(State_0, 'ObstacleDistance', 'ODveryclose'), 
+    get(State_0, 'CCInitialisationInProgress', false), 
+    get(State_0, 'CruiseSpeedChangeInProgress', false)) ->
+    (mppcg_equal(Expr_vtks, true)); true), 
+    ((get(State_0, 'ObstacleRelativeSpeed', 'RSequal'), 
+    get(State_0, 'ObstacleDistance', 'ODnone')) ->
+    (mppcg_equal(Expr_vtktg, false)); true), 
+    ((get(State_0, 'ObstacleRelativeSpeed', 'RSneg'), 
+    get(State_0, 'ObstacleDistance', 'ODnone')) ->
+    (mppcg_equal(Expr_vtktg, false)); true), 
+    ((get(State_0, 'ObstacleRelativeSpeed', 'RSpos'), 
+    \+ get(State_0, 'ObstacleDistance', 'ODveryclose')) ->
+    (mppcg_equal(Expr_vtktg, false)); true), 
+    get(State_0, 'ObstacleStatusJustChanged', true),
+
+    % Then
+    % Parallel Substitution:
+    update('VehicleTryKeepTimeGap', Expr_vtktg, State_0, State_1),
+    update('VehicleTryKeepSpeed', Expr_vtks, State_1, State_2).
+
+trans('ObstacleBecomesOld', State_0, State_1) :-
+    % Select
+    get(State_0, 'ObstacleStatusJustChanged', true), 
+    (((get(State_0, 'VehicleTryKeepSpeed', true); get(State_0, 'VehicleTryKeepTimeGap', true)); 
+    get(State_0, 'CCInitialisationInProgress', true)); 
+    get(State_0, 'CruiseSpeedChangeInProgress', true)), 
+    (get(State_0, 'ObstacleDistance', 'ODnone') -> get(State_0, 'VehicleTryKeepSpeed', true); true), 
+    ((get(State_0, 'ObstacleDistance', 'ODclose'), 
+    \+ get(State_0, 'ObstacleRelativeSpeed', 'RSpos'), 
+    get(State_0, 'CCInitialisationInProgress', false), 
+    get(State_0, 'CruiseSpeedChangeInProgress', false)) ->
+    (get(State_0, 'VehicleTryKeepTimeGap', true)); true), 
+    ((get(State_0, 'ObstacleDistance', 'ODveryclose'), 
+    get(State_0, 'CCInitialisationInProgress', false), 
+    get(State_0, 'CruiseSpeedChangeInProgress', false)) ->
+    (get(State_0, 'VehicleTryKeepTimeGap', true)); true), 
+    ((get(State_0, 'ObstacleRelativeSpeed', 'RSpos'), 
+    \+ get(State_0, 'ObstacleDistance', 'ODveryclose'), 
+    get(State_0, 'CCInitialisationInProgress', false), 
+    get(State_0, 'CruiseSpeedChangeInProgress', false)) ->
+    (get(State_0, 'VehicleTryKeepSpeed', true)); true),
+
+    % Then
+    update('ObstacleStatusJustChanged', false, State_0, State_1).
+
+% Invariant
+prop(State, unsafe) :-
+    \+ check_inv(State),
+    !.
+prop(State, State) :- !.
+
+check_inv(State) :-
+    check_inv_0(State), !, 
+    check_inv_1(State), !, 
+    check_inv_2(State), !, 
+    check_inv_3(State), !, 
+    check_inv_4(State), !, 
+    check_inv_5(State), !, 
+    check_inv_6(State), !, 
+    check_inv_7(State), !, 
+    check_inv_8(State), !, 
+    check_inv_9(State), !, 
+    check_inv_10(State), !, 
+    check_inv_11(State), !, 
+    check_inv_12(State), !, 
+    check_inv_13(State), !, 
+    check_inv_14(State), !, 
+    check_inv_15(State), !, 
+    check_inv_16(State), !, 
+    check_inv_17(State), !, 
+    check_inv_18(State), !, 
+    check_inv_19(State), !, 
+    check_inv_20(State), !, 
+    check_inv_21(State), !, 
+    check_inv_22(State), !, 
+    check_inv_23(State), !, 
+    check_inv_24(State), !, 
+    check_inv_25(State), !, 
+    check_inv_26(State), !, 
+    check_inv_27(State), !, 
+    check_inv_28(State), !, 
+    check_inv_29(State), !, 
+    check_inv_30(State), !, 
+    check_inv_31(State), !, 
+    check_inv_32(State), !, 
+    check_inv_33(State), !, 
+    check_inv_34(State), !, 
+    check_inv_35(State), !, 
+    check_inv_36(State), !, 
+    check_inv_37(State), !, 
+    check_inv_38(State).
+
+check_inv_0(State_0) :-
+    get(State_0, 'CruiseAllowed', Expr_0),
+    mppcg_member(Expr_0, 'BOOL'),
+    !.
+
+check_inv_1(State_0) :-
+    get(State_0, 'CruiseActive', Expr_0),
+    mppcg_member(Expr_0, 'BOOL'),
+    !.
+
+check_inv_2(State_0) :-
+    get(State_0, 'VehicleAtCruiseSpeed', Expr_0),
+    mppcg_member(Expr_0, 'BOOL'),
+    !.
+
+check_inv_3(State_0) :-
+    get(State_0, 'VehicleCanKeepSpeed', Expr_0),
+    mppcg_member(Expr_0, 'BOOL'),
+    !.
+
+check_inv_4(State_0) :-
+    get(State_0, 'VehicleTryKeepSpeed', Expr_0),
+    mppcg_member(Expr_0, 'BOOL'),
+    !.
+
+check_inv_5(State_0) :-
+    get(State_0, 'SpeedAboveMax', Expr_0),
+    mppcg_member(Expr_0, 'BOOL'),
+    !.
+
+check_inv_6(State_0) :-
+    get(State_0, 'VehicleTryKeepTimeGap', Expr_0),
+    mppcg_member(Expr_0, 'BOOL'),
+    !.
+
+check_inv_7(State_0) :-
+    get(State_0, 'CruiseSpeedAtMax', Expr_0),
+    mppcg_member(Expr_0, 'BOOL'),
+    !.
+
+check_inv_8(State_0) :-
+    get(State_0, 'NumberOfSetCruise', Expr_0),
+    mppcg_member(Expr_0, 'NATURAL'),
+    !.
+
+check_inv_9(State_0) :-
+    get(State_0, 'NumberOfSetCruise', Expr_0),
+    mppcg_member(Expr_0, (0, 1)),
+    !.
+
+check_inv_10(State_0) :-
+    get(State_0, 'ObstaclePresent', Expr_0),
+    mppcg_member(Expr_0, 'BOOL'),
+    !.
+
+check_inv_11(State_0) :-
+    get(State_0, 'ObstacleDistance', Expr_0),
+    s_ODset(Expr_1),
+    mppcg_member(Expr_0, Expr_1),
+    !.
+
+check_inv_12(State_0) :-
+    get(State_0, 'ObstacleRelativeSpeed', Expr_0),
+    s_RSset(Expr_1),
+    mppcg_member(Expr_0, Expr_1),
+    !.
+
+check_inv_13(State_0) :-
+    get(State_0, 'ObstacleStatusJustChanged', Expr_0),
+    mppcg_member(Expr_0, 'BOOL'),
+    !.
+
+check_inv_14(State_0) :-
+    get(State_0, 'CCInitialisationInProgress', Expr_0),
+    mppcg_member(Expr_0, 'BOOL'),
+    !.
+
+check_inv_15(State_0) :-
+    get(State_0, 'CruiseSpeedChangeInProgress', Expr_0),
+    mppcg_member(Expr_0, 'BOOL'),
+    !.
+
+check_inv_16(State_0) :-
+    (get(State_0, 'CruiseActive', false) -> get(State_0, 'VehicleAtCruiseSpeed', false); true),
+    !.
+
+check_inv_17(State_0) :-
+    (get(State_0, 'CruiseActive', false) -> get(State_0, 'VehicleCanKeepSpeed', false); true),
+    !.
+
+check_inv_18(State_0) :-
+    (get(State_0, 'CruiseActive', false) -> get(State_0, 'VehicleTryKeepSpeed', false); true),
+    !.
+
+check_inv_19(State_0) :-
+    ((get(State_0, 'NumberOfSetCruise', 0),
+    get(State_0, 'CruiseActive', false));
+    (\+ (get(State_0, 'NumberOfSetCruise', 0)),
+    \+ (get(State_0, 'CruiseActive', false)))),
+    !.
+
+check_inv_20(State_0) :-
+    (get(State_0, 'CruiseActive', false) -> get(State_0, 'VehicleTryKeepTimeGap', false); true),
+    !.
+
+check_inv_21(State_0) :-
+    (get(State_0, 'CruiseActive', false) -> get(State_0, 'CruiseSpeedAtMax', false); true),
+    !.
+
+check_inv_22(State_0) :-
+    (get(State_0, 'CruiseActive', false) -> get(State_0, 'ObstacleDistance', 'ODnone'); true),
+    !.
+
+check_inv_23(State_0) :-
+    (get(State_0, 'CruiseActive', false) -> get(State_0, 'ObstacleStatusJustChanged', false); true),
+    !.
+
+check_inv_24(State_0) :-
+    (get(State_0, 'CruiseActive', false) -> get(State_0, 'CCInitialisationInProgress', false); true),
+    !.
+
+check_inv_25(State_0) :-
+    (get(State_0, 'CruiseActive', false) -> get(State_0, 'CruiseSpeedChangeInProgress', false); true),
+    !.
+
+check_inv_26(State_0) :-
+    (get(State_0, 'ObstaclePresent', false) -> get(State_0, 'VehicleTryKeepTimeGap', false); true),
+    !.
+
+check_inv_27(State_0) :-
+    (get(State_0, 'ObstaclePresent', false) -> get(State_0, 'ObstacleDistance', 'ODnone'); true),
+    !.
+
+check_inv_28(State_0) :-
+    ((get(State_0, 'ObstaclePresent', false),
+    get(State_0, 'ObstacleRelativeSpeed', 'RSnone'));
+    (\+ (get(State_0, 'ObstaclePresent', false)),
+    \+ (get(State_0, 'ObstacleRelativeSpeed', 'RSnone')))),
+    !.
+
+check_inv_29(State_0) :-
+    ((get(State_0, 'ObstacleRelativeSpeed', 'RSequal'), 
+    get(State_0, 'ObstacleDistance', 'ODnone')) ->
+    (get(State_0, 'VehicleTryKeepTimeGap', false)); true),
+    !.
+
+check_inv_30(State_0) :-
+    ((get(State_0, 'ObstacleRelativeSpeed', 'RSneg'), 
+    get(State_0, 'ObstacleDistance', 'ODnone')) ->
+    (get(State_0, 'VehicleTryKeepTimeGap', false)); true),
+    !.
+
+check_inv_31(State_0) :-
+    ((get(State_0, 'ObstacleRelativeSpeed', 'RSpos'), 
+    \+ get(State_0, 'ObstacleDistance', 'ODveryclose')) ->
+    (get(State_0, 'VehicleTryKeepTimeGap', false)); true),
+    !.
+
+check_inv_32(State_0) :-
+    (get(State_0, 'CruiseAllowed', false) -> get(State_0, 'CruiseActive', false); true),
+    !.
+
+check_inv_33(State_0) :-
+    (get(State_0, 'SpeedAboveMax', true) -> get(State_0, 'VehicleAtCruiseSpeed', false); true),
+    !.
+
+check_inv_34(State_0) :-
+    ((get(State_0, 'CruiseActive', true)) ->
+    (((get(State_0, 'VehicleTryKeepSpeed', true); get(State_0, 'VehicleTryKeepTimeGap', true)); 
+    \+ (get(State_0, 'ObstacleStatusJustChanged', false), 
+    get(State_0, 'CCInitialisationInProgress', false), 
+    get(State_0, 'CruiseSpeedChangeInProgress', false)))); true),
+    !.
+
+check_inv_35(State_0) :-
+    ((get(State_0, 'ObstacleDistance', 'ODnone'), 
+    get(State_0, 'CruiseActive', true), 
+    get(State_0, 'ObstacleStatusJustChanged', false), 
+    get(State_0, 'CCInitialisationInProgress', false), 
+    get(State_0, 'CruiseSpeedChangeInProgress', false)) ->
+    (get(State_0, 'VehicleTryKeepSpeed', true)); true),
+    !.
+
+check_inv_36(State_0) :-
+    ((get(State_0, 'ObstacleDistance', 'ODclose'), 
+    \+ get(State_0, 'ObstacleRelativeSpeed', 'RSpos'), 
+    get(State_0, 'ObstacleStatusJustChanged', false), 
+    get(State_0, 'CCInitialisationInProgress', false), 
+    get(State_0, 'CruiseSpeedChangeInProgress', false)) ->
+    (get(State_0, 'VehicleTryKeepTimeGap', true)); true),
+    !.
+
+check_inv_37(State_0) :-
+    ((get(State_0, 'ObstacleDistance', 'ODveryclose'), 
+    get(State_0, 'ObstacleStatusJustChanged', false), 
+    get(State_0, 'CCInitialisationInProgress', false), 
+    get(State_0, 'CruiseSpeedChangeInProgress', false)) ->
+    (get(State_0, 'VehicleTryKeepTimeGap', true)); true),
+    !.
+
+check_inv_38(State_0) :-
+    ((get(State_0, 'ObstacleRelativeSpeed', 'RSpos'), 
+    \+ get(State_0, 'ObstacleDistance', 'ODveryclose'), 
+    get(State_0, 'CruiseActive', true), 
+    get(State_0, 'ObstacleStatusJustChanged', false), 
+    get(State_0, 'CCInitialisationInProgress', false), 
+    get(State_0, 'CruiseSpeedChangeInProgress', false)) ->
+    (get(State_0, 'VehicleTryKeepSpeed', true)); true),
+    !.

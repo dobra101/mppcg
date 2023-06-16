@@ -1,0 +1,8 @@
+runCfg(maxInt, minInt) ::= <<
+public class RunConfig {
+    public static int maxInt = <maxInt>;
+    public static int minInt = <minInt>;
+
+    private RunConfig() {}
+}
+>>

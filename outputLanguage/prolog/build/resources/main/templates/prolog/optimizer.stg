@@ -1,0 +1,4 @@
+optimizedBinaryPredicateEqual(lhs, rhs, stateCount, negate, useGet) ::= <<
+<if(useGet)><if(negate)>\+ <endif>get(State_<stateCount>, '<lhs>', <rhs>)<else>
+<if(negate)><lhs> \= <rhs><else><lhs> = <rhs><endif><endif>
+>>

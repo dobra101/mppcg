@@ -1,0 +1,31 @@
+ProB can make use of symmetries induced by the use of deferred sets in B (and given sets in Z).
+
+Warning: turning on symmetry reduction will also influence the way that
+animation works. In other words, when executing an operation, the animator
+may transfer you to an equivalent symmetric state (rather than to the one
+you may have expected).
+
+In the "Symmetry" menu of the "Preferences" menu you can choose the following:
+
+"off": symmetry reduction is turned off.
+
+"flood": This performs permutation flooding, whereby all permutations of a newly
+         added state are automatically added (and marked as already treated).
+         This does not reduce the number of states of the state space, but it
+         may still considerably reduce the number of transitions and the number
+         of states which need to be checked (for invariant violations and for
+         computing outgoing transitions).
+
+"nauty": This approach translates a B state into a graph and uses the nauty
+         package in order to compute a canonical form of this graph.
+         If two states have the same canonical form, they are considered
+         equivalent and only one of them is explored. Warning: nauty sometimes
+         can take a long time to compute the canonical form for complicated
+         states (and in this case it will not respond to ProB's standard
+         time-out mechanism).
+
+"hash": This approach computes a symbolic hash value for every state, having
+        the important property that two symmetric states have the same hash
+        value. Note that this is an "approximate" method, as two non-symmetric
+        states may also be mapped to the same hash value.
+        This is typically the most efficient method.

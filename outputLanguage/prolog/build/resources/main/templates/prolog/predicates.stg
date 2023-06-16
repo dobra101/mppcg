@@ -1,0 +1,37 @@
+binaryPredicate(lhs, operator, rhs, prefixOperator) ::= <<
+<if(prefixOperator)>
+<operator>(<lhs>, <rhs>)<else>
+<lhs> <operator> <rhs><endif>
+>>
+
+binaryLogicPredicate(lhs, operator, rhs, addParentheses, inline) ::= <<
+<if(addParentheses)>
+<if(inline)>(<lhs><operator><rhs>)<else>
+(<lhs><operator>
+<rhs>)<endif><else>
+<if(inline)><lhs><operator><rhs><else>
+<lhs><operator>
+<rhs><endif><endif>
+>>
+
+equivalence(lhs, rhs) ::= <<
+((<lhs>,
+<rhs>);
+(\+ (<lhs>),
+\+ (<rhs>)))
+>>
+
+implication(lhs, rhs, inline) ::= <<
+<if(inline)>
+(<lhs> -> <rhs>; true)<else>
+((<lhs>) ->
+(<rhs>); true)<endif>
+>>
+
+unaryLogicPredicate(predicate, operator) ::= <<
+<operator>(<predicate>)
+>>
+
+valuePredicate(value) ::= <<
+<value>
+>>

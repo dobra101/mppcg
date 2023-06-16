@@ -1,0 +1,458 @@
+:- use_module(btypes).
+
+s_BLOCKS(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N']).
+
+s_ROUTES(['R1', 'R2', 'R3', 'R4', 'R5', 'R6', 'R7', 'R8', 'R9', 'R10']).
+
+init_constants :-
+    retractall(c_nxt(_)),
+    assert((c_nxt(['R1'-['L'-'A', 'A'-'B', 'B'-'C'], 'R2'-['L'-'A', 'A'-'B', 'B'-'D', 'D'-'E', 'E'-'F', 'F'-'G'], 'R3'-['L'-'A', 'A'-'B', 'B'-'D', 'D'-'K', 'K'-'J', 'J'-'N'], 'R4'-['M'-'H', 'H'-'I', 'I'-'K', 'K'-'F', 'F'-'G'], 'R5'-['M'-'H', 'H'-'I', 'I'-'J', 'J'-'N'], 'R6'-['C'-'B', 'B'-'A', 'A'-'L'], 'R7'-['G'-'F', 'F'-'E', 'E'-'D', 'D'-'B', 'B'-'A', 'A'-'L'], 'R8'-['N'-'J', 'J'-'K', 'K'-'D', 'D'-'B', 'B'-'A', 'A'-'L'], 'R9'-['G'-'F', 'F'-'K', 'K'-'I', 'I'-'H', 'H'-'M'], 'R10'-['N'-'J', 'J'-'I', 'I'-'H', 'H'-'M']]))),
+    retractall(c_fst(_)),
+    assert((c_fst(['R1'-'L', 'R2'-'L', 'R3'-'L', 'R4'-'M', 'R5'-'M', 'R6'-'C', 'R7'-'G', 'R8'-'N', 'R9'-'G', 'R10'-'N']))),
+    retractall(c_lst(_)),
+    assert((c_lst(['R1'-'C', 'R2'-'G', 'R3'-'N', 'R4'-'G', 'R5'-'N', 'R6'-'L', 'R7'-'L', 'R8'-'L', 'R9'-'M', 'R10'-'M']))),
+    retractall(c_rtbl(_)),
+    findall(
+        (Expr_b - Expr_r),
+        (
+            s_BLOCKS(Expr_0),
+            mppcg_member(Expr_b, Expr_0), 
+            s_ROUTES(Expr_1),
+            mppcg_member(Expr_r, Expr_1), 
+            c_nxt(Expr_2),
+            mppcg_domain(Expr_2, Expr_3),
+            mppcg_member(Expr_r, Expr_3), 
+            (c_nxt(Expr_4),
+            mppcg_callFunction(Expr_4, Expr_r, Expr_5),
+            mppcg_domain(Expr_5, Expr_6),
+            mppcg_member(Expr_b, Expr_6); 
+            c_nxt(Expr_7),
+            mppcg_callFunction(Expr_7, Expr_r, Expr_8),
+            mppcg_range(Expr_8, Expr_9),
+            mppcg_member(Expr_b, Expr_9))
+        ),
+        Expr_10
+    ),
+    ordsets:list_to_ord_set(Expr_10, Ord_10),
+    assert((c_rtbl(Ord_10))).
+
+start(State_7) :-
+    init_constants,
+    empty(State_0),
+    % Parallel Substitution:
+    update('resrt', [], State_0, State_1),
+    update('resbl', [], State_1, State_2),
+    update('rsrtbl', [], State_2, State_3),
+    update('OCC', [], State_3, State_4),
+    update('TRK', [], State_4, State_5),
+    update('frm', [], State_5, State_6),
+    update('LBT', [], State_6, State_7).
+
+% Transitions
+trans('route_reservation'(r=Expr_r), State_0, State_3) :-
+    s_ROUTES(Expr_0),
+    mppcg_member(Expr_r, Expr_0), 
+    get(State_0, 'resrt', Expr_1),
+    \+ mppcg_member(Expr_r, Expr_1), 
+    c_rtbl(Expr_2),
+    mppcg_inverse(Expr_2, Expr_3),
+    mppcg_image(Expr_3, [Expr_r], Expr_4),
+    get(State_0, 'resbl', Expr_5),
+    mppcg_setIntersection(Expr_4, Expr_5, Expr_6),
+    mppcg_equal(Expr_6, []),
+    % Parallel Substitution:
+    get(State_0, 'resrt', Expr_7),
+    mppcg_setUnion(Expr_7, [Expr_r], Expr_8),
+    update('resrt', Expr_8, State_0, State_1),
+    get(State_1, 'rsrtbl', Expr_9),
+    c_rtbl(Expr_10),
+    mppcg_rangeRestriction(Expr_10, [Expr_r], Expr_11),
+    mppcg_setUnion(Expr_9, Expr_11, Expr_12),
+    update('rsrtbl', Expr_12, State_1, State_2),
+    get(State_2, 'resbl', Expr_13),
+    mppcg_inverse(Expr_10, Expr_14),
+    mppcg_image(Expr_14, [Expr_r], Expr_15),
+    mppcg_setUnion(Expr_13, Expr_15, Expr_16),
+    update('resbl', Expr_16, State_2, State_3).
+
+trans('route_freeing'(r=Expr_r), State_0, State_2) :-
+    get(State_0, 'resrt', Expr_0),
+    get(State_0, 'rsrtbl', Expr_1),
+    mppcg_range(Expr_1, Expr_2),
+    mppcg_setSubtraction(Expr_0, Expr_2, Expr_3),
+    mppcg_member(Expr_r, Expr_3),
+    % Parallel Substitution:
+    mppcg_setSubtraction(Expr_0, [Expr_r], Expr_4),
+    update('resrt', Expr_4, State_0, State_1),
+    get(State_1, 'frm', Expr_5),
+    mppcg_setSubtraction(Expr_5, [Expr_r], Expr_6),
+    update('frm', Expr_6, State_1, State_2).
+
+trans('FRONT_MOVE_1'(r=Expr_r), State_0, State_2) :-
+    get(State_0, 'frm', Expr_0),
+    mppcg_member(Expr_r, Expr_0), 
+    get(State_0, 'rsrtbl', Expr_1),
+    c_fst(Expr_2),
+    mppcg_callFunction(Expr_2, Expr_r, Expr_3),
+    mppcg_callFunction(Expr_1, Expr_3, Expr_4),
+    mppcg_equal(Expr_r, Expr_4), 
+    c_fst(Expr_5),
+    mppcg_callFunction(Expr_5, Expr_r, Expr_6),
+    get(State_0, 'resbl', Expr_7),
+    get(State_0, 'OCC', Expr_8),
+    mppcg_setSubtraction(Expr_7, Expr_8, Expr_9),
+    mppcg_member(Expr_6, Expr_9), 
+    get(State_0, 'resrt', Expr_10),
+    get(State_0, 'rsrtbl', Expr_11),
+    mppcg_range(Expr_11, Expr_12),
+    mppcg_setSubtraction(Expr_10, Expr_12, Expr_13),
+    mppcg_equal([], Expr_13),
+    % Parallel Substitution:
+    get(State_0, 'OCC', Expr_14),
+    c_fst(Expr_15),
+    mppcg_callFunction(Expr_15, Expr_r, Expr_16),
+    mppcg_setUnion(Expr_14, [Expr_16], Expr_17),
+    update('OCC', Expr_17, State_0, State_1),
+    get(State_1, 'LBT', Expr_18),
+    mppcg_setUnion(Expr_18, [Expr_16], Expr_19),
+    update('LBT', Expr_19, State_1, State_2).
+
+trans('FRONT_MOVE_2'(b=Expr_b), State_0, State_1) :-
+    get(State_0, 'OCC', Expr_0),
+    mppcg_member(Expr_b, Expr_0), 
+    get(State_0, 'TRK', Expr_1),
+    mppcg_domain(Expr_1, Expr_2),
+    mppcg_member(Expr_b, Expr_2), 
+    get(State_0, 'TRK', Expr_3),
+    mppcg_callFunction(Expr_3, Expr_b, Expr_4),
+    get(State_0, 'OCC', Expr_5),
+    \+ mppcg_member(Expr_4, Expr_5),
+    get(State_0, 'OCC', Expr_6),
+    get(State_0, 'TRK', Expr_7),
+    mppcg_callFunction(Expr_7, Expr_b, Expr_8),
+    mppcg_setUnion(Expr_6, [Expr_8], Expr_9),
+    update('OCC', Expr_9, State_0, State_1).
+
+trans('BACK_MOVE_1'(b=Expr_b), State_0, State_4) :-
+    get(State_0, 'LBT', Expr_0),
+    mppcg_member(Expr_b, Expr_0), 
+    get(State_0, 'TRK', Expr_1),
+    mppcg_domain(Expr_1, Expr_2),
+    \+ mppcg_member(Expr_b, Expr_2),
+    % Parallel Substitution:
+    get(State_0, 'OCC', Expr_3),
+    mppcg_setSubtraction(Expr_3, [Expr_b], Expr_4),
+    update('OCC', Expr_4, State_0, State_1),
+    get(State_1, 'rsrtbl', Expr_5),
+    mppcg_domainSubtraction([Expr_b], Expr_5, Expr_6),
+    update('rsrtbl', Expr_6, State_1, State_2),
+    get(State_2, 'resbl', Expr_7),
+    mppcg_setSubtraction(Expr_7, [Expr_b], Expr_8),
+    update('resbl', Expr_8, State_2, State_3),
+    get(State_3, 'LBT', Expr_9),
+    mppcg_setSubtraction(Expr_9, [Expr_b], Expr_10),
+    update('LBT', Expr_10, State_3, State_4).
+
+trans('BACK_MOVE_2'(b=Expr_b), State_0, State_4) :-
+    get(State_0, 'LBT', Expr_0),
+    mppcg_member(Expr_b, Expr_0), 
+    get(State_0, 'TRK', Expr_1),
+    mppcg_domain(Expr_1, Expr_2),
+    mppcg_member(Expr_b, Expr_2), 
+    get(State_0, 'TRK', Expr_3),
+    mppcg_callFunction(Expr_3, Expr_b, Expr_4),
+    get(State_0, 'OCC', Expr_5),
+    mppcg_member(Expr_4, Expr_5),
+    % Parallel Substitution:
+    get(State_0, 'OCC', Expr_6),
+    mppcg_setSubtraction(Expr_6, [Expr_b], Expr_7),
+    update('OCC', Expr_7, State_0, State_1),
+    get(State_1, 'rsrtbl', Expr_8),
+    mppcg_domainSubtraction([Expr_b], Expr_8, Expr_9),
+    update('rsrtbl', Expr_9, State_1, State_2),
+    get(State_2, 'resbl', Expr_10),
+    mppcg_setSubtraction(Expr_10, [Expr_b], Expr_11),
+    update('resbl', Expr_11, State_2, State_3),
+    get(State_3, 'LBT', Expr_12),
+    mppcg_setSubtraction(Expr_12, [Expr_b], Expr_13),
+    get(State_3, 'TRK', Expr_14),
+    mppcg_callFunction(Expr_14, Expr_b, Expr_15),
+    mppcg_setUnion(Expr_13, [Expr_15], Expr_16),
+    update('LBT', Expr_16, State_3, State_4).
+
+trans('point_positionning'(r=Expr_r), State_0, State_1) :-
+    get(State_0, 'resrt', Expr_0),
+    get(State_0, 'frm', Expr_1),
+    mppcg_setSubtraction(Expr_0, Expr_1, Expr_2),
+    mppcg_member(Expr_r, Expr_2),
+    c_nxt(Expr_3),
+    mppcg_callFunction(Expr_3, Expr_r, Expr_4),
+    mppcg_domain(Expr_4, Expr_5),
+    get(State_0, 'TRK', Expr_6),
+    mppcg_domainSubtraction(Expr_5, Expr_6, Expr_7),
+    mppcg_range(Expr_4, Expr_8),
+    mppcg_rangeSubtraction(Expr_7, Expr_8, Expr_9),
+    mppcg_setUnion(Expr_9, Expr_4, Expr_10),
+    update('TRK', Expr_10, State_0, State_1).
+
+trans('route_formation'(r=Expr_r), State_0, State_1) :-
+    get(State_0, 'resrt', Expr_0),
+    get(State_0, 'frm', Expr_1),
+    mppcg_setSubtraction(Expr_0, Expr_1, Expr_2),
+    mppcg_member(Expr_r, Expr_2), 
+    get(State_0, 'rsrtbl', Expr_3),
+    mppcg_inverse(Expr_3, Expr_4),
+    mppcg_image(Expr_4, [Expr_r], Expr_5),
+    c_nxt(Expr_6),
+    mppcg_callFunction(Expr_6, Expr_r, Expr_7),
+    mppcg_domainRestriction(Expr_5, Expr_7, Expr_8),
+    get(State_0, 'TRK', Expr_9),
+    mppcg_domainRestriction(Expr_5, Expr_9, Expr_10),
+    mppcg_equal(Expr_8, Expr_10),
+    get(State_0, 'frm', Expr_11),
+    mppcg_setUnion(Expr_11, [Expr_r], Expr_12),
+    update('frm', Expr_12, State_0, State_1).
+
+% Invariant
+prop(State, unsafe) :-
+    \+ check_inv(State),
+    !.
+prop(State, State) :- !.
+
+check_inv(State) :-
+    check_inv_0(State), !, 
+    check_inv_1(State), !, 
+    check_inv_2(State), !, 
+    check_inv_3(State), !, 
+    check_inv_4(State), !, 
+    check_inv_5(State), !, 
+    check_inv_6(State), !, 
+    check_inv_7(State), !, 
+    check_inv_8(State), !, 
+    check_inv_9(State), !, 
+    check_inv_10(State), !, 
+    check_inv_11(State), !, 
+    check_inv_12(State), !, 
+    check_inv_13(State).
+
+check_inv_0(State_0) :-
+    get(State_0, 'TRK', Expr_0),
+    s_BLOCKS(Expr_1),
+    mppcg_member(Expr_0, function(Expr_1, Expr_1)),
+    !.
+
+check_inv_1(State_0) :-
+    \+ universal_quantifier__0(State_0),
+    !.
+
+check_inv_2(State_0) :-
+    \+ universal_quantifier__1(State_0),
+    !.
+
+check_inv_3(State_0) :-
+    \+ universal_quantifier__4(State_0),
+    !.
+
+check_inv_4(State_0) :-
+    get(State_0, 'LBT', Expr_0),
+    get(State_0, 'OCC', Expr_1),
+    mppcg_subset(Expr_0, Expr_1),
+    !.
+
+check_inv_5(State_0) :-
+    \+ universal_quantifier__5(State_0),
+    !.
+
+check_inv_6(State_0) :-
+    get(State_0, 'rsrtbl', Expr_0),
+    get(State_0, 'resbl', Expr_1),
+    get(State_0, 'resrt', Expr_2),
+    mppcg_member(Expr_0, function(Expr_1, Expr_2)),
+    !.
+
+check_inv_7(State_0) :-
+    get(State_0, 'rsrtbl', Expr_0),
+    c_rtbl(Expr_1),
+    mppcg_subset(Expr_0, Expr_1),
+    !.
+
+check_inv_8(State_0) :-
+    get(State_0, 'OCC', Expr_0),
+    get(State_0, 'resbl', Expr_1),
+    mppcg_subset(Expr_0, Expr_1),
+    !.
+
+check_inv_9(State_0) :-
+    \+ universal_quantifier__6(State_0),
+    !.
+
+check_inv_10(State_0) :-
+    \+ universal_quantifier__7(State_0),
+    !.
+
+check_inv_11(State_0) :-
+    \+ universal_quantifier__8(State_0),
+    !.
+
+check_inv_12(State_0) :-
+    get(State_0, 'frm', Expr_0),
+    get(State_0, 'resrt', Expr_1),
+    mppcg_subset(Expr_0, Expr_1),
+    !.
+
+check_inv_13(State_0) :-
+    get(State_0, 'rsrtbl', Expr_0),
+    get(State_0, 'OCC', Expr_1),
+    mppcg_image(Expr_0, Expr_1, Expr_2),
+    get(State_0, 'frm', Expr_3),
+    mppcg_subset(Expr_2, Expr_3),
+    !.
+% Quantifier
+universal_quantifier__5(State_0) :-
+    s_BLOCKS(Expr_0),
+    mppcg_member(Expr_q_a, Expr_0), 
+    get(State_0, 'LBT', Expr_1),
+    mppcg_member(Expr_q_b, Expr_1), 
+    get(State_0, 'rsrtbl', Expr_2),
+    mppcg_domain(Expr_2, Expr_3),
+    mppcg_member(Expr_q_b, Expr_3), 
+    c_nxt(Expr_4),
+    get(State_0, 'rsrtbl', Expr_5),
+    mppcg_callFunction(Expr_5, Expr_q_b, Expr_6),
+    mppcg_callFunction(Expr_4, Expr_6, Expr_7),
+    mppcg_range(Expr_7, Expr_8),
+    mppcg_member(Expr_q_b, Expr_8), 
+    get(State_0, 'rsrtbl', Expr_9),
+    mppcg_domain(Expr_9, Expr_10),
+    mppcg_member(Expr_q_a, Expr_10), 
+    c_nxt(Expr_11),
+    get(State_0, 'rsrtbl', Expr_12),
+    mppcg_callFunction(Expr_12, Expr_q_b, Expr_13),
+    mppcg_callFunction(Expr_11, Expr_13, Expr_14),
+    mppcg_inverse(Expr_14, Expr_15),
+    mppcg_callFunction(Expr_15, Expr_q_b, Expr_16),
+    mppcg_equal(Expr_q_a, Expr_16),
+    \+ (
+            get(State_0, 'rsrtbl', Expr_17),
+            mppcg_callFunction(Expr_17, Expr_q_a, Expr_18),
+            mppcg_callFunction(Expr_17, Expr_q_b, Expr_19),
+            mppcg_notEqual(Expr_18, Expr_19)
+        ).
+
+universal_quantifier__4(State_0) :-
+    get(State_0, 'frm', Expr_0),
+    mppcg_member(Expr_q_r, Expr_0),
+    \+ (
+            get(State_0, 'rsrtbl', Expr_1),
+            mppcg_inverse(Expr_1, Expr_2),
+            mppcg_image(Expr_2, [Expr_q_r], Expr_3),
+            c_nxt(Expr_4),
+            mppcg_callFunction(Expr_4, Expr_q_r, Expr_5),
+            mppcg_domainRestriction(Expr_3, Expr_5, Expr_6),
+            get(State_0, 'TRK', Expr_7),
+            mppcg_domainRestriction(Expr_3, Expr_7, Expr_8),
+            mppcg_equal(Expr_6, Expr_8)
+        ).
+
+universal_quantifier__0(State_0) :-
+    get(State_0, 'resrt', Expr_0),
+    get(State_0, 'frm', Expr_1),
+    mppcg_setSubtraction(Expr_0, Expr_1, Expr_2),
+    mppcg_member(Expr_q_r, Expr_2),
+    \+ (
+            c_rtbl(Expr_3),
+            mppcg_rangeRestriction(Expr_3, [Expr_q_r], Expr_4),
+            get(State_0, 'rsrtbl', Expr_5),
+            mppcg_rangeRestriction(Expr_5, [Expr_q_r], Expr_6),
+            mppcg_equal(Expr_4, Expr_6)
+        ).
+
+universal_quantifier__6(State_0) :-
+    s_ROUTES(Expr_0),
+    mppcg_member(Expr_q_r, Expr_0),
+    \+ (
+            c_nxt(Expr_1),
+            mppcg_callFunction(Expr_1, Expr_q_r, Expr_2),
+            c_rtbl(Expr_3),
+            mppcg_inverse(Expr_3, Expr_4),
+            mppcg_image(Expr_4, [Expr_q_r], Expr_5),
+            get(State_0, 'rsrtbl', Expr_6),
+            mppcg_inverse(Expr_6, Expr_7),
+            mppcg_image(Expr_7, [Expr_q_r], Expr_8),
+            mppcg_setSubtraction(Expr_5, Expr_8, Expr_9),
+            mppcg_image(Expr_2, Expr_9, Expr_10),
+            get(State_0, 'OCC', Expr_11),
+            mppcg_setSubtraction(Expr_8, Expr_11, Expr_12),
+            mppcg_setIntersection(Expr_10, Expr_12, Expr_13),
+            mppcg_equal(Expr_13, [])
+        ).
+
+universal_quantifier__2(State_0, Expr_q_x, Expr_q_y) :-
+    s_ROUTES(Expr_0),
+    mppcg_member(Expr_q_r, Expr_0),
+    \+ (
+            c_nxt(Expr_1),
+            mppcg_callFunction(Expr_1, Expr_q_r, Expr_2),
+            mppcg_member(Expr_q_x-Expr_q_y, Expr_2)
+        ).
+
+universal_quantifier__8(State_0) :-
+    s_ROUTES(Expr_0),
+    mppcg_member(Expr_q_r, Expr_0),
+    \+ (
+            c_nxt(Expr_1),
+            mppcg_callFunction(Expr_1, Expr_q_r, Expr_2),
+            get(State_0, 'rsrtbl', Expr_3),
+            mppcg_inverse(Expr_3, Expr_4),
+            mppcg_image(Expr_4, [Expr_q_r], Expr_5),
+            get(State_0, 'OCC', Expr_6),
+            mppcg_setSubtraction(Expr_5, Expr_6, Expr_7),
+            mppcg_image(Expr_2, Expr_7, Expr_8),
+            mppcg_subset(Expr_8, Expr_7)
+        ).
+
+universal_quantifier__9(State_0) :-
+    get(State_0, 'OCC', Expr_0),
+    mppcg_member(Expr_q_b, Expr_0), 
+    get(State_0, 'TRK', Expr_1),
+    mppcg_domain(Expr_1, Expr_2),
+    mppcg_member(Expr_q_b, Expr_2),
+    \+ (
+            c_nxt(Expr_3),
+            get(State_0, 'rsrtbl', Expr_4),
+            mppcg_callFunction(Expr_4, Expr_q_b, Expr_5),
+            mppcg_callFunction(Expr_3, Expr_5, Expr_6),
+            mppcg_callFunction(Expr_6, Expr_q_b, Expr_7),
+            get(State_0, 'TRK', Expr_8),
+            mppcg_callFunction(Expr_8, Expr_q_b, Expr_9),
+            mppcg_equal(Expr_7, Expr_9)
+        ).
+
+universal_quantifier__1(State_0) :-
+    get(State_0, 'TRK', Expr_0),
+    mppcg_domain(Expr_0, Expr_1),
+    mppcg_member(Expr_q_x, Expr_1), 
+    get(State_0, 'TRK', Expr_2),
+    mppcg_image(Expr_2, [Expr_q_x], Expr_3),
+    mppcg_member(Expr_q_y, Expr_3),
+    \+ (
+            % exist quantifier
+            s_ROUTES(Expr_4),
+            mppcg_member(Expr_q_r, Expr_4),
+            c_nxt(Expr_5),
+            mppcg_callFunction(Expr_5, Expr_q_r, Expr_6),
+            mppcg_member(Expr_q_x-Expr_q_y, Expr_6)
+        ).
+
+universal_quantifier__7(State_0) :-
+    s_ROUTES(Expr_0),
+    mppcg_member(Expr_q_r, Expr_0),
+    \+ (
+            c_nxt(Expr_1),
+            mppcg_callFunction(Expr_1, Expr_q_r, Expr_2),
+            get(State_0, 'rsrtbl', Expr_3),
+            mppcg_inverse(Expr_3, Expr_4),
+            mppcg_image(Expr_4, [Expr_q_r], Expr_5),
+            mppcg_image(Expr_2, Expr_5, Expr_6),
+            mppcg_subset(Expr_6, Expr_5)
+        ).

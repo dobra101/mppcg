@@ -1,0 +1,69 @@
+anonymousSetCollectionExpression(elements) ::= <<
+[<elements; separator=", ">]
+>>
+
+binaryExpression(lhs, rhs, operator, exprCount, math, infiniteSet) ::= <<
+<if(infiniteSet)><operator>(<lhs>, <rhs>, Expr_<exprCount>)<else>
+Expr_<exprCount> <if(math)>is<else>=<endif> <lhs> <operator> <rhs><endif>
+>>
+
+unaryCollectionExpression(collection, operator, exprCount) ::= <<
+<operator>(<collection>, Expr_<exprCount>)
+>>
+
+binaryCollectionExpression(lhs, rhs, operator, exprCount) ::= <<
+<operator>(<lhs>, <rhs>, Expr_<exprCount>)
+>>
+
+enumCollectionExpression(name, elements, isParameter, exprCount) ::= <<
+<if(isParameter)>
+s_<name>(Expr_<exprCount>)<else>
+s_<name>([<elements; separator = ", ">])<endif>
+>>
+
+// TODO: add enum name?
+enumEntryExpression(name) ::= <<
+'<name>'
+>>
+
+identifierExpression(name, stateCount, exprCount) ::= <<
+get(State_<stateCount>, '<name>', Expr_<exprCount>)
+>>
+
+intervalExpression(lhs, rhs) ::= <<
+(<lhs>, <rhs>)
+>>
+
+// TODO: add set name?
+setEntryExpression(name) ::= <<
+'<name>'
+>>
+
+unaryExpression(value, operator, convertBoolean, isMinus, isMinusInline, exprCount, resultAt) ::= <<
+<if(isMinus)><if(isMinusInline)>Expr_<exprCount> = -<value><else><if(value)><value>,<endif>
+Expr_<exprCount> is -<resultAt><endif><else>
+<if(convertBoolean)>
+(<value> -> Expr_<exprCount> = true; Expr_<exprCount> = false)<else>
+<operator>(<value>, Expr_<exprCount>)<endif><endif>
+>>
+
+// TODO: add type ?
+valueExpression(value) ::= <<
+<value>
+>>
+
+generalSumOrProductExpression(identifiers, predicate, expression, isSum, exprCount) ::= <<
+% general <if(isSum)>sum<else>product<endif>
+findall(
+    (<identifiers; separator="/">),
+    (
+        <predicate><if(expression)>,
+        <expression><endif>
+
+    ),
+    Expr_<exprCount>_<if(isSum)>Sum<else>Product<endif>
+),
+<if(isSum)>
+mppcg_listSum(Expr_<exprCount>_Sum, Expr_<exprCount>)<else>
+mppcg_listProduct(Expr_<exprCount>_Product, Expr_<exprCount>)<endif>
+>>

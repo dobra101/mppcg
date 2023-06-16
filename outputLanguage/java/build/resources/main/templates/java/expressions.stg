@@ -1,0 +1,55 @@
+anonymousSetCollectionExpression(elements, type) ::= <<
+new <type>(<elements; separator=", ">)
+>>
+
+anonymousSetAsRelation(elements) ::= <<
+new BRelation\<\>(<elements; separator=", ">)
+>>
+
+binaryExpression(lhs, rhs, operator, customOperator) ::= <<
+<if(customOperator)><lhs>.<operator>(<rhs>)<else>
+<lhs> <operator> <rhs><endif>
+>>
+
+unaryExpression(value, operator, parenthesis) ::= <<
+<if(parenthesis)><operator>(<value>)<else>
+<operator><value><endif>
+>>
+
+unaryCollectionExpression(collection, operator) ::= <<
+<collection>.<operator>()
+>>
+
+binaryCollectionExpression(lhs, rhs, operator, rhsIsList) ::= <<
+<if(rhsIsList)><lhs>.<operator>(<rhs; separator=", ">)<else>
+<lhs>.<operator>(<rhs>)<endif>
+>>
+
+enumCollectionExpression(name, elements, isParameter) ::= <<
+<if(isParameter)>new BSet\<<name>\>(<elements: {elem | <name>.<elem>}; separator=", ">)<else>
+private enum <name> {
+    <elements; separator=", ">
+}
+<endif>
+>>
+
+enumEntryExpression(name, enum) ::= <<
+<enum>.<name>
+>>
+
+identifierExpression(name) ::= <<
+<name>
+>>
+
+intervalExpression(left, right) ::= <<
+new BSet\<Integer\>(new BInterval(<left>, <right>))
+>>
+
+// TODO: add type
+valueExpression(value) ::= <<
+<value>
+>>
+
+parameterExpression(name, type) ::= <<
+<type> <name>
+>>

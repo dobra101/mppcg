@@ -1,0 +1,188 @@
+machine(name, parameters, constraints, sets, constants, concrete_constants, properties, definitions, variables, concrete_variables, initialization, invariant, assertions, operations, transitions) ::= <<
+public class <name> {
+    <parameters>
+    <constraints>
+    <sets; separator="\n">
+
+    <constants; separator="\n">
+    <concrete_constants; separator="\n">
+    <variables; separator="\n">
+
+    <definitions>
+    <concrete_variables>
+    <initialization>
+
+    private void initProperties() {
+        <properties; separator="\n">
+    }
+
+    <operations; separator="\n\n">
+
+    <transitions; separator="\n\n">
+
+    <invariant>
+
+    private Integer succ(Integer x) {
+        return x+1;
+    }
+
+    private Integer pred(Integer x) {
+        return x-1;
+    }
+}
+>>
+
+operation(name, parameters, body, returnValues, returnValueDeclarations, type) ::= <<
+public <if(type)><type><else>void<endif> <name>(<parameters; separator=", ">) {
+    <returnValueDeclarations>
+    <body>
+    <if(returnValues)>
+    return <returnValues>;
+    <endif>
+}
+>>
+
+transition(name, body, parameters) ::= <<
+public boolean tr_<name>(<parameters; separator=", ">) {
+    <body; separator="\n\n">
+
+    return true;
+}
+>>
+
+transitionPredicate(predicate, count, isConstruct) ::= <<
+<if(isConstruct)><predicate>
+if (!ic_<count>) {
+    return false;
+}<else>if (!(<predicate>)) {
+    return false;
+}<endif>
+>>
+
+function(left, right) ::= <<
+<left>[<right>]
+>>
+
+invariant(ic, body, idx, inline) ::= <<
+public boolean check_inv_<idx>() {
+    <if(inline)>return <body>;
+    <else><body>
+return ic_<ic>;
+<endif>
+}
+>>
+
+invariants(list) ::= <<
+<list; separator="\n\n">
+>>
+
+initialization(substitutions, name) ::= <<
+public <name>() {
+    initProperties();
+    <substitutions; separator="\n">
+}
+>>
+
+precondition(predicate, substitution) ::= <<
+<predicate>
+<substitution>
+>>
+
+// TODO: only else, when
+select(condition, then, elseSubstitution, when) ::= <<
+<if(then)><then><else>// skip<endif>
+>>
+
+// TODO: make parallel
+parallelSubstitution(substitutions) ::= <<
+// Parallel Substitution:
+<substitutions; separator="\n">
+>>
+
+concreteIdentifier(name, value, type, declare) ::= <<
+<if(declare)>
+<type> <name><if(value)> = <value><endif>;<else>
+<name><endif>
+>>
+
+lambdaExpression(identifier, type, predicate, expression, exprType, identifierType) ::= <<
+new <type>(
+    <predicate>.stream()
+        .map(<identifier> -> new BCouple\<<identifierType>, <exprType>\>(<identifier>, <expression>))
+        .toList())
+>>
+
+callFunction(expression, parameters, operator) ::= <<
+<expression>.<operator>(<parameters; separator=", ">)
+>>
+
+unaryFunctionExpression(expression, operator) ::= <<
+<expression>.<operator>()
+>>
+
+binaryFunctionExpression(left, right, operator, swap) ::= <<
+<if(swap)><right>.<operator>(<left>)<else>
+<left>.<operator>(<right>)<endif>
+>>
+
+couple(from, to) ::= <<
+new BCouple\<\>(<from>, <to>)
+>>
+
+sequence(elements, type) ::= <<
+new <type>(<elements; separator=", ">)
+>>
+
+binarySequenceExpression(left, right, operator) ::= <<
+<left>.<operator>(<right>)
+>>
+
+unarySequenceExpression(sequence, operator) ::= <<
+<sequence>.<operator>()
+>>
+
+comprehensionSetExpression(identifiers, iterators, predicates, ic) ::= <<
+<iterators; separator=" {\n\t"> {
+    if (<predicates; separator=" && ">) {
+        ic_<ic>.add(<identifiers; separator=", ">);
+    }
+<iterators: {it | \}}; separator="\n">
+>>
+
+quantifierPredicate(body, ic, isForAll) ::= <<
+boolean ic_<ic> = true;
+<body>
+>>
+
+
+quantification(ic, pred, body, resultIc, isConstruct) ::= <<
+<if(isConstruct)>
+<body>
+ic_<ic> &= new BBoolean(<pred; separator=" && ">).implies(ic_<resultIc>).value();<else>
+<if(pred)>ic_<ic> &= new BBoolean(<pred; separator=" && ">).implies(<body>).value();
+if (!ic_<ic>) {
+    break;
+}<else>if (!(<body>)) {
+    break;
+}<endif><endif>
+>>
+
+iteratorConstruct(type, name, collection, body) ::= <<
+<if(body)>for (<type> <name> : <collection>) {
+    <body>
+}<else>for (<type> <name> : <collection>)<endif>
+>>
+
+functionTypeCheck(left, from, to, functionType, mapType) ::= <<
+<left>.typeCheck().hasDomain(<from>).hasRange(<to>).<mapType>.<functionType>.value()
+>>
+
+infiniteSetExpression(type, interval) ::= <<
+new <type>(<if(interval)><interval><endif>)
+>>
+
+delayedAssignSubstitution(type, identifier, body, ic) ::= <<
+<type> ic_<ic> = new <type>();
+<body>
+<identifier> = ic_<ic>;
+>>

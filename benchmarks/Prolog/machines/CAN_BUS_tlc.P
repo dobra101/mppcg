@@ -1,0 +1,369 @@
+:- use_module(btypes).
+
+s_T1state(['T1_EN', 'T1_CALC', 'T1_SEND', 'T1_WAIT']).
+
+s_T2mode(['T2MODE_SENSE', 'T2MODE_TRANSMIT', 'T2MODE_RELEASE']).
+
+s_T2state(['T2_EN', 'T2_RCV', 'T2_PROC', 'T2_CALC', 'T2_SEND', 'T2_WAIT', 'T2_RELEASE']).
+
+s_T3state(['T3_READY', 'T3_WRITE', 'T3_RELEASE', 'T3_READ', 'T3_PROC', 'T3_WAIT']).
+
+init_constants :-
+    retractall(c_NATSET(_)),
+    assert((c_NATSET((0, 5)))).
+
+start(State_18) :-
+    init_constants,
+    empty(State_0),
+    % Parallel Substitution:
+    update('T2v', 0, State_0, State_1),
+    update('T3_evaluated', true, State_1, State_2),
+    update('T3_enabled', true, State_2, State_3),
+    update('T1_state', 'T1_EN', State_3, State_4),
+    update('T2_state', 'T2_EN', State_4, State_5),
+    update('T3_state', 'T3_READY', State_5, State_6),
+    update('T1_writevalue', 0, State_6, State_7),
+    update('T2_writevalue', 0, State_7, State_8),
+    update('T2_readvalue', 0, State_8, State_9),
+    update('T2_readpriority', 0, State_9, State_10),
+    update('T3_readvalue', 0, State_10, State_11),
+    update('T3_readpriority', 0, State_11, State_12),
+    update('T1_timer', 2, State_12, State_13),
+    update('T2_timer', 3, State_13, State_14),
+    update('BUSwrite', [0-0], State_14, State_15),
+    update('BUSvalue', 0, State_15, State_16),
+    update('BUSpriority', 0, State_16, State_17),
+    update('T2_mode', 'T2MODE_SENSE', State_17, State_18).
+
+% Transitions
+trans('T1Evaluate', State_0, State_2) :-
+    get(State_0, 'T1_timer', 0), 
+    get(State_0, 'T1_state', 'T1_EN'),
+    % Parallel Substitution:
+    update('T1_timer', 0, State_0, State_1),
+    update('T1_state', 'T1_CALC', State_1, State_2).
+
+trans('T1Calculate'(p=Expr_p), State_0, State_2) :-
+    Expr_0 = -1,
+    mppcg_member(Expr_p, (Expr_0, 3)), 
+    get(State_0, 'T1_state', 'T1_CALC'),
+    % Parallel Substitution:
+    update('T1_writevalue', Expr_p, State_0, State_1),
+    update('T1_state', 'T1_SEND', State_1, State_2).
+
+trans('T1SendResult'(ppriority=Expr_ppriority, pv=Expr_pv), State_0, State_2) :-
+    mppcg_equal(Expr_ppriority, 3), 
+    get(State_0, 'T1_writevalue', Expr_0),
+    mppcg_equal(Expr_pv, Expr_0), 
+    get(State_0, 'T1_state', 'T1_SEND'),
+    % Parallel Substitution:
+    get(State_0, 'BUSwrite', Expr_1),
+    mppcg_override(Expr_1, [Expr_ppriority-Expr_pv], Expr_2),
+    update('BUSwrite', Expr_2, State_0, State_1),
+    update('T1_state', 'T1_WAIT', State_1, State_2).
+
+trans('T1Wait'(pt=Expr_pt), State_0, State_2) :-
+    mppcg_equal(Expr_pt, 2), 
+    get(State_0, 'T1_state', 'T1_WAIT'),
+    % Parallel Substitution:
+    update('T1_timer', Expr_pt, State_0, State_1),
+    update('T1_state', 'T1_EN', State_1, State_2).
+
+trans('T2Evaluate', State_0, State_2) :-
+    get(State_0, 'T2_timer', 0), 
+    get(State_0, 'T2_state', 'T2_EN'),
+    % Parallel Substitution:
+    update('T2_timer', 0, State_0, State_1),
+    update('T2_state', 'T2_RCV', State_1, State_2).
+
+trans('T2ReadBus'(ppriority=Expr_ppriority, pv=Expr_pv), State_0, State_3) :-
+    get(State_0, 'BUSpriority', Expr_0),
+    mppcg_equal(Expr_ppriority, Expr_0), 
+    get(State_0, 'BUSvalue', Expr_1),
+    mppcg_equal(Expr_pv, Expr_1), 
+    get(State_0, 'T2_state', 'T2_RCV'),
+    % Parallel Substitution:
+    update('T2_readvalue', Expr_pv, State_0, State_1),
+    update('T2_readpriority', Expr_ppriority, State_1, State_2),
+    update('T2_state', 'T2_PROC', State_2, State_3).
+
+trans('T2Reset', State_0, State_4) :-
+    get(State_0, 'T2_readpriority', 4), 
+    get(State_0, 'T2_state', 'T2_PROC'),
+    % Parallel Substitution:
+    get(State_0, 'T2v', Expr_0),
+    update('T2_writevalue', Expr_0, State_0, State_1),
+    update('T2v', 0, State_1, State_2),
+    update('T2_state', 'T2_SEND', State_2, State_3),
+    update('T2_mode', 'T2MODE_TRANSMIT', State_3, State_4).
+
+trans('T2Complete', State_0, State_2) :-
+    get(State_0, 'T2_state', 'T2_PROC'), 
+    get(State_0, 'T2_readpriority', 5), 
+    get(State_0, 'T2_mode', 'T2MODE_TRANSMIT'),
+    % Parallel Substitution:
+    update('T2_state', 'T2_RELEASE', State_0, State_1),
+    update('T2_mode', 'T2MODE_SENSE', State_1, State_2).
+
+trans('T2ReleaseBus'(ppriority=Expr_ppriority), State_0, State_2) :-
+    get(State_0, 'T2_readpriority', Expr_0),
+    mppcg_equal(Expr_ppriority, Expr_0), 
+    get(State_0, 'BUSwrite', Expr_1),
+    mppcg_domain(Expr_1, Expr_2),
+    mppcg_member(Expr_ppriority, Expr_2), 
+    get(State_0, 'T2_state', 'T2_RELEASE'),
+    % Parallel Substitution:
+    get(State_0, 'BUSwrite', Expr_3),
+    mppcg_domainSubtraction([Expr_ppriority], Expr_3, Expr_4),
+    update('BUSwrite', Expr_4, State_0, State_1),
+    update('T2_state', 'T2_WAIT', State_1, State_2).
+
+trans('T2Calculate', State_0, State_2) :-
+    get(State_0, 'T2_readpriority', 3), 
+    get(State_0, 'T2_state', 'T2_PROC'),
+    % Parallel Substitution:
+    get(State_0, 'T2_readvalue', Expr_0),
+    update('T2v', Expr_0, State_0, State_1),
+    update('T2_state', 'T2_WAIT', State_1, State_2).
+
+trans('T2WriteBus'(ppriority=Expr_ppriority, pv=Expr_pv), State_0, State_2) :-
+    mppcg_equal(Expr_ppriority, 5), 
+    get(State_0, 'T2_writevalue', Expr_0),
+    mppcg_equal(Expr_pv, Expr_0), 
+    get(State_0, 'T2_state', 'T2_SEND'),
+    % Parallel Substitution:
+    get(State_0, 'BUSwrite', Expr_1),
+    mppcg_override(Expr_1, [Expr_ppriority-Expr_pv], Expr_2),
+    update('BUSwrite', Expr_2, State_0, State_1),
+    update('T2_state', 'T2_WAIT', State_1, State_2).
+
+trans('T2Wait'(pt=Expr_pt), State_0, State_2) :-
+    mppcg_equal(Expr_pt, 3), 
+    get(State_0, 'T2_state', 'T2_WAIT'),
+    % Parallel Substitution:
+    update('T2_timer', Expr_pt, State_0, State_1),
+    update('T2_state', 'T2_EN', State_1, State_2).
+
+trans('T3Initiate', State_0, State_2) :-
+    get(State_0, 'T3_state', 'T3_READY'), 
+    get(State_0, 'T3_evaluated', false), 
+    get(State_0, 'T3_enabled', true),
+    % Parallel Substitution:
+    update('T3_state', 'T3_WRITE', State_0, State_1),
+    update('T3_enabled', false, State_1, State_2).
+
+trans('T3Evaluate', State_0, State_1) :-
+    get(State_0, 'T3_state', 'T3_READY'), 
+    get(State_0, 'T3_evaluated', false), 
+    get(State_0, 'T3_enabled', false),
+    update('T3_state', 'T3_READ', State_0, State_1).
+
+trans('T3writebus'(ppriority=Expr_ppriority, pv=Expr_pv), State_0, State_2) :-
+    mppcg_equal(Expr_ppriority, 4), 
+    mppcg_equal(Expr_pv, 0), 
+    get(State_0, 'T3_state', 'T3_WRITE'),
+    % Parallel Substitution:
+    get(State_0, 'BUSwrite', Expr_0),
+    mppcg_override(Expr_0, [Expr_ppriority-Expr_pv], Expr_1),
+    update('BUSwrite', Expr_1, State_0, State_1),
+    update('T3_state', 'T3_WAIT', State_1, State_2).
+
+trans('T3Read'(ppriority=Expr_ppriority, pv=Expr_pv), State_0, State_3) :-
+    get(State_0, 'BUSpriority', Expr_0),
+    mppcg_equal(Expr_ppriority, Expr_0), 
+    get(State_0, 'BUSvalue', Expr_1),
+    mppcg_equal(Expr_pv, Expr_1), 
+    get(State_0, 'T3_state', 'T3_READ'),
+    % Parallel Substitution:
+    update('T3_readvalue', Expr_pv, State_0, State_1),
+    update('T3_readpriority', Expr_ppriority, State_1, State_2),
+    update('T3_state', 'T3_PROC', State_2, State_3).
+
+trans('T3Poll', State_0, State_1) :-
+    get(State_0, 'T3_readpriority', Expr_0),
+    Expr_0 < 5, 
+    get(State_0, 'T3_state', 'T3_PROC'),
+    update('T3_state', 'T3_WAIT', State_0, State_1).
+
+trans('T3ReleaseBus'(ppriority=Expr_ppriority), State_0, State_2) :-
+    mppcg_equal(Expr_ppriority, 4), 
+    get(State_0, 'T3_readpriority', 5), 
+    get(State_0, 'T3_state', 'T3_PROC'),
+    % Parallel Substitution:
+    get(State_0, 'BUSwrite', Expr_0),
+    mppcg_domainSubtraction([Expr_ppriority], Expr_0, Expr_1),
+    update('BUSwrite', Expr_1, State_0, State_1),
+    update('T3_state', 'T3_RELEASE', State_1, State_2).
+
+trans('T3Wait', State_0, State_2) :-
+    get(State_0, 'T3_state', 'T3_WAIT'),
+    % Parallel Substitution:
+    update('T3_state', 'T3_READY', State_0, State_1),
+    update('T3_evaluated', true, State_1, State_2).
+
+trans('T3ReEnableWait', State_0, State_3) :-
+    get(State_0, 'T3_state', 'T3_RELEASE'),
+    % Parallel Substitution:
+    update('T3_state', 'T3_READY', State_0, State_1),
+    update('T3_evaluated', true, State_1, State_2),
+    update('T3_enabled', true, State_2, State_3).
+
+trans('Update'(pmax=Expr_pmax), State_0, State_5) :-
+    get(State_0, 'BUSwrite', Expr_0),
+    mppcg_domain(Expr_0, Expr_1),
+    mppcg_max(Expr_1, Expr_2),
+    mppcg_equal(Expr_pmax, Expr_2), 
+    get(State_0, 'T1_timer', Expr_3),
+    Expr_3 > 0, 
+    get(State_0, 'T2_timer', Expr_4),
+    Expr_4 > 0, 
+    (get(State_0, 'T3_enabled', true); get(State_0, 'T3_evaluated', true)),
+    % Parallel Substitution:
+    get(State_0, 'BUSwrite', Expr_5),
+    mppcg_callFunction(Expr_5, Expr_pmax, Expr_6),
+    update('BUSvalue', Expr_6, State_0, State_1),
+    update('BUSpriority', Expr_pmax, State_1, State_2),
+    get(State_2, 'T1_timer', Expr_7),
+    Expr_8 is Expr_7 - 1,
+    update('T1_timer', Expr_8, State_2, State_3),
+    get(State_3, 'T2_timer', Expr_9),
+    Expr_10 is Expr_9 - 1,
+    update('T2_timer', Expr_10, State_3, State_4),
+    update('T3_evaluated', false, State_4, State_5).
+
+% Invariant
+prop(State, unsafe) :-
+    \+ check_inv(State),
+    !.
+prop(State, State) :- !.
+
+check_inv(State) :-
+    check_inv_0(State), !, 
+    check_inv_1(State), !, 
+    check_inv_2(State), !, 
+    check_inv_3(State), !, 
+    check_inv_4(State), !, 
+    check_inv_5(State), !, 
+    check_inv_6(State), !, 
+    check_inv_7(State), !, 
+    check_inv_8(State), !, 
+    check_inv_9(State), !, 
+    check_inv_10(State), !, 
+    check_inv_11(State), !, 
+    check_inv_12(State), !, 
+    check_inv_13(State), !, 
+    check_inv_14(State), !, 
+    check_inv_15(State), !, 
+    check_inv_16(State), !, 
+    check_inv_17(State), !, 
+    check_inv_18(State), !, 
+    check_inv_19(State).
+
+check_inv_0(State_0) :-
+    get(State_0, 'T2v', Expr_0),
+    mppcg_member(Expr_0, 'INTEGER'),
+    !.
+
+check_inv_1(State_0) :-
+    get(State_0, 'T3_evaluated', Expr_0),
+    mppcg_member(Expr_0, 'BOOL'),
+    !.
+
+check_inv_2(State_0) :-
+    get(State_0, 'T3_enabled', Expr_0),
+    mppcg_member(Expr_0, 'BOOL'),
+    !.
+
+check_inv_3(State_0) :-
+    get(State_0, 'T1_state', Expr_0),
+    s_T1state(Expr_1),
+    mppcg_member(Expr_0, Expr_1),
+    !.
+
+check_inv_4(State_0) :-
+    get(State_0, 'T2_state', Expr_0),
+    s_T2state(Expr_1),
+    mppcg_member(Expr_0, Expr_1),
+    !.
+
+check_inv_5(State_0) :-
+    get(State_0, 'T3_state', Expr_0),
+    s_T3state(Expr_1),
+    mppcg_member(Expr_0, Expr_1),
+    !.
+
+check_inv_6(State_0) :-
+    get(State_0, 'T1_writevalue', Expr_0),
+    mppcg_member(Expr_0, 'INTEGER'),
+    !.
+
+check_inv_7(State_0) :-
+    get(State_0, 'T2_writevalue', Expr_0),
+    mppcg_member(Expr_0, 'INTEGER'),
+    !.
+
+check_inv_8(State_0) :-
+    get(State_0, 'T2_readvalue', Expr_0),
+    mppcg_member(Expr_0, 'INTEGER'),
+    !.
+
+check_inv_9(State_0) :-
+    get(State_0, 'T1_timer', Expr_0),
+    mppcg_member(Expr_0, 'NATURAL'),
+    !.
+
+check_inv_10(State_0) :-
+    get(State_0, 'T2_timer', Expr_0),
+    mppcg_member(Expr_0, 'NATURAL'),
+    !.
+
+check_inv_11(State_0) :-
+    get(State_0, 'T2_mode', Expr_0),
+    s_T2mode(Expr_1),
+    mppcg_member(Expr_0, Expr_1),
+    !.
+
+check_inv_12(State_0) :-
+    get(State_0, 'BUSvalue', Expr_0),
+    mppcg_member(Expr_0, 'INTEGER'),
+    !.
+
+check_inv_13(State_0) :-
+    get(State_0, 'BUSpriority', Expr_0),
+    c_NATSET(Expr_1),
+    mppcg_member(Expr_0, Expr_1),
+    !.
+
+check_inv_14(State_0) :-
+    get(State_0, 'T3_readvalue', Expr_0),
+    mppcg_member(Expr_0, 'INTEGER'),
+    !.
+
+check_inv_15(State_0) :-
+    get(State_0, 'T3_readpriority', Expr_0),
+    c_NATSET(Expr_1),
+    mppcg_member(Expr_0, Expr_1),
+    !.
+
+check_inv_16(State_0) :-
+    get(State_0, 'T2_readpriority', Expr_0),
+    c_NATSET(Expr_1),
+    mppcg_member(Expr_0, Expr_1),
+    !.
+
+check_inv_17(State_0) :-
+    get(State_0, 'BUSwrite', Expr_0),
+    c_NATSET(Expr_1),
+    mppcg_member(Expr_0, function(Expr_1, 'INTEGER')),
+    !.
+
+check_inv_18(State_0) :-
+    get(State_0, 'BUSwrite', Expr_0),
+    mppcg_notEqual(Expr_0, []),
+    !.
+
+check_inv_19(State_0) :-
+    get(State_0, 'BUSwrite', Expr_0),
+    mppcg_domain(Expr_0, Expr_1),
+    mppcg_member(0, Expr_1),
+    !.

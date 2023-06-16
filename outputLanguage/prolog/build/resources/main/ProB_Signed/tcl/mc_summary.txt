@@ -1,0 +1,74 @@
+1. MODEL CHECKING
+  Started by "Model Check..." in the Verify menu.
+  This works by systematically exploring the state space of the
+  currently opened specification. Starting from the initial
+  states, the transitions are systematically computed and new
+  nodes added. The progress bar at the bottom of the model
+  checking dialog shows you how many nodes have been treated.
+  Note: treating a node consists of computing all outgoing
+  transitions, computing the resulting states and checking
+  whether those states have already been encountered. Hence, the
+  treatment of a single node actually involves the manipulation
+  and creation of many transitions and nodes.
+  
+2. LTL MODEL CHECKING
+  Started by "Check LTL Assertions..." in the Verify menu.
+  This works like the ordinary model checking, but can check
+  temporal properties expressed in an extension of LTL
+  (Linear Temporal Logic).
+  You can use {...} for B predicates as atomic LTL propositions,
+   G,F,X,U,W,R,true,false,not,&,or and => as part of the standard LTL syntax.
+  You can also use Past-LTL: Y,H,O,S,T (as the duals to X,G,F,U,R)
+   and e(op), [op], deadlock(op1,...,opn), deterministic(op1,...,opk),...
+
+3. CONSTRAINT BASED CHECKING
+  Started by using "Constraint Based Checking" submenu in the Verify menu.
+  There are a variety of commands which try to find errors using
+  ProB's constraint solver. For example, the command
+  "Check Invariant Preservation for Operations"
+  tries to find invariant violations not by starting
+  from the initial states and executing operations, but by
+  constraint solving. More precisely, it tries to find a state
+  that satisfies the invariant and enables a certain operation,
+  such that the resulting state of the operation violates the
+  invariant. It only works for B specifications (whereas
+  model checking also works for CSP and XTL specifications).
+
+4. REFINEMENT CHECKING
+  This is a recent addition to ProB. It allows refinement
+  checking for
+    - traces: i.e., are all execution traces of the
+      implementation also traces of the specification.
+    - single failures: a single failure is a trace followed by a
+      single event that can be refused. For example, ab<c> means
+      that the system can do the operations a followed by b and then
+      it may not be able to do c.
+  Refinement checking works for all types of
+  specifications (B, CSP, B+CSP, XTL). To do a refinement check
+  the "ancestor specification" first needs to be explored (best
+  done by temporal model check, possibly with turning off the
+  options to detect deadlocks and invariant violations) and then
+  you need to use the command "Save for later refinement check".
+  This will create a file ending with "refine_spec.P". You can
+  now open the implementation and choose the Refinement Checking
+  command.
+  Note that ProB does *not* check your gluing invariant; also
+  ProB does treat top-level PRE conditions like a SELECT, leading
+  to a stronger requirement on refinements (i.e., PREconditions
+  are not automatically inherited by the refinements).
+
+5. External Tools for Model Checking
+  Started by using "External Tools" submenu in the Verify menu.
+  a) LTSmin-ProB Integration:
+     This backend works very well when operations only read and write a
+     part of model's variables.
+     It works with B and Event-B models and to a lesser extent with CSP models.
+     It uses the ProB interpreter, and as such supports the full feature set.
+     You need to copy the commands prob2lts-sym, prob2lts-seq, ltsmin-printtrace from
+      https://github.com/utwente-fmt/ltsmin/releases
+     to ProB's lib folder (containing amongst others probcliparser.jar).
+  b) TLC Backend:
+    This backend can work in parallel and can be very efficient for
+    lower-level B models. It cannot deal with refinement and
+    with certain B features, such as sequential composition.
+    See also https://prob.hhu.de/w/index.php/TLC.
