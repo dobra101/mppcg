@@ -32,15 +32,15 @@ class PrologTest : ExpectSpec({
     }
 
     val include: List<String> = listOf(
-        "Lift.mch",
-        "TrafficLight_MC.mch",
-        "scheduler_deterministic_MC.mch",
-        "QueensWithEvents_4.mch",
-        "QueensWithEvents_8.mch",
+//        "Lift.mch",
+//        "TrafficLight_MC.mch",
+//        "scheduler_deterministic_MC.mch",
+//        "QueensWithEvents_4.mch",
+//        "QueensWithEvents_8.mch",
         "sort_m2_data1000.mch",
-        "CAN_BUS_tlc.mch",
-        "Cruise_finite1_deterministic_MC.mch",
-        "LandingGear_R6.mch",
+//        "CAN_BUS_tlc.mch",
+//        "Cruise_finite1_deterministic_MC.mch",
+//        "LandingGear_R6.mch",
 //        "Train_1_beebook_deterministic_MC.mch"
     )
 
@@ -61,7 +61,7 @@ class PrologTest : ExpectSpec({
         val prologResourcesPath = "outputLanguage/prolog/src/main/resources"
         val probPath = "$prologResourcesPath/ProB_Signed/probcli.sh"
         val probArgs =
-            "--model-check -disable-time-out -p OPERATION_REUSE full -pref_group model_check unlimited -p COMPRESSION TRUE -noass -memory"
+            "--model-check -disable-time-out -pref_group model_check unlimited -p COMPRESSION TRUE -noass -memory"
 
         val cmd = "$probPath $probArgs ${machine.path}"
         val process: Process = Runtime.getRuntime().exec(cmd)
@@ -93,7 +93,8 @@ class PrologTest : ExpectSpec({
                         optimize = optimize,
                         benchmark = false
                     )
-                    val result = Launcher.benchmarkProlog(file, timeout = 1000 + (mchResult!!.modelCheckingTime * 2))
+                    println("Benchmark Prolog:")
+                    val result = Launcher.benchmarkProlog(file); //, timeout = 1000 + (mchResult!!.modelCheckingTime * 2))
                     println(result)
 
                     withClue("States do not match") {

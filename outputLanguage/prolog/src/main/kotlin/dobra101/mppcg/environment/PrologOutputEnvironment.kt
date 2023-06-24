@@ -554,8 +554,8 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             return mapOf(
                 "name" to currentOperation,
                 "count" to whileCount,
-                "condition" to evaluatedExpressions.returnWithReset(true) { condition.render() },
-                "body" to evaluatedExpressions.returnWithReset(true) { body.render() },
+                "condition" to condition.render(),
+                "body" to body.render(),
                 "lastState" to stateCount
             )
         }

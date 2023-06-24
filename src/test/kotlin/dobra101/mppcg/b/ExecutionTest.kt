@@ -4,7 +4,6 @@ import dobra101.mppcg.Launcher
 import dobra101.mppcg.Parser
 import dobra101.mppcg.environment.EnvironmentException
 import dobra101.mppcg.environment.Language
-import io.kotest.assertions.errorCollectorContextElement
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.ExpectSpec
 import io.kotest.inspectors.forAll

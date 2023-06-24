@@ -99,7 +99,7 @@ object Launcher {
         val prologResourcesPath = "outputLanguage/prolog/src/main/resources"
         val probPath = "$prologResourcesPath/ProB_Signed/probcli.sh"
         val probArgs =
-            "--model-check ${if (checkDeadlock) "" else "-nodead"} ${if (checkInvariant) "" else "-noinv"} ${if (timeout != null) "--timeout $timeout" else "-disable-time-out"} -p OPERATION_REUSE full -pref_group model_check unlimited -p COMPRESSION TRUE -noass -memory"
+            "--model-check ${if (checkDeadlock) "" else "-nodead"} ${if (checkInvariant) "" else "-noinv"} ${if (timeout != null) "--timeout $timeout" else "-disable-time-out"} -pref_group model_check unlimited -p COMPRESSION TRUE -noass -memory"
 
         val probFile = File("$prologResourcesPath/${file.nameWithoutExtension}.P")
         if (probFile.exists()) probFile.delete()
@@ -112,6 +112,7 @@ object Launcher {
         copyFile("runCfg.pl", "generator/build/generated", prologResourcesPath)
 
         val cmd = "$probPath $probArgs ${probFile.absolutePath}"
+        println("Cmd: $cmd")
         val process: Process = Runtime.getRuntime().exec(cmd)
 
         // store pid to kill prob if needed
@@ -120,11 +121,8 @@ object Launcher {
         logger.info("Started ProB with pid ${process.pid()}")
         val exitValue = process.waitFor()
 
-        println("PROB DONE")
-
         val probOutput = process.inputReader().readText()
         process.inputReader().close()
-        println("LINES: ${probOutput.lines().size}")
 
         if (exitValue != 0) {
             val error = process.errorReader().readText()

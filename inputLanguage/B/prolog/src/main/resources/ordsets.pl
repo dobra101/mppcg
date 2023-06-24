@@ -280,15 +280,15 @@ ord_seteq(Set1, Set2) :-
 %@  @example
 %@  @group
 %@  ord_setproduct(Set1, Set2, Product) :-
-%@  	(   foreach(H1,Set1),
-%@  	    param(Set2),
-%@  	    fromto(Product,P1,P3,[])
-%@  	do  (   foreach(H2,Set2),
-%@  		param(H1),
-%@  		fromto(P1,[H1-H2|P2],P2,P3)
-%@  	    do  true
-%@  	    )
-%@  	).
+%@      (   foreach(H1,Set1),
+%@          param(Set2),
+%@          fromto(Product,P1,P3,[])
+%@      do  (   foreach(H2,Set2),
+%@              param(H1),
+%@              fromto(P1,[H1-H2|P2],P2,P3)
+%@          do  true
+%@          )
+%@      ).
 %@  @end group
 %@  @end example
 :- ord_setproduct/3 is det.
