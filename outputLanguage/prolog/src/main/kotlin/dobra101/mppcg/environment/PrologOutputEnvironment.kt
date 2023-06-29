@@ -355,7 +355,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
                 val map: MutableMap<String, Any> = mutableMapOf(
                     "lhs" to expanded.lhs,
                     "rhs" to expanded.rhs,
-                    "operator" to operator2String(operator),
+                    "operator" to operator.render(),
                     "addParentheses" to (operator == LogicPredicateOperator.OR),
                     "inline" to inline(lineBreaksTotal)
                 )
@@ -371,7 +371,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         evaluatedExpressions.withReset {
             map = mapOf(
                 "predicate" to predicate.render(),
-                "operator" to operator2String(operator)
+                "operator" to operator.render()
             )
         }
         return RenderResult(renderTemplate(map))
@@ -607,7 +607,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             val map = mapOf(
                 "lhs" to expanded.lhs,
                 "rhs" to expanded.rhs,
-                "operator" to operator2String(operator),
+                "operator" to operator.render(),
                 "exprCount" to exprCount
             )
             val rendered = renderTemplate(map)
@@ -624,7 +624,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             val map = mapOf(
                 "lhs" to expanded.lhs,
                 "rhs" to expanded.rhs,
-                "operator" to operator2String(operator),
+                "operator" to operator.render(),
                 "exprCount" to exprCount
             )
             val rendered = renderTemplate(map)
@@ -641,7 +641,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             val map = mapOf(
                 "lhs" to expanded.lhs,
                 "rhs" to if (operator == BinarySequenceExpressionOperator.APPEND) "[${expanded.rhs}]" else expanded.rhs,
-                "operator" to operator2String(operator),
+                "operator" to operator.render(),
                 "exprCount" to exprCount
             )
             val rendered = renderTemplate(map)
@@ -764,7 +764,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun InfiniteSet.renderSelf(): RenderResult {
-        return RenderResult(renderTemplate(mapOf("type" to type2String(type!!))))
+        return RenderResult(renderTemplate(mapOf("type" to type.render())))
     }
 
     override fun LambdaExpression.renderSelf(): RenderResult {
@@ -792,7 +792,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         val expanded = ExpandedExpression.of(sequence)
         val map = mapOf(
             "sequence" to expanded.expression,
-            "operator" to operator2String(operator),
+            "operator" to operator.render(),
             "exprCount" to exprCount
         )
 
@@ -805,7 +805,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
 
             val map = mutableMapOf(
                 "collection" to expanded.expression,
-                "operator" to operator2String(operator),
+                "operator" to operator.render(),
                 "exprCount" to exprCount
             )
 
@@ -833,7 +833,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
 
                 val map = mapOf(
                     "value" to renderedValue,
-                    "operator" to operator2String(operator),
+                    "operator" to operator.render(),
                     "convertBoolean" to (operator == UnaryExpressionOperator.CONVERT_BOOLEAN),
                     "isMinus" to (operator == UnaryExpressionOperator.MINUS),
                     "isMinusInline" to (value is ValueExpression || value is ConcreteIdentifierExpression),
@@ -853,7 +853,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
 
             val map = mapOf(
                 "expression" to expanded.expression,
-                "operator" to operator2String(operator),
+                "operator" to operator.render(),
                 "exprCount" to exprCount
             )
 
@@ -1099,11 +1099,49 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
                 BinaryExpressionOperator.PARALLEL_PRODUCT -> "mppcg_parallelProduct"
             }
         }
-        return operator2String(operator)
+        return operator.render()
     }
 
-    override fun operator2String(operator: BinaryCollectionOperator): String {
-        return when (operator) {
+
+    override fun BinaryPredicateOperator.render(): String {
+        return when (this) {
+            BinaryPredicateOperator.GREATER -> ">"
+            BinaryPredicateOperator.GREATER_EQUAL -> ">="
+            BinaryPredicateOperator.LESS -> "<"
+            BinaryPredicateOperator.LESS_EQUAL -> "=<"
+            BinaryPredicateOperator.EQUAL -> "mppcg_equal"
+            BinaryPredicateOperator.NOT_EQUAL -> "mppcg_notEqual"
+            BinaryPredicateOperator.MEMBER -> "mppcg_member"
+            BinaryPredicateOperator.NOT_MEMBER -> "\\+ ${BinaryPredicateOperator.MEMBER.render()}"
+            BinaryPredicateOperator.SUBSET -> "mppcg_subset"
+            BinaryPredicateOperator.STRICT_SUBSET -> "mppcg_subsetStrict"
+        }
+    }
+
+    override fun BinaryExpressionOperator.render(): String {
+        return when (this) {
+            BinaryExpressionOperator.MOD -> "mod"
+            BinaryExpressionOperator.DIV -> "//"
+            BinaryExpressionOperator.POW -> "mppcg_pow"
+            BinaryExpressionOperator.ADD -> "+"
+            BinaryExpressionOperator.MINUS -> "-"
+            BinaryExpressionOperator.MULT -> "*"
+            BinaryExpressionOperator.PARALLEL_PRODUCT -> "mppcg_parallelProduct"
+        }
+    }
+
+    override fun LogicPredicateOperator.render(): String {
+        return when (this) {
+            LogicPredicateOperator.AND -> ", "
+            LogicPredicateOperator.OR -> "; "
+            LogicPredicateOperator.IMPLIES -> " -> "
+            LogicPredicateOperator.EQUIVALENCE -> " = "
+            LogicPredicateOperator.NOT -> "\\+ "
+        }
+    }
+
+    override fun BinaryCollectionOperator.render(): String {
+        return when (this) {
             BinaryCollectionOperator.INTERSECTION -> "mppcg_setIntersection"
             BinaryCollectionOperator.SUBTRACTION -> "mppcg_setSubtraction"
             BinaryCollectionOperator.UNION -> "mppcg_setUnion"
@@ -1113,12 +1151,21 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         }
     }
 
-    override fun operator2String(operator: BinaryFunctionOperator): String {
-        return "mppcg_" + super.operator2String(operator)
+    override fun BinaryFunctionOperator.render(): String {
+        return when (this) {
+            BinaryFunctionOperator.DOMAIN_RESTRICTION -> "mppcg_domainRestriction"
+            BinaryFunctionOperator.DOMAIN_SUBTRACTION -> "mppcg_domainSubtraction"
+            BinaryFunctionOperator.IMAGE -> "mppcg_image"
+            BinaryFunctionOperator.OVERWRITE -> "mppcg_override"
+            BinaryFunctionOperator.RANGE_RESTRICTION -> "mppcg_rangeRestriction"
+            BinaryFunctionOperator.RANGE_SUBTRACTION -> "mppcg_rangeSubtraction"
+            BinaryFunctionOperator.FORWARD_COMPOSITION -> "mppcg_forwardComposition"
+            BinaryFunctionOperator.ITERATE -> "mppcg_iterate"
+        }
     }
 
-    override fun operator2String(operator: UnaryCollectionOperator): String {
-        return when (operator) {
+    override fun UnaryCollectionOperator.render(): String {
+        return when (this) {
             UnaryCollectionOperator.MAX -> "mppcg_max"
             UnaryCollectionOperator.MIN -> "mppcg_min"
             UnaryCollectionOperator.CARD -> "mppcg_card"
@@ -1127,12 +1174,23 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         }
     }
 
-    override fun operator2String(operator: UnaryFunctionOperator): String {
-        return "mppcg_" + super.operator2String(operator)
+    override fun CallFunctionOperator.render(): String {
+        return when (this) {
+            CallFunctionOperator.GET -> "get"
+            CallFunctionOperator.SET -> "put"
+        }
     }
 
-    override fun operator2String(operator: BinarySequenceExpressionOperator): String {
-        return when (operator) {
+    override fun UnaryFunctionOperator.render(): String {
+        return when (this) {
+            UnaryFunctionOperator.DOMAIN -> "mppcg_domain"
+            UnaryFunctionOperator.RANGE -> "mppcg_range"
+            UnaryFunctionOperator.REVERSE -> "mppcg_inverse"
+        }
+    }
+
+    override fun BinarySequenceExpressionOperator.render(): String {
+        return when (this) {
             BinarySequenceExpressionOperator.RESTRICT_FRONT -> "mppcg_sequenceRestrictFront"
             BinarySequenceExpressionOperator.RESTRICT_TAIL -> "mppcg_sequenceRestrictTail"
             BinarySequenceExpressionOperator.APPEND -> "append"
@@ -1141,8 +1199,8 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         }
     }
 
-    override fun operator2String(operator: UnarySequenceExpressionOperator): String {
-        return when (operator) {
+    override fun UnarySequenceExpressionOperator.render(): String {
+        return when (this) {
             UnarySequenceExpressionOperator.FRONT -> "mppcg_sequenceFront"
             UnarySequenceExpressionOperator.TAIL -> "mppcg_sequenceTail"
             UnarySequenceExpressionOperator.FIRST -> "mppcg_sequenceFirst"
@@ -1151,28 +1209,8 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         }
     }
 
-    private fun operator2String(operator: BinaryPredicateOperator, infiniteSet: Boolean): String {
-        if (infiniteSet) {
-            return when (operator) {
-                BinaryPredicateOperator.EQUAL -> "mppcg_equal"
-                BinaryPredicateOperator.NOT_EQUAL -> "mppcg_notEqual"
-                else -> operator2String(operator)
-            }
-        }
-        return operator2String(operator)
-    }
-
-    override fun operator2String(operator: BinaryExpressionOperator): String {
-        return when (operator) {
-            BinaryExpressionOperator.MOD -> "mod"
-            BinaryExpressionOperator.DIV -> "//"
-            BinaryExpressionOperator.POW -> "mppcg_pow"
-            else -> super.operator2String(operator)
-        }
-    }
-
-    override fun operator2String(operator: UnaryExpressionOperator): String {
-        return when (operator) {
+    override fun UnaryExpressionOperator.render(): String {
+        return when (this) {
             UnaryExpressionOperator.CONVERT_BOOLEAN -> ""
             UnaryExpressionOperator.PRED -> "mppcg_pred"
             UnaryExpressionOperator.SUCC -> "mppcg_succ"
@@ -1180,14 +1218,15 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         }
     }
 
-    override fun operator2String(operator: LogicPredicateOperator): String {
-        return when (operator) {
-            LogicPredicateOperator.AND -> ", "
-            LogicPredicateOperator.OR -> "; "
-            LogicPredicateOperator.IMPLIES -> " -> "
-            LogicPredicateOperator.EQUIVALENCE -> " = "
-            LogicPredicateOperator.NOT -> "\\+ "
+    private fun operator2String(operator: BinaryPredicateOperator, infiniteSet: Boolean): String {
+        if (infiniteSet) {
+            return when (operator) {
+                BinaryPredicateOperator.EQUAL -> "mppcg_equal"
+                BinaryPredicateOperator.NOT_EQUAL -> "mppcg_notEqual"
+                else -> operator.render()
+            }
         }
+        return operator.render()
     }
 
     private fun isConstant(identifierExpression: IdentifierExpression): Boolean {
@@ -1208,8 +1247,8 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         return concreteVariables.find { (it as? ConcreteIdentifierExpression)?.name == cc.name } != null
     }
 
-    override fun type2String(type: Type): String {
-        return when (type) {
+    override fun Type?.render(): String {
+        return when (this) {
             MPPCG_Nat1 -> "'NAT1'"
             MPPCG_Nat -> "'NAT'"
             MPPCG_Int -> "'INT'"
@@ -1217,10 +1256,10 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             MPPCG_Natural -> "'NATURAL'"
             MPPCG_Natural1 -> "'NATURAL1'"
             MPPCG_Boolean -> "'BOOL'"
-            is TypeSet -> type2String(type.type)
+            is TypeSet -> type.render()
             else -> {
-                println(type)
-                TODO("type2String not implemented (${type::class.simpleName})")
+                println(this)
+                TODO("type2String not implemented (${this!!::class.simpleName})")
             }
         }
     }

@@ -6,6 +6,7 @@ import dobra101.mppcg.node.b.Operation
 import dobra101.mppcg.node.expression.*
 import dobra101.mppcg.node.substitution.AssignSubstitution
 
+// TODO: remove optimizer
 // TODO: parts of optimizer are input language specific
 class JavaOptimizer(private val environment: JavaOutputEnvironment) {
 
@@ -54,7 +55,7 @@ class JavaOptimizer(private val environment: JavaOutputEnvironment) {
             } else {
                 mapOf(
                     "identifier" to target.name,
-                    "operator" to environment.operator2String(operator),
+                    "operator" to environment.render(operator),
                     "rhs" to right.render()
                 )
             }

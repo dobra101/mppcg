@@ -34,7 +34,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     override fun AnonymousCollectionNode.renderSelf(): RenderResult {
         val map = mutableMapOf(
             "elements" to elements.render(),
-            "type" to type2String(type!!)
+            "type" to type.render()
         )
 
         return RenderResult(renderTemplate(map))
@@ -44,7 +44,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         val map = mapOf(
             "lhs" to left.render(),
             "rhs" to right.render(),
-            "operator" to if (left.type is TypeNumber) operator2String(operator) else customOperator2String(operator),
+            "operator" to if (left.type is TypeNumber) operator.render() else customOperator2String(operator),
             "customOperator" to (left.type !is TypeNumber)
         )
 
@@ -147,7 +147,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             }
 
             val map = mapOf(
-                "type" to type2String(left.type!!),
+                "type" to left.type.render(),
                 "identifier" to left.render(),
                 "body" to right.render(),
                 "ic" to iteratorCount
@@ -158,7 +158,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         if (operator != BinaryPredicateOperator.MEMBER) {
             val map = mapOf(
                 "lhs" to left.render(),
-                "operator" to operator2String(operator),
+                "operator" to operator.render(),
                 "rhs" to right.render(),
                 "isMethodCall" to (operator == BinaryPredicateOperator.SUBSET
                         || operator == BinaryPredicateOperator.NOT_MEMBER
@@ -181,7 +181,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
 
         if (memberAsIterator) {
             val map = mapOf(
-                "type" to type2String(left.type!!),
+                "type" to left.type.render(),
                 "name" to left.render(),
                 "collection" to right.render()
             )
@@ -203,8 +203,8 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
                 // type check
                 val map = mapOf(
                     "lhs" to left.render(),
-                    "rhs" to type2String((right as AnonymousCollectionNode).collectionType!!),
-                    "operator" to operator2String(operator)
+                    "rhs" to (right as AnonymousCollectionNode).collectionType.render(),
+                    "operator" to operator.render()
                 )
                 return RenderResult(renderTemplate(map))
             }
@@ -218,7 +218,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         val map = mapOf(
             "lhs" to left.render(),
             "rhs" to right.render(),
-            "operator" to operator2String(operator)
+            "operator" to operator.render()
         )
         return RenderResult(renderTemplate(map))
     }
@@ -229,7 +229,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
 
         val map = mapOf(
             "lhs" to lhs,
-            "operator" to operator2String(operator),
+            "operator" to operator.render(),
             "rhs" to rhs,
             "parenthesis" to (operator != LogicPredicateOperator.AND),
             "implication" to (operator == LogicPredicateOperator.IMPLIES) // TODO: refactor
@@ -241,7 +241,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     override fun UnaryLogicPredicate.renderSelf(): RenderResult {
         val map = mapOf(
             "predicate" to predicate.render(),
-            "operator" to operator2String(operator)
+            "operator" to operator.render()
         )
         return RenderResult(renderTemplate(map))
     }
@@ -332,7 +332,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         val declarations = variables.filterIsInstance<IdentifierExpression>()
             .map {
                 val map = mapOf(
-                    "type" to type2String(it.type!!),
+                    "type" to it.type.render(),
                     "lhs" to it.name,
                     "classVar" to true
                 )
@@ -360,14 +360,14 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             mapOf(
                 "lhs" to left.render(),
                 "rhs" to (right as AnonymousCollectionNode).elements.render(),
-                "operator" to operator2String(operator),
+                "operator" to operator.render(),
                 "rhsIsList" to true
             )
         } else {
             mapOf(
                 "lhs" to left.render(),
                 "rhs" to right.render(),
-                "operator" to operator2String(operator)
+                "operator" to operator.render()
             )
         }
         return RenderResult(renderTemplate(map))
@@ -377,7 +377,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         val map = mapOf(
             "left" to left.render(),
             "right" to right.render(),
-            "operator" to operator2String(operator),
+            "operator" to operator.render(),
             "swap" to (operator == BinaryFunctionOperator.DOMAIN_SUBTRACTION || operator == BinaryFunctionOperator.DOMAIN_RESTRICTION)
         )
         return RenderResult(renderTemplate(map))
@@ -387,7 +387,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         val map = mapOf(
             "left" to left.render(),
             "right" to right.render(),
-            "operator" to operator2String(operator)
+            "operator" to operator.render()
         )
         return RenderResult(renderTemplate(map))
     }
@@ -399,7 +399,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         ) {
             val map = mapOf(
                 "expression" to parameters.render(),
-                "operator" to operator2String((expression as BinaryCollectionExpression).operator)
+                "operator" to operator.render()
             )
             return RenderResult(renderTemplate(map))
         }
@@ -407,7 +407,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         val map = mapOf(
             "expression" to expression.render(),
             "parameters" to parameters.render(),
-            "operator" to operator2String(operator)
+            "operator" to operator.render()
         )
         return RenderResult(renderTemplate(map))
     }
@@ -428,7 +428,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
                 val id = (it as BinaryPredicate).left
                 val key = id.render().rendered
                 if (!supplier.containsKey(key)) {
-                    supplier[key] = Pair(type2String(id.type!!), it.right.render().rendered)
+                    supplier[key] = Pair(id.type.render(), it.right.render().rendered)
                 }
             } else {
                 condition.add(it)
@@ -457,7 +457,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         val map = mapOf(
             "name" to name,
             "value" to if (value is LambdaExpression || value is ComprehensionSet) null else value.render(),
-            "type" to type2String(type!!),
+            "type" to type.render(),
             "declare" to (currentOperation == null)
         )
         return RenderResult(renderTemplate(map))
@@ -490,7 +490,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         }
 
         val map = mapOf(
-            "type" to type2String(type!!),
+            "type" to type.render(),
             "interval" to interval
         )
         return RenderResult(renderTemplate(map))
@@ -505,11 +505,11 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             }
         val map = mapOf(
             "identifier" to identifiers.render(),
-            "type" to type2String(type!!),
+            "type" to type.render(),
             "predicate" to predicateRendered,
             "expression" to expression.render(),
-            "exprType" to type2String(expression.type!!),
-            "identifierType" to identifiers.map { type2String(it.type!!) }
+            "exprType" to expression.type.render(),
+            "identifierType" to identifiers.map { it.type.render() }
         )
         return RenderResult(renderTemplate(map))
     }
@@ -517,7 +517,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     override fun Sequence.renderSelf(): RenderResult {
         val map = mapOf(
             "elements" to elements.render(),
-            "type" to type2String(type!!)
+            "type" to type.render()
         )
         return RenderResult(renderTemplate(map))
     }
@@ -525,7 +525,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     override fun UnarySequenceExpression.renderSelf(): RenderResult {
         val map = mapOf(
             "sequence" to sequence.render(),
-            "operator" to operator2String(operator)
+            "operator" to operator.render()
         )
         return RenderResult(renderTemplate(map))
     }
@@ -533,7 +533,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     override fun UnaryCollectionExpression.renderSelf(): RenderResult {
         val map = mapOf(
             "collection" to collection.render(),
-            "operator" to operator2String(operator)
+            "operator" to operator.render()
         )
         return RenderResult(renderTemplate(map))
     }
@@ -541,7 +541,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     override fun UnaryExpression.renderSelf(): RenderResult {
         val map = mapOf(
             "value" to value.render(),
-            "operator" to operator2String(operator),
+            "operator" to operator.render(),
             "parenthesis" to (operator != UnaryExpressionOperator.MINUS)
         )
         return RenderResult(renderTemplate(map))
@@ -550,7 +550,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     override fun UnaryFunctionExpression.renderSelf(): RenderResult {
         val map = mapOf(
             "expression" to expression.render(),
-            "operator" to operator2String(operator)
+            "operator" to operator.render()
         )
         return RenderResult(renderTemplate(map))
     }
@@ -623,7 +623,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         remainingPredicates.forEach {
             val id = (it as BinaryPredicate).left
             val itMap = mapOf(
-                "type" to type2String(id.type!!),
+                "type" to id.type.render(),
                 "name" to id.render().rendered,
                 "collection" to it.right.render().rendered,
                 "body" to currentBody
@@ -719,7 +719,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
                     "parameterExpression",
                     mapOf(
                         "name" to it.name,
-                        "type" to type2String(it.type!!)
+                        "type" to it.type.render()
                     )
                 )
             }
@@ -727,7 +727,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         val declarations = returnValues.filterIsInstance<IdentifierExpression>()
             .map {
                 val map = mapOf(
-                    "type" to type2String(it.type!!),
+                    "type" to it.type.render(),
                     "name" to it.name,
                     "value" to "null"
                 )
@@ -740,7 +740,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             "returnValues" to returnValues.render(),
             "returnValueDeclarations" to declarations,
             "body" to bodyUsed?.render(),
-            "type" to type2String(type)
+            "type" to type.render()
         )
 
         currentOperation = null
@@ -755,7 +755,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
                     "parameterExpression",
                     mapOf(
                         "name" to it.name,
-                        "type" to type2String(it.type!!)
+                        "type" to it.type.render()
                     )
                 )
             }
@@ -791,8 +791,8 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         return RenderResult(renderTemplate(map))
     }
 
-    override fun type2String(type: Type): String {
-        return when (type) {
+    override fun Type?.render(): String {
+        return when (this) {
             MPPCG_Boolean -> "Boolean"
             MPPCG_Nat1, MPPCG_Nat, MPPCG_Natural,
             MPPCG_Integer, MPPCG_Int -> "Integer"
@@ -800,30 +800,30 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             MPPCG_Real, MPPCG_Float -> "Double"
             MPPCG_String -> "String"
             MPPCG_Void -> "void"
-            is TypeRelation -> "BRelation<${type2String(type.from)}, ${type2String(type.to)}>"
-            is TypeSet -> "BSet<${type2String(type.type)}>"
-            is TypeCouple -> "BCouple<${type2String(type.from)}, ${type2String(type.to)}>"
+            is TypeRelation -> "BRelation<${from.render()}, ${to.render()}>"
+            is TypeSet -> "BSet<${type.render()}>"
+            is TypeCouple -> "BCouple<${from.render()}, ${to.render()}>"
             is TypeOperator -> {
-                when (type.name) {
+                when (name) {
                     "sequence" -> {
-                        "BSequence<${type2String(type.types[0])}>"
+                        "BSequence<${types[0].render()}>"
                     }
 
                     else -> {
-                        type.name.capitalize()
+                        name.capitalize()
                     }
                 }
             }
 
             else -> {
-                println(type)
-                throw TypeException(type::class.simpleName!!)
+                println(this)
+                throw TypeException(this!!::class.simpleName!!)
             }
         }
     }
 
-    override fun operator2String(operator: BinaryPredicateOperator): String {
-        return when (operator) {
+    override fun BinaryPredicateOperator.render(): String {
+        return when (this) {
             BinaryPredicateOperator.GREATER -> ">"
             BinaryPredicateOperator.GREATER_EQUAL -> ">="
             BinaryPredicateOperator.LESS -> "<"
@@ -837,8 +837,30 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         }
     }
 
-    override fun operator2String(operator: BinaryCollectionOperator): String {
-        return when (operator) {
+    override fun BinaryExpressionOperator.render(): String {
+        return when (this) {
+            BinaryExpressionOperator.ADD -> "+"
+            BinaryExpressionOperator.MINUS -> "-"
+            BinaryExpressionOperator.MULT -> "*"
+            BinaryExpressionOperator.DIV -> "/"
+            BinaryExpressionOperator.MOD -> "%"
+            BinaryExpressionOperator.POW -> "**"
+            BinaryExpressionOperator.PARALLEL_PRODUCT -> "mppcg_parallelProduct"
+        }
+    }
+
+    override fun LogicPredicateOperator.render(): String {
+        return when (this) {
+            LogicPredicateOperator.AND -> "&&"
+            LogicPredicateOperator.OR -> "||"
+            LogicPredicateOperator.IMPLIES -> "|| !"
+            LogicPredicateOperator.EQUIVALENCE -> "=="
+            LogicPredicateOperator.NOT -> "!"
+        }
+    }
+
+    override fun BinaryCollectionOperator.render(): String {
+        return when (this) {
             BinaryCollectionOperator.INTERSECTION -> "intersection"
             BinaryCollectionOperator.SUBTRACTION -> "subtraction"
             BinaryCollectionOperator.UNION -> "union"
@@ -848,6 +870,72 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         }
     }
 
+    override fun BinaryFunctionOperator.render(): String {
+        return when (this) {
+            BinaryFunctionOperator.DOMAIN_RESTRICTION -> "domainRestriction"
+            BinaryFunctionOperator.DOMAIN_SUBTRACTION -> "domainSubtraction"
+            BinaryFunctionOperator.IMAGE -> "image"
+            BinaryFunctionOperator.OVERWRITE -> "override"
+            BinaryFunctionOperator.RANGE_RESTRICTION -> "rangeRestriction"
+            BinaryFunctionOperator.RANGE_SUBTRACTION -> "rangeSubtraction"
+            BinaryFunctionOperator.FORWARD_COMPOSITION -> "forwardComposition"
+            BinaryFunctionOperator.ITERATE -> "iterate"
+        }
+    }
+
+    override fun UnaryCollectionOperator.render(): String {
+        return when (this) {
+            UnaryCollectionOperator.MAX -> "max"
+            UnaryCollectionOperator.MIN -> "min"
+            UnaryCollectionOperator.CARD -> "card"
+            UnaryCollectionOperator.POW -> "pow"
+            UnaryCollectionOperator.POW1 -> "pow1"
+        }
+    }
+
+    override fun CallFunctionOperator.render(): String {
+        return when (this) {
+            CallFunctionOperator.GET -> "get"
+            CallFunctionOperator.SET -> "put"
+        }
+    }
+
+    override fun UnaryFunctionOperator.render(): String {
+        return when (this) {
+            UnaryFunctionOperator.DOMAIN -> "domain"
+            UnaryFunctionOperator.RANGE -> "range"
+            UnaryFunctionOperator.REVERSE -> "inverse"
+        }
+    }
+
+    override fun BinarySequenceExpressionOperator.render(): String {
+        return when (this) {
+            BinarySequenceExpressionOperator.RESTRICT_FRONT -> "restrict_front"
+            BinarySequenceExpressionOperator.RESTRICT_TAIL -> "restrict_tail"
+            BinarySequenceExpressionOperator.APPEND -> "append"
+            BinarySequenceExpressionOperator.PREPEND -> "prepend"
+            BinarySequenceExpressionOperator.CONCAT -> "concat"
+        }
+    }
+
+    override fun UnarySequenceExpressionOperator.render(): String {
+        return when (this) {
+            UnarySequenceExpressionOperator.FRONT -> "front"
+            UnarySequenceExpressionOperator.TAIL -> "tail"
+            UnarySequenceExpressionOperator.FIRST -> "first"
+            UnarySequenceExpressionOperator.LAST -> "last"
+            UnarySequenceExpressionOperator.REVERSE -> "reverse"
+        }
+    }
+
+    override fun UnaryExpressionOperator.render(): String {
+        return when (this) {
+            UnaryExpressionOperator.CONVERT_BOOLEAN -> ""
+            UnaryExpressionOperator.PRED -> "pred"
+            UnaryExpressionOperator.SUCC -> "succ"
+            UnaryExpressionOperator.MINUS -> "-"
+        }
+    }
 
     private fun customOperator2String(operator: BinaryExpressionOperator): String {
         return when (operator) {
