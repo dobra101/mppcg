@@ -17,3 +17,7 @@
 
 /prolog/src/main/resources/ProB_Signed/
 /prolog/src/main/resources/runtimes.txt
+/inputLanguage/B/java/build/
+/inputLanguage/B/prolog/build/
+/outputLanguage/prolog/build/
+/outputLanguage/java/build/

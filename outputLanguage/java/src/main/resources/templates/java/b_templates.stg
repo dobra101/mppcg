@@ -94,7 +94,6 @@ select(condition, then, elseSubstitution, when) ::= <<
 >>
 
 parallelSubstitution(substitutions) ::= <<
-// Parallel Substitution:
 <substitutions; separator="\n">
 >>
 

@@ -1,54 +1,6 @@
 machine(name, parameters, constraints, sets, constants, concrete_constants, properties, definitions, variables, concrete_variables, invariant, assertions, initialization, operations, whileDefinitions, quantifierDefinitions) ::= <<
 :- use_module(btypes).
 
-% MODEL CHECKING START %
-modelcheck_start(States, TCount) :-
-    start(S0),
-    \+ prop(S0, unsafe),
-    modelcheck(S0, [], VisitedStates, TCount),
-    !,
-    length(VisitedStates, SCount),
-    States is SCount + 1.
-modelcheck_start(_, _) :-
-    print('Counterexample found').
-
-modelcheck(State, VisitedStates, NewVisitedStates, TransitionCount) :-
-    findall(T-NextState, trans(T, State, NextState), Trans),
-
-    Trans \= [], % deadlock check
-
-    prune_transitions(Trans, [State | VisitedStates], Transitions),
-    no_violations(Transitions), % invariant check
-
-    modelcheck_all(Transitions, [State | VisitedStates], NewVisitedStates, TCount),
-
-    length(Trans, TransCount),
-    TransitionCount is TCount + TransCount.
-
-modelcheck_all([], VisitedStates, VisitedStates, 0).
-modelcheck_all([(_-State) | Tail], VisitedStates, NewVisitedStates, TransitionCount) :-
-    modelcheck(State, VisitedStates, VisitedStates1, TCount),
-    modelcheck_all(Tail, VisitedStates1, NewVisitedStates, TCount1),
-    !,
-    TransitionCount is TCount + TCount1.
-
-prune_transitions([], _, []).
-prune_transitions([(_-State) | Tail], VisitedStates, NewTail) :-
-    member(State, VisitedStates),
-    !,
-    prune_transitions(Tail, VisitedStates, NewTail).
-prune_transitions([Head | Tail], VisitedStates, [Head | NewTail]) :-
-    prune_transitions(Tail, VisitedStates, NewTail).
-
-no_violations([]).
-no_violations([(_-State) | Tail]) :-
-    \+ prop(State, unsafe),
-    !,
-    no_violations(Tail).
-
-% MODEL CHECKING END %
-
-
 <if(sets)>
 <sets; separator=".\n\n">.
 <endif>

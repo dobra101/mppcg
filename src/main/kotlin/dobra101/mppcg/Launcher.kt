@@ -28,6 +28,9 @@ object Launcher {
     ): File {
         /**
          * Copies a file with a given name from the input path to the output path.
+         *
+         * @param name The name of the file
+         * @param inputPath The path to the file's directory
          */
         fun copyFile(name: String, inputPath: String) {
             val inputFile = File("$inputPath/$name")

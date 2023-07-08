@@ -55,11 +55,17 @@ val killProB = tasks.register("killProB") {
 tasks {
     named("run") {
         dependsOn(killProB)
+        dependsOn(":inputLanguage:B:java:build")
         doFirst {
             mkdir("generator/build/generated")
         }
-        doLast{
+        doLast {
             killProB
+            copy {
+                from("inputLanguage/B/java/build/libs")
+                into("generator/build/generated")
+                include("btypes.jar")
+            }
         }
     }
 
@@ -71,7 +77,7 @@ tasks {
         dependsOn(":inputLanguage:B:java:build")
         doFirst {
             copy {
-                from("inputLanguage/B/java/build")
+                from("inputLanguage/B/java/build/libs")
                 into("generator/build/generated")
                 include("btypes.jar")
             }
