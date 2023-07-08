@@ -9,6 +9,10 @@ import dobra101.mppcg.node.collection.EnumCollectionNode
 import dobra101.mppcg.node.collection.EnumEntry
 import dobra101.mppcg.node.expression.IdentifierExpression
 
+/**
+ * Overrides the visitor methods which visit collection nodes.
+ * The result is a converted collection.
+ */
 class CollectionVisitor : AbstractVisitor() {
 
     override var result: CollectionNode? = null

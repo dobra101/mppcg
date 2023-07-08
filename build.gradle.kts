@@ -34,6 +34,7 @@ application {
     mainClass.set("dobra101.mppcg.LauncherKt")
 }
 
+// needed if ProB is running a background task and the test/benchmark has been canceled via intellij
 val killProB = tasks.register("killProB") {
     if (!Os.isFamily(Os.FAMILY_MAC)) {
         exec {
@@ -52,6 +53,18 @@ val killProB = tasks.register("killProB") {
     }
 }
 
+val copyJavaLibs = copy {
+    from("inputLanguage/B/java/build/libs")
+    into("generator/build/generated")
+    include("btypes.jar")
+}
+
+val copyPrologLibs = copy {
+    from("inputLanguage/B/prolog/src/main/resources")
+    into("generator/build/generated")
+    include("btypes.pl", "ordsets.pl")
+}
+
 tasks {
     named("run") {
         dependsOn(killProB)
@@ -61,11 +74,8 @@ tasks {
         }
         doLast {
             killProB
-            copy {
-                from("inputLanguage/B/java/build/libs")
-                into("generator/build/generated")
-                include("btypes.jar")
-            }
+            copyJavaLibs
+            copyPrologLibs
         }
     }
 
@@ -76,11 +86,8 @@ tasks {
     named("test") {
         dependsOn(":inputLanguage:B:java:build")
         doFirst {
-            copy {
-                from("inputLanguage/B/java/build/libs")
-                into("generator/build/generated")
-                include("btypes.jar")
-            }
+            copyJavaLibs
+            copyPrologLibs
         }
     }
 }

@@ -14,6 +14,11 @@ import dobra101.mppcg.node.predicate.LogicPredicateOperator
 import dobra101.mppcg.node.predicate.Predicate
 import dobra101.mppcg.node.substitution.Substitution
 
+/**
+ * Utility class to provide mode extension functions.
+ *
+ * For example, abstract extension functions for rendering operator names are provided by this class.
+ */
 abstract class EnvironmentUtils {
     abstract fun BinaryPredicateOperator.render(): String
     abstract fun BinaryExpressionOperator.render(): String

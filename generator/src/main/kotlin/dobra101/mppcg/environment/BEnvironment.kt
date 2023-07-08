@@ -14,7 +14,7 @@ import dobra101.mppcg.node.substitution.ParallelSubstitution
 
 /**
  * Provides rendering methods only used in B models.
- * Extends the [OutputLanguageEnvironment].
+ * Supplements the [OutputLanguageEnvironment].
  */
 interface BEnvironment {
 
@@ -50,5 +50,4 @@ interface BEnvironment {
     fun Machine.renderSelf(): RenderResult
     fun Operation.renderSelf(): RenderResult
     fun Transition.renderSelf(): RenderResult
-
 }

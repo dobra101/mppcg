@@ -41,8 +41,9 @@ Example calls for benchmarked machines:
 ***Important***: Currently, the machine files have to be located in [src/main/resources/machines](src/main/resources/machines)
 
 The files will then be generated to `generator/build/generated/`
-
 After generation, the run config and required libraries of the *input language module* are also copied to `generator/build/generated`.
+
+*Note*: MPPCG does currently only support a subset of B. Unsupported nodes throw an exception in the adapter.
 
 ## Running Tests
 To run tests, the environment variable `jasper` need to be set.

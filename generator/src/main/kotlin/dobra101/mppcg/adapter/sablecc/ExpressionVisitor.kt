@@ -10,6 +10,10 @@ import dobra101.mppcg.node.b.Sequence
 import dobra101.mppcg.node.collection.*
 import dobra101.mppcg.node.expression.*
 
+/**
+ * Overrides the visitor methods which visit expression nodes.
+ * The result is a converted expression.
+ */
 class ExpressionVisitor : AbstractVisitor() {
 
     override var result: Expression? = null

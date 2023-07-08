@@ -14,6 +14,8 @@ import java.util.*
  * This is the [OutputLanguageEnvironment] for Java.
  *
  * Here, the ```renderSelf```-method is implemented for each node.
+ *
+ * Collapse all methods for a better understanding of what this class does.
  */
 class JavaOutputEnvironment : OutputLanguageEnvironment() {
     override val templateDir = "templates/java"
@@ -46,7 +48,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         val map = mapOf(
             "lhs" to left.render(),
             "rhs" to right.render(),
-            "operator" to if (left.type is TypeNumber) operator.render() else customOperator2String(operator),
+            "operator" to if (left.type is TypeNumber) operator.render() else operator.renderCustomMethod(),
             "customOperator" to (left.type !is TypeNumber)
         )
 
@@ -112,7 +114,6 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         TODO("Not yet implemented")
     }
 
-    // HINT: Same for Java and Prolog
     override fun ValueExpression.renderSelf(): RenderResult {
         val map = mapOf("value" to value)
         return RenderResult(renderTemplate(map))
@@ -252,6 +253,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         return RenderResult(renderTemplate(map))
     }
 
+
     /* ---------- SUBSTITUTIONS ---------- */
     override fun AssignSubstitution.renderSelf(): RenderResult {
         fun canBeFurtherOptimized(expr: Expression, operator: BinaryExpressionOperator): Boolean {
@@ -346,6 +348,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         return RenderResult(renderTemplate(map))
     }
 
+
     /* ---------- CLASS BLOCK ---------- */
     override fun ClassVariables.renderSelf(): RenderResult {
         val declarations = variables.filterIsInstance<IdentifierExpression>()
@@ -364,6 +367,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
 
         return RenderResult(renderTemplate(map))
     }
+
 
     /* ---------- B NODES ---------- */
     override fun Function.renderSelf(): RenderResult {
@@ -573,7 +577,6 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         return RenderResult(renderTemplate(map))
     }
 
-    // HINT: SAME FOR JAVA AND PROLOG
     override fun Invariant.renderSelf(): RenderResult {
         inInvariant = true
         val renderedPredicates = List(predicates.size) { idx ->
@@ -807,6 +810,8 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         return RenderResult(renderTemplate(map))
     }
 
+
+    /* ---------- TYPES AND OPERATORS ---------- */
     override fun Type?.render(): String {
         return when (this) {
             MPPCG_Boolean -> "Boolean"
@@ -953,8 +958,8 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         }
     }
 
-    private fun customOperator2String(operator: BinaryExpressionOperator): String {
-        return when (operator) {
+    private fun BinaryExpressionOperator.renderCustomMethod(): String {
+        return when (this) {
             BinaryExpressionOperator.ADD -> "add"
             BinaryExpressionOperator.MINUS -> "minus"
             BinaryExpressionOperator.MULT -> "mult"

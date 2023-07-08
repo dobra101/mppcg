@@ -30,6 +30,7 @@ abstract class AbstractVisitor: DepthFirstAdapter() {
         }
     }
 
+    // ensure that every node overrides its visitor
     override fun defaultCase(node: Node) {
         throw VisitorException("Not implemented ${node::class}")
     }

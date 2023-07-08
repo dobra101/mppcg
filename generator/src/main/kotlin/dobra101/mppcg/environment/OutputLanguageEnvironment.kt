@@ -18,9 +18,9 @@ import java.util.logging.Logger
 
 /**
  * Contains the rendering functions for each node of an intermediate code representation.
- * Therefore, each node's render()-method is delegated to the correct renderSelf()-method.
+ * Therefore, each node's `render`-method is delegated to the correct `renderSelf`-method.
  *
- * Collects also the StringTemplate-files and builds a STGroup which can be used to fill the templates
+ * Collects also the StringTemplate-files and builds a [STGroup] which can be used to fill the templates
  * using the template name and a map of arguments.
  */
 abstract class OutputLanguageEnvironment : EnvironmentUtils(), BEnvironment {
@@ -183,6 +183,14 @@ abstract class OutputLanguageEnvironment : EnvironmentUtils(), BEnvironment {
         return st.render()
     }
 
+    /**
+     * Extension function for [MPPCGNode] to simplify calls by accessing its class fields.
+     *
+     * Calls [renderTemplate].
+     *
+     * @param map The arguments as key (name) - value pairs
+     * @return The rendered string
+     */
     fun MPPCGNode.renderTemplate(map: Map<String, Any?> = emptyMap()): String {
         return renderTemplate(templateName, map)
     }

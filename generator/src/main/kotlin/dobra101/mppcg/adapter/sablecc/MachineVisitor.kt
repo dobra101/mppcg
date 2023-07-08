@@ -10,6 +10,10 @@ import dobra101.mppcg.node.predicate.BinaryPredicate
 import dobra101.mppcg.node.predicate.BinaryPredicateOperator
 import dobra101.mppcg.node.predicate.Predicate
 
+/**
+ * The machine visitor converts the components of the B machine to intermediate nodes.
+ * The result is a program node containing every converted child node.
+ */
 class MachineVisitor : AbstractVisitor() {
     override var result: Machine? = null
 
@@ -18,11 +22,11 @@ class MachineVisitor : AbstractVisitor() {
     private var constraints: Predicate? = null
     var sets: List<CollectionNode> = emptyList()
     var constants: List<Expression> = emptyList()
-    var concreteConstants: MutableList<Expression> = mutableListOf()
+    private var concreteConstants: MutableList<Expression> = mutableListOf()
     private var properties: List<Predicate> = emptyList()
     private var definitions: Predicate? = null
     var variables: List<Expression> = emptyList()
-    var concreteVariables: List<Expression> = emptyList()
+    private var concreteVariables: List<Expression> = emptyList()
     private var initialization: Initialization = Initialization()
     private var invariant: Invariant = Invariant()
     private var assertions: List<Predicate> = emptyList()

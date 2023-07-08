@@ -4,6 +4,10 @@ import de.be4.classicalb.core.parser.node.*
 import dobra101.mppcg.node.expression.IdentifierExpression
 import dobra101.mppcg.node.predicate.*
 
+/**
+ * Overrides the visitor methods which visit predicate nodes.
+ * The result is a converted predicate.
+ */
 class PredicateVisitor : AbstractVisitor() {
 
     override var result: Predicate? = null

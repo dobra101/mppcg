@@ -4,6 +4,10 @@ import de.be4.classicalb.core.parser.node.AOperation
 import dobra101.mppcg.node.b.Operation
 import dobra101.mppcg.node.expression.Expression
 
+/**
+ * Overrides the visitor method which visits an operation node.
+ * The result is a converted operation.
+ */
 class OperationVisitor : AbstractVisitor() {
 
     override var result: Operation? = null

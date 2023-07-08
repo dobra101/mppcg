@@ -7,6 +7,10 @@ import dobra101.mppcg.node.b.Precondition
 import dobra101.mppcg.node.b.Select
 import dobra101.mppcg.node.substitution.*
 
+/**
+ * Overrides the visitor methods which visit substitution nodes.
+ * The result is a converted substitution.
+ */
 class SubstitutionVisitor : AbstractVisitor() {
 
     override var result: Substitution? = null

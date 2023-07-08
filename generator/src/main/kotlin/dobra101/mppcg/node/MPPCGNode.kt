@@ -10,6 +10,7 @@ interface MPPCGNode {
      * @return A RenderResult containing the resulting string and individual information
      */
     fun render(): RenderResult {
+        // use the current output environment instance to render the node
         return environment.delegateCall(this)
     }
 

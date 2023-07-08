@@ -22,6 +22,10 @@ data class RenderResult(
     }
 }
 
+/**
+ * Wrapper class containing information needed by an output environment.
+ * The wrapping is used, as this class can be subclassed to provide further information types than strings.
+ */
 data class IndividualInfo(val info: String = "")
 
 class UnknownInfoException(msg: String) : Exception(msg)

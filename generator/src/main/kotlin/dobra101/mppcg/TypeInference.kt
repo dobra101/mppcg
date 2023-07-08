@@ -11,16 +11,23 @@ import kotlin.math.min
 import kotlin.reflect.*
 import kotlin.reflect.full.*
 
-class TypeInference {
+object TypeInference {
 
-    fun infereTypes(node: Program) {
+    /**
+     * Executes the HM type inference algorithm.
+     *
+     * @param node The programs root node
+     */
+    fun inferTypes(node: Program) {
         val env: MutableMap<MPPCGNode, Type> = mutableMapOf()
         analyse(node, env)
         env.filterKeys { it is ConcreteIdentifierExpression }
-                .forEach {
-                    (it.key as ConcreteIdentifierExpression).type =
-                            typeFromEnv((it.key as ConcreteIdentifierExpression).name.removePrefix("c_"), env)
-                }
+            .forEach {
+                (it.key as ConcreteIdentifierExpression).type =
+                    typeFromEnv((it.key as ConcreteIdentifierExpression).name.removePrefix("c_"), env)
+            }
+
+        // prune all type variables to get their concrete types
         pruneAll(node)
     }
 
@@ -33,148 +40,45 @@ class TypeInference {
         val type = typeOf<Type?>()
         val string = typeOf<String?>()
         node::class.memberProperties
-                .filter { !it.returnType.isSubtypeOf(string) }
-                .forEach { kp ->
-                    if (kp.visibility == KVisibility.PRIVATE) return@forEach
-                    if (kp.call(node) == node || (node is ConcreteIdentifierExpression && kp.name == "node")) return@forEach
+            .filter { !it.returnType.isSubtypeOf(string) }
+            .forEach { kp ->
+                if (kp.visibility == KVisibility.PRIVATE) return@forEach
+                if (kp.call(node) == node || (node is ConcreteIdentifierExpression && kp.name == "node")) return@forEach
 
-                    if (kp.returnType.isSubtypeOf(mppcgnode)) {
-                        kp.call(node)?.let { inst -> pruneAll(inst as MPPCGNode) }
-                    } else if (kp.returnType.isSubtypeOf(collection)) {
-                        (kp.call(node) as Collection<*>).forEach { entry -> pruneAll(entry as MPPCGNode) }
-                    } else if (kp.returnType.isSubtypeOf(type)) {
-                        (kp as? KMutableProperty1<out MPPCGNode, *>)?.setter?.call(node, prune(kp.call(node) as Type))
-                    }
+                if (kp.returnType.isSubtypeOf(mppcgnode)) {
+                    kp.call(node)?.let { inst -> pruneAll(inst as MPPCGNode) }
+                } else if (kp.returnType.isSubtypeOf(collection)) {
+                    (kp.call(node) as Collection<*>).forEach { entry -> pruneAll(entry as MPPCGNode) }
+                } else if (kp.returnType.isSubtypeOf(type)) {
+                    (kp as? KMutableProperty1<out MPPCGNode, *>)?.setter?.call(node, prune(kp.call(node) as Type))
                 }
+            }
     }
 
-    // env: Jeder Wertvariablen wird ein Typ zugeordnet
+    /**
+     * The main HM algorithm.
+     * Traverses the tree and calculates types for nodes.
+     *
+     * @param node The current visited note
+     * @param env The context / environment which stores known types / type variables
+     *
+     * @return The calculated type(-variable) of the visited node
+     */
     private fun analyse(node: MPPCGNode, env: MutableMap<MPPCGNode, Type>): Type {
-        // TODO: env setup in B
+        var nodeType: Type = TypeVariable()
         when (node) {
             // does not return a type but analyses
             is Predicate -> {
                 analysePredicate(node, env)
-                return MPPCG_Boolean
+                nodeType = MPPCG_Boolean
             }
 
-            is IdentifierExpression -> {
-                if (!env.contains(node)) {
-                    env[node] = TypeVariable()
-                }
-                val type = typeFromEnv(node, env)
-                if (node.type == null) node.type = type
-                return type
+            is Expression -> {
+                nodeType = analyseExpression(node, env)
             }
 
-            is ValueExpression -> {
-                return node.valueType
-            }
-
-            is BinaryExpression -> {
-                val leftType = prune(analyse(node.left, env))
-                val rightType = prune(analyse(node.right, env))
-                val nonEnumValueRight =
-                        if (rightType is TypeEnumValue) TypeOperator(rightType.name, listOf()) else rightType
-
-                val resultType =
-                        if (node.operator == BinaryExpressionOperator.MULT && (leftType is TypeSet || nonEnumValueRight is TypeSet)) {
-                            val left = (leftType as? TypeSet)?.type ?: leftType
-                            val right = (nonEnumValueRight as? TypeSet)?.type ?: nonEnumValueRight
-                            TypeRelation(left, right)
-                        } else {
-                            unify(leftType, nonEnumValueRight)
-                            leftType
-                        }
-
-                node.type = resultType
-                return resultType
-            }
-
-            is UnaryCollectionExpression -> {
-                val collectionType = analyse(node.collection, env)
-                val type = when (node.operator) {
-                    UnaryCollectionOperator.CARD,
-                    UnaryCollectionOperator.MAX,
-                    UnaryCollectionOperator.MIN -> {
-                        MPPCG_Integer
-                    }
-
-                    UnaryCollectionOperator.POW,
-                    UnaryCollectionOperator.POW1 -> {
-                        TypeSet(collectionType)
-                    }
-                }
-                node.type = type
-                return type
-            }
-
-            is EnumCollectionNode -> {
-                val type = typeFromEnv(node, env)
-                node.type = type
-                return type
-            }
-
-            is BinaryCollectionExpression -> {
-                val leftType = analyse(node.left, env)
-                val rightType = analyse(node.right, env)
-                val type = when (node.operator) {
-                    BinaryCollectionOperator.PRJ1 -> leftType
-                    BinaryCollectionOperator.PRJ2 -> rightType
-                    BinaryCollectionOperator.INTERSECTION,
-                    BinaryCollectionOperator.SUBTRACTION,
-                    BinaryCollectionOperator.UNION,
-                    BinaryCollectionOperator.CONCAT -> {
-                        unify(leftType, rightType)
-                        leftType
-                    }
-                }
-                node.type = type
-                return type
-            }
-
-            is AnonymousCollectionNode -> {
-                val types = node.elements.map { analyse(it, env) }.toList()
-                for (i in 1 until types.size) {
-                    unify(types[0], types[i])
-                }
-                val type = if (node.elements.isNotEmpty() && node.elements.first() is Couple) {
-                    val couple = node.elements.first() as Couple
-                    TypeRelation(couple.from.type!!, couple.to.type!!)
-                } else {
-                    TypeSet(
-                            if (node.elements.isEmpty()) {
-                                if (node.collectionType != null) {
-                                    node.collectionType!!
-                                } else {
-                                    TypeVariable()
-                                }
-                            } else {
-                                types[0]
-                            }
-                    )
-                }
-
-                if (node.collectionType != null) {
-                    if (node.elements.isNotEmpty()) {
-                        unify(node.collectionType!!, types[0])
-                    }
-                } else {
-                    node.collectionType = type.type
-                }
-
-                node.type = type
-                return type
-            }
-
-            is SequenceSubstitution -> {
-                node.substitutions.forEach { analyse(it, env) }
-            }
-
-            is AssignSubstitution -> {
-                val leftType = analyse(node.left, env)
-                val rightType = analyse(node.right, env)
-                unify(leftType, rightType)
+            is Substitution -> {
+                analyseSubstitution(node, env)
             }
 
             is Operation -> {
@@ -225,6 +129,26 @@ class TypeInference {
                 node.operations.forEach { analyse(it, env) }
             }
 
+            else -> {
+                TODO("Not implemented for class: ${node.javaClass}")
+            }
+        }
+
+        return nodeType
+    }
+
+    private fun analyseSubstitution(node: Substitution, env: MutableMap<MPPCGNode, Type>) {
+        when (node) {
+            is SequenceSubstitution -> {
+                node.substitutions.forEach { analyse(it, env) }
+            }
+
+            is AssignSubstitution -> {
+                val leftType = analyse(node.left, env)
+                val rightType = analyse(node.right, env)
+                unify(leftType, rightType)
+            }
+
             is Select -> {
                 analyse(node.condition, env)
                 node.then?.let { analyse(it, env) }
@@ -247,6 +171,50 @@ class TypeInference {
             is Precondition -> {
                 node.substitution?.let { analyse(it, env) }
                 analyse(node.predicate, env)
+            }
+
+
+            is ParallelSubstitution -> {
+                node.substitutions.forEach { analyse(it, env) }
+            }
+
+            is WhileSubstitution -> {
+                analyse(node.condition, env)
+                analyse(node.body, env)
+            }
+        }
+    }
+
+    private fun analyseExpression(node: Expression, env: MutableMap<MPPCGNode, Type>): Type {
+        when (node) {
+            is IdentifierExpression -> {
+                if (!env.contains(node)) {
+                    env[node] = TypeVariable()
+                }
+                val type = typeFromEnv(node, env)
+                if (node.type == null) node.type = type
+                return type
+            }
+
+            is ValueExpression -> {
+                return node.valueType
+            }
+
+            is LambdaExpression -> {
+                val envBefore = HashMap(env)
+                val identifierTypes = node.identifiers.map {
+                    env[it] = TypeVariable()
+                    analyse(it, env)
+                }
+                analyse(node.predicate, env)
+                val exprType = analyse(node.expression, env)
+                val fromType =
+                    if (identifierTypes.size == 1) identifierTypes[0] else TypeOperator("list", identifierTypes)
+
+                val type = TypeRelation(fromType, exprType)
+                loadOldEnv(env, envBefore)
+                node.type = type
+                return type
             }
 
             is IntervalExpression -> {
@@ -293,10 +261,6 @@ class TypeInference {
                 }
                 node.type = resultType
                 return resultType
-            }
-
-            is ParallelSubstitution -> {
-                node.substitutions.forEach { analyse(it, env) }
             }
 
             is Couple -> {
@@ -377,23 +341,6 @@ class TypeInference {
                 return toType
             }
 
-            is LambdaExpression -> {
-                val envBefore = HashMap(env)
-                val identifierTypes = node.identifiers.map {
-                    env[it] = TypeVariable()
-                    analyse(it, env)
-                }
-                analyse(node.predicate, env)
-                val exprType = analyse(node.expression, env)
-                val fromType =
-                        if (identifierTypes.size == 1) identifierTypes[0] else TypeOperator("list", identifierTypes)
-
-                val type = TypeRelation(fromType, exprType)
-                loadOldEnv(env, envBefore)
-                node.type = type
-                return type
-            }
-
             is ComprehensionSet -> {
                 val envBefore = HashMap(env)
                 val identifierTypes = node.identifiers.map {
@@ -403,7 +350,7 @@ class TypeInference {
 
                 analyse(node.predicates, env)
                 val type = if (identifierTypes.size == 1) TypeSet(identifierTypes[0]) else TypeSet(
-                        nestedCouples(identifierTypes)
+                    nestedCouples(identifierTypes)
                 )
                 loadOldEnv(env, envBefore)
                 node.type = type
@@ -417,16 +364,108 @@ class TypeInference {
                 return type
             }
 
-            is WhileSubstitution -> {
-                analyse(node.condition, env)
-                analyse(node.body, env)
+            is BinaryExpression -> {
+                val leftType = prune(analyse(node.left, env))
+                val rightType = prune(analyse(node.right, env))
+                val nonEnumValueRight =
+                    if (rightType is TypeEnumValue) TypeOperator(rightType.name, listOf()) else rightType
+
+                val resultType =
+                    if (node.operator == BinaryExpressionOperator.MULT && (leftType is TypeSet || nonEnumValueRight is TypeSet)) {
+                        val left = (leftType as? TypeSet)?.type ?: leftType
+                        val right = (nonEnumValueRight as? TypeSet)?.type ?: nonEnumValueRight
+                        TypeRelation(left, right)
+                    } else {
+                        unify(leftType, nonEnumValueRight)
+                        leftType
+                    }
+
+                node.type = resultType
+                return resultType
             }
+
+            is UnaryCollectionExpression -> {
+                val collectionType = analyse(node.collection, env)
+                val type = when (node.operator) {
+                    UnaryCollectionOperator.CARD,
+                    UnaryCollectionOperator.MAX,
+                    UnaryCollectionOperator.MIN -> {
+                        MPPCG_Integer
+                    }
+
+                    UnaryCollectionOperator.POW,
+                    UnaryCollectionOperator.POW1 -> {
+                        TypeSet(collectionType)
+                    }
+                }
+                node.type = type
+                return type
+            }
+
+            is EnumCollectionNode -> {
+                val type = typeFromEnv(node, env)
+                node.type = type
+                return type
+            }
+
+            is BinaryCollectionExpression -> {
+                val leftType = analyse(node.left, env)
+                val rightType = analyse(node.right, env)
+                val type = when (node.operator) {
+                    BinaryCollectionOperator.PRJ1 -> leftType
+                    BinaryCollectionOperator.PRJ2 -> rightType
+                    BinaryCollectionOperator.INTERSECTION,
+                    BinaryCollectionOperator.SUBTRACTION,
+                    BinaryCollectionOperator.UNION,
+                    BinaryCollectionOperator.CONCAT -> {
+                        unify(leftType, rightType)
+                        leftType
+                    }
+                }
+                node.type = type
+                return type
+            }
+
+            is AnonymousCollectionNode -> {
+                val types = node.elements.map { analyse(it, env) }.toList()
+                for (i in 1 until types.size) {
+                    unify(types[0], types[i])
+                }
+                val type = if (node.elements.isNotEmpty() && node.elements.first() is Couple) {
+                    val couple = node.elements.first() as Couple
+                    TypeRelation(couple.from.type!!, couple.to.type!!)
+                } else {
+                    TypeSet(
+                        if (node.elements.isEmpty()) {
+                            if (node.collectionType != null) {
+                                node.collectionType!!
+                            } else {
+                                TypeVariable()
+                            }
+                        } else {
+                            types[0]
+                        }
+                    )
+                }
+
+                if (node.collectionType != null) {
+                    if (node.elements.isNotEmpty()) {
+                        unify(node.collectionType!!, types[0])
+                    }
+                } else {
+                    node.collectionType = type.type
+                }
+
+                node.type = type
+                return type
+            }
+
 
             is Sequence -> {
                 node.elements.forEach { analyse(it, env) }
                 val type = TypeOperator(
-                        "sequence",
-                        listOf((if (node.elements.isNotEmpty()) node.elements.first().type!! else TypeVariable()))
+                    "sequence",
+                    listOf((if (node.elements.isNotEmpty()) node.elements.first().type!! else TypeVariable()))
                 )
                 env[node] = type
                 node.type = type
@@ -461,13 +500,10 @@ class TypeInference {
                 TODO("Not implemented for class: ${node.javaClass}")
             }
         }
-
-        return TypeVariable()
     }
 
     private fun analysePredicate(node: Predicate, env: MutableMap<MPPCGNode, Type>): Type {
         when (node) {
-            // common
             is BinaryLogicPredicate -> {
                 analyse(node.left, env)
                 analyse(node.right, env)
@@ -514,6 +550,10 @@ class TypeInference {
             is Invariant -> {
                 node.predicates.forEach { analyse(it, env) }
             }
+
+            else -> {
+                TODO("Not implemented for class: ${node.javaClass}")
+            }
         }
 
         return MPPCG_Boolean
@@ -521,22 +561,22 @@ class TypeInference {
 
     private fun loadOldEnv(env: MutableMap<MPPCGNode, Type>, envBefore: MutableMap<MPPCGNode, Type>) {
         env.filterKeys { !envBefore.containsKey(it) }
-                .forEach {
-                    val value = prune(it.value)
-                    when (it.key) {
-                        is Expression -> {
-                            (it.key as Expression).type = value
-                        }
+            .forEach {
+                val value = prune(it.value)
+                when (it.key) {
+                    is Expression -> {
+                        (it.key as Expression).type = value
+                    }
 
-                        is Operation -> {
-                            (it.key as Operation).type = value
-                        }
+                    is Operation -> {
+                        (it.key as Operation).type = value
+                    }
 
-                        else -> {
-                            TODO("Not implemented")
-                        }
+                    else -> {
+                        TODO("Not implemented")
                     }
                 }
+            }
         env.clear()
         env.putAll(envBefore)
     }
@@ -566,6 +606,13 @@ class TypeInference {
         return typeFromEnv(key, env)
     }
 
+    /**
+     * Unifies two types, i.e. if one type is a type variable and the other is a concrete type,
+     * the type variable's instance is set to the concrete type.
+     *
+     * @param type1 The first type
+     * @param type2 The second type
+     */
     private fun unify(type1: Type, type2: Type) {
         val a = prune(type1)
         val b = prune(type2)
@@ -580,10 +627,8 @@ class TypeInference {
         } else if (a is TypeOperator && b is TypeVariable) {
             unify(b, a)
         } else if (a is TypeOperator && b is TypeOperator) {
-
-
             if (((a.name != b.name) || (a.types.size != b.types.size))
-                    && !unifyable(a, b)
+                && !unifiable(a, b)
             ) {
                 throw InferenceError("Types $a and $b do not match.")
             }
@@ -593,7 +638,7 @@ class TypeInference {
         }
     }
 
-    private fun unifyable(type1: Type, type2: Type): Boolean {
+    private fun unifiable(type1: Type, type2: Type): Boolean {
         if (type1 is TypeNumber) {
             if (type1 == MPPCG_Real || type1 == MPPCG_Float) return type1 == type2
             return (type2 is TypeNumber && type2 != MPPCG_Real && type2 != MPPCG_Float)
@@ -601,6 +646,12 @@ class TypeInference {
         return false
     }
 
+    /**
+     * Tries to retrieve the concrete type (the instance) of a type variable.
+     *
+     * @param type The type to prune
+     * @return The pruned type
+     */
     private fun prune(type: Type): Type {
         if (type is TypeVariable && type.instance != null) {
             type.instance = prune(type.instance!!)
