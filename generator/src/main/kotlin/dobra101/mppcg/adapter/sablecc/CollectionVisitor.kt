@@ -13,9 +13,7 @@ class CollectionVisitor : AbstractVisitor() {
 
     override var result: CollectionNode? = null
 
-    // TODO: not every set to enum
     override fun caseAEnumeratedSetSet(node: AEnumeratedSetSet) {
-        // TODO: when more than one identifier?
         val collectionName = node.identifier.first.text
         result = EnumCollectionNode(
             name = collectionName,

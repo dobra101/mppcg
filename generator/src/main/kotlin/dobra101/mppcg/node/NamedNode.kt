@@ -1,7 +1,9 @@
 package dobra101.mppcg.node
 
-// TODO: doc
-// necessary to find and replace keywords
+/**
+ * Used, if the implementing node has a name identifier.
+ * For nodes implementing this interface, keywords can be found and replaced.
+ */
 interface NamedNode {
     var name: String
 }

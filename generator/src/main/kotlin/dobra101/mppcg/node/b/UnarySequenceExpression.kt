@@ -1,6 +1,5 @@
 package dobra101.mppcg.node.b
 
-import dobra101.mppcg.node.CustomMethodOperator
 import dobra101.mppcg.node.expression.Expression
 
 data class UnarySequenceExpression(
@@ -14,7 +13,7 @@ data class BinarySequenceExpression(
     val operator: BinarySequenceExpressionOperator
 ) : Expression("binarySequenceExpression")
 
-enum class UnarySequenceExpressionOperator : CustomMethodOperator {
+enum class UnarySequenceExpressionOperator {
     FRONT,
     TAIL,
     FIRST,
@@ -22,7 +21,7 @@ enum class UnarySequenceExpressionOperator : CustomMethodOperator {
     REVERSE
 }
 
-enum class BinarySequenceExpressionOperator : CustomMethodOperator {
+enum class BinarySequenceExpressionOperator {
     RESTRICT_FRONT,
     RESTRICT_TAIL,
     APPEND,

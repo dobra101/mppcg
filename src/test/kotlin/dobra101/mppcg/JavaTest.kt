@@ -7,7 +7,6 @@ import dobra101.mppcg.prob.ProBResultAnalyser
 import io.kotest.assertions.throwables.shouldNotThrowAny
 import io.kotest.core.spec.style.ExpectSpec
 import io.kotest.inspectors.forAll
-import io.kotest.matchers.ints.shouldBeExactly
 import java.io.File
 
 class JavaTest : ExpectSpec({
@@ -69,19 +68,6 @@ class JavaTest : ExpectSpec({
         return ProBResultAnalyser.analyze(probOutput)
     }
 
-    // TODO: is duplicate
-    fun compile(cp: String, vararg files: File) {
-        println("Compile: javac -Xlint:unchecked -cp $cp: ${files.joinToString(" ") { it.path }}")
-        val process: Process =
-            Runtime.getRuntime().exec("javac -Xlint:unchecked -cp $cp: ${files.joinToString(" ") { it.path }}")
-        process.waitFor()
-        val error = process.errorReader().readText()
-        process.errorReader().close()
-        if (error.isNotBlank()) {
-            throw RuntimeException(error)
-        }
-    }
-
     machines.forAll { machineFile ->
         context(machineFile.name) {
             println("Testing ${machineFile.name}")
@@ -96,26 +82,11 @@ class JavaTest : ExpectSpec({
                 lang = Language.JAVA,
                 file = machineFile.name,
                 parser = Parser.SableCC,
-                optimize = true,
                 benchmark = false
             )
-            // TODO: outputDir is in other test file
             shouldNotThrowAny {
                 compile(cp = outputDir.path + "/${machineFile.path}:inputLanguage/B/java/build/libs/btypes.jar", file)
             }
-            1 shouldBeExactly 1
-
-            // TODO: compile file
-//            val result = Launcher.benchmarkProlog(file, timeout = 1000 + (mchResult!!.modelCheckingTime * 3))
-//            println(result)
-
-//            withClue("States do not match") {
-//                result.statesAnalysed shouldBeExactly mchResult!!.statesAnalysed
-//            }
-//            withClue("Transitions do not match") {
-//                result.transitionsFired shouldBeExactly mchResult!!.transitionsFired
-//            }
-//            result.counterExample shouldBe mchResult!!.counterExample
         }
     }
 })

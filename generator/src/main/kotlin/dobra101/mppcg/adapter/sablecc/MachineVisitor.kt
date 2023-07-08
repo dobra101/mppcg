@@ -9,9 +9,7 @@ import dobra101.mppcg.node.expression.IdentifierExpression
 import dobra101.mppcg.node.predicate.BinaryPredicate
 import dobra101.mppcg.node.predicate.BinaryPredicateOperator
 import dobra101.mppcg.node.predicate.Predicate
-import dobra101.mppcg.node.substitution.AssignSubstitution
 
-// TODO: scoping generic?
 class MachineVisitor : AbstractVisitor() {
     override var result: Machine? = null
 
@@ -41,7 +39,6 @@ class MachineVisitor : AbstractVisitor() {
         currentScope.known.addAll(expr)
     }
 
-    // TODO: not as function?
     fun knownIdentifier(): Set<IdentifierExpression> {
         val known: MutableList<Expression> = mutableListOf()
         known += variables
@@ -53,12 +50,11 @@ class MachineVisitor : AbstractVisitor() {
     }
 
     override fun caseAMachineHeader(node: AMachineHeader) {
-        name = node.name[0].text // TODO: more than one name?
+        name = node.name[0].text
         parameters = node.parameters.convert()
     }
 
     override fun caseAConstraintsMachineClause(node: AConstraintsMachineClause) {
-        // TODO: split into multiple?
         constraints = node.predicates.convert()
     }
 
@@ -74,7 +70,6 @@ class MachineVisitor : AbstractVisitor() {
         concreteConstants = node.identifiers.convert().toMutableList()
     }
 
-    // TODO: add other cases
     override fun caseAPropertiesMachineClause(node: APropertiesMachineClause) {
         fun valueToConcreteConstant(predicate: BinaryPredicate) {
             if (predicate.left is IdentifierExpression) {
@@ -101,8 +96,7 @@ class MachineVisitor : AbstractVisitor() {
     }
 
     override fun caseADefinitionsMachineClause(node: ADefinitionsMachineClause) {
-//        TODO("Not implemented caseADefinitionsMachineClause")
-//        definitions = node.definitions.convert()
+        TODO("Not implemented caseADefinitionsMachineClause")
     }
 
     override fun caseAVariablesMachineClause(node: AVariablesMachineClause) {

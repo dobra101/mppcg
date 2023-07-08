@@ -1,9 +1,13 @@
 package dobra101.mppcg.node
 
+/**
+ * The base node for every root node of a program.
+ */
 interface Program: MPPCGNode {
     val name: String
 
-    // TODO: doc
-    // needed as starting point
-    fun getAllIdentifiers(): List<MPPCGNode>
+    /**
+     * Implemented by each subtype to execute for example keyword handling.
+     */
+    fun getAllNodesWithIdentifiers(): List<MPPCGNode>
 }

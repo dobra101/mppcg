@@ -10,12 +10,14 @@ import dobra101.mppcg.node.predicate.*
 import dobra101.mppcg.node.substitution.*
 import java.util.*
 
-// TODO: add constructor for generated classes
+/**
+ * This is the [OutputLanguageEnvironment] for Java.
+ *
+ * Here, the ```renderSelf```-method is implemented for each node.
+ */
 class JavaOutputEnvironment : OutputLanguageEnvironment() {
     override val templateDir = "templates/java"
     override val fileExtension = "java"
-
-    private val optimizer = JavaOptimizer(this)
 
     private var codeRepresentation: Program? = null
 
@@ -81,7 +83,6 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
                 } != null
         }
 
-        // TODO: central keyword handler
         val enumNode = (codeRepresentation as Machine).sets.find { it.elements.find { e -> e.name == name } != null }
         val prefix = when {
             enumNode != null -> enumNode.name.capitalize() + "."
@@ -119,7 +120,6 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
 
 
     /* ---------- PREDICATES ---------- */
-    // TODO: refactor
     override fun BinaryPredicate.renderSelf(): RenderResult {
         fun mapType2String(type: FunctionMapType): String {
             return when (type) {
@@ -189,7 +189,6 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
         }
 
         if (right is EnumCollectionNode) {
-            // TODO: neglect if types already match
             val map = mapOf(
                 "lhs" to left.render(),
                 "operator" to "instanceof",
@@ -232,7 +231,7 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             "operator" to operator.render(),
             "rhs" to rhs,
             "parenthesis" to (operator != LogicPredicateOperator.AND),
-            "implication" to (operator == LogicPredicateOperator.IMPLIES) // TODO: refactor
+            "implication" to (operator == LogicPredicateOperator.IMPLIES)
         )
 
         return RenderResult(renderTemplate(map))
@@ -255,12 +254,32 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
 
     /* ---------- SUBSTITUTIONS ---------- */
     override fun AssignSubstitution.renderSelf(): RenderResult {
-        fun renderAnonymousSetAsRelation(set: AnonymousCollectionNode): RenderResult {
-            val map = mutableMapOf(
-                "elements" to set.elements.render()
-            )
-
-            return RenderResult(renderTemplate("anonymousSetAsRelation", map))
+        fun canBeFurtherOptimized(expr: Expression, operator: BinaryExpressionOperator): Boolean {
+            val op = operator == BinaryExpressionOperator.ADD || operator == BinaryExpressionOperator.MINUS
+            return op && expr is ValueExpression && expr.value.toIntOrNull() == 1
+        }
+        fun assignSelf(
+            left: Expression,
+            right: Expression,
+            operator: BinaryExpressionOperator,
+            target: Expression
+        ): RenderResult? {
+            if (target is IdentifierExpression && left == target && left.type is TypeNumber) {
+                val map = if (canBeFurtherOptimized(right, operator)) {
+                    mapOf(
+                        "identifier" to target.name,
+                        "operator" to if (operator == BinaryExpressionOperator.ADD) "++" else "--"
+                    )
+                } else {
+                    mapOf(
+                        "identifier" to target.name,
+                        "operator" to operator.render(),
+                        "rhs" to right.render()
+                    )
+                }
+                return RenderResult(renderTemplate("optimizedAssignSubstitution", map))
+            }
+            return null
         }
 
         if (left is CallFunctionExpression) {
@@ -277,14 +296,14 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             return RenderResult(rendered.rendered + ";", rendered.info)
         }
 
-        if (optimize) optimizer.renderOptimized(this)?.let { return it }
+        if (right is BinaryExpression) {
+            val binaryExpr = right as BinaryExpression
 
-        // TODO: fix type -> needed? -> if not required, delete template
-//        val rhs = if (right is AnonymousCollectionNode && left.type is TypeRelation) {
-//            renderAnonymousSetAsRelation(right as AnonymousCollectionNode)
-//        } else {
-//            right.render()
-//        }
+            // e.g. a = a + 1 or a = 1 + a
+            val result = assignSelf(binaryExpr.left, binaryExpr.right, binaryExpr.operator, left)
+                ?: assignSelf(binaryExpr.right, binaryExpr.left, binaryExpr.operator, left)
+            result?.let { return it }
+        }
 
         val rhs = right.render()
 
@@ -481,7 +500,6 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
             return RenderResult(renderTemplate("intervalExpression", map))
         }
 
-        // TODO: support true infinite sets
         val interval = when (setType) {
             MPPCG_Int -> createInterval(MPPCG_MIN_INT, MPPCG_MAX_INT)
             MPPCG_Nat -> createInterval("0", MPPCG_MAX_INT)
@@ -706,10 +724,8 @@ class JavaOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     override fun Operation.renderSelf(): RenderResult {
-        // TODO: check if scope contains variables
         currentOperation = this
         iteratorCount = 0
-        if (optimize) optimizer.renderOptimized(this)?.let { return it }
 
         val bodyUsed = (body as? Precondition)?.substitution ?: body
 

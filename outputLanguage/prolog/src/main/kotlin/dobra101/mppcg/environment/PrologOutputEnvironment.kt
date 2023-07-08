@@ -56,7 +56,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     private fun expr(name: Any): String = "Expr_$name"
 
     /**
-     * Returns the evaluated expression or evaluates the node.
+     * Returns the evaluated expression or evaluates the node, if the expression was not evaluated yet.
      */
     private fun loadOrEvaluate(node: MPPCGNode, evaluation: EvaluatedExpressions.() -> RenderResult): RenderResult {
         if (evaluatedExpressions.containsKey(node)) return RenderResult(evaluatedExpressions[node]!!)
@@ -145,7 +145,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
                 "exprCount" to exprName
             )
             val rendered = renderTemplate(map)
-            if (optimize) evaluatedExpressions[this] = expr(exprName)
+            evaluatedExpressions[this] = expr(exprName)
             return RenderResult(rendered, mapOf(RESULT_EXPR to IndividualInfo(expr(exprName))))
         }
 
@@ -414,13 +414,12 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         )
         val rendered = renderTemplate(map)
 
-        if (optimize) {
-            if (needTempVar) {
-                evaluatedExpressions[left] = expr("tmp_${identifier.removeSurrounding("'")}")
-            } else if (!temporaryVariables.contains(left)) {
-                evaluatedExpressions[left] = expandedRhs.expression
-            }
+        if (needTempVar) {
+            evaluatedExpressions[left] = expr("tmp_${identifier.removeSurrounding("'")}")
+        } else if (!temporaryVariables.contains(left)) {
+            evaluatedExpressions[left] = expandedRhs.expression
         }
+
         return RenderResult("${expandedRhs.before}$rendered")
     }
 
@@ -720,7 +719,8 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
                 "exprCount" to exprCount - 1 // last assigned expression
             )
             val rendered = RenderResult(renderTemplate("concreteIdentifierDeclaration", map))
-            concreteIdentifierExpressionDeclared[rendered.rendered] = !((map["inline"] as Boolean) || (map["interval"] as Boolean))
+            concreteIdentifierExpressionDeclared[rendered.rendered] =
+                !((map["inline"] as Boolean) || (map["interval"] as Boolean))
             return rendered
         }
 
@@ -946,7 +946,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         temporaryVariables = temporaryVariables + needTempVar
 
         // remove temporary variables from previous evaluated to use temp vars
-        if (optimize) temporaryVariables.forEach { evaluatedExpressions.remove(it) }
+        temporaryVariables.forEach { evaluatedExpressions.remove(it) }
 
         val neededTempVars = substitutions
             .filterIsInstance<AssignSubstitution>()
@@ -957,7 +957,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
         // load temporary variables if they are needed
         // optimized: they are not needed if e.g. 'a = a + 1 || b = a + 1' and a + 1 has been evaluated before
         val tempVars = needTempVar.mapNotNull {
-            if (optimize && !neededTempVars.contains(it)) {
+            if (!neededTempVars.contains(it)) {
                 null
             } else {
                 val map = mapOf(
@@ -1025,7 +1025,8 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             "constraints" to constraints?.render(),
             "sets" to sets.render(),
             "constants" to constants.render(),
-            "concrete_constants" to concreteIdentifierExpressionDeclared.toList().sortedBy { it.second }.map { it.first }.toList(),
+            "concrete_constants" to concreteIdentifierExpressionDeclared.toList().sortedBy { it.second }
+                .map { it.first }.toList(),
 //            "properties" to properties?.render(), // TODO: use properties
             "definitions" to definitions?.render(),
             "variables" to variables.render(),
@@ -1135,7 +1136,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
             LogicPredicateOperator.AND -> ", "
             LogicPredicateOperator.OR -> "; "
             LogicPredicateOperator.IMPLIES -> " -> "
-            LogicPredicateOperator.EQUIVALENCE -> " = "
+            LogicPredicateOperator.EQUIVALENCE -> " == "
             LogicPredicateOperator.NOT -> "\\+ "
         }
     }
@@ -1265,7 +1266,7 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
     }
 
     private fun exprToInfo(node: MPPCGNode): Map<String, IndividualInfo> {
-        if (optimize) evaluatedExpressions[node] = expr(exprCount)
+        evaluatedExpressions[node] = expr(exprCount)
         val info = mapOf(RESULT_EXPR to IndividualInfo(expr(exprCount)))
         // expr is now assigned -> increase
         exprCount++

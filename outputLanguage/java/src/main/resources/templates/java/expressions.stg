@@ -45,7 +45,6 @@ intervalExpression(left, right) ::= <<
 new BSet\<Integer\>(new BInterval(<left>, <right>))
 >>
 
-// TODO: add type
 valueExpression(value) ::= <<
 <value>
 >>

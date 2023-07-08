@@ -8,10 +8,8 @@ data class UnaryExpression(
     val operator: UnaryExpressionOperator
 ) : Expression(templateName = "unaryExpression")
 
-// TODO: refactor
 enum class UnaryExpressionOperator: BMethod {
     CONVERT_BOOLEAN,
-    // TODO: only for B
     PRED,
     SUCC,
     MINUS

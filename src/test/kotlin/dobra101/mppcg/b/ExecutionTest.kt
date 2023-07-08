@@ -2,8 +2,10 @@ package dobra101.mppcg.b
 
 import dobra101.mppcg.Launcher
 import dobra101.mppcg.Parser
+import dobra101.mppcg.compile
 import dobra101.mppcg.environment.EnvironmentException
 import dobra101.mppcg.environment.Language
+import dobra101.mppcg.execute
 import io.kotest.assertions.withClue
 import io.kotest.core.spec.style.ExpectSpec
 import io.kotest.inspectors.forAll
@@ -17,10 +19,11 @@ import java.io.File
 
 val outputDir = File("build/executionTests/")
 
-// TODO: refactor: load file in setup file and execute setup file?
+/**
+ * Defines the setup and evaluation for testing Prolog files
+ */
 class ExecutionTestProlog : ExecutionTest(Language.PROLOG, "prolog.stg", ".pl", runSetup) {
     companion object {
-        // TODO: refactor
         private fun set2String(possibleSet: String): String {
             if (!possibleSet.startsWith("set(")) return possibleSet
 
@@ -49,8 +52,6 @@ class ExecutionTestProlog : ExecutionTest(Language.PROLOG, "prolog.stg", ".pl", 
             while (query.nextSolution()) {
                 wayMap.forEach { (k, v) ->
                     if (k.startsWith("Result_")) {
-                        // TODO: not here?
-                        // TODO: refactor
                         try {
                             if (v is SPTerm && v.functorName == "set") {
                                 val setArg = sicstus!!.newVariable()
@@ -86,40 +87,15 @@ class ExecutionTestProlog : ExecutionTest(Language.PROLOG, "prolog.stg", ".pl", 
     }
 }
 
+/**
+ * Defines the setup and evaluation for testing Prolog files
+ */
 class ExecutionTestJava : ExecutionTest(Language.JAVA, "java.stg", ".java", runSetup) {
     companion object {
         private val runSetup = { dir: String, file: File, setupFile: File ->
             val cp = "${outputDir.path}/$dir/RunConfig.java:${outputDir.path}/$dir:inputLanguage/B/java/build/libs/btypes.jar"
             compile(cp = cp, file, setupFile)
             execute(cp = cp, setup = setupFile)
-        }
-
-        private fun compile(cp: String, vararg files: File) {
-            println("Compile: javac -Xlint:unchecked -cp $cp: ${files.joinToString(" ") { it.path }}")
-            val process: Process =
-                Runtime.getRuntime().exec("javac -Xlint:unchecked -cp $cp: ${files.joinToString(" ") { it.path }}")
-            process.waitFor()
-            val error = process.errorReader().readText()
-            process.errorReader().close()
-            if (error.isNotBlank()) {
-                throw RuntimeException(error)
-            }
-        }
-
-        private fun execute(cp: String, setup: File): String {
-            println("Execute: java -cp $cp: ${setup.path}")
-            val process: Process = Runtime.getRuntime().exec("java -cp $cp: ${setup.path}")
-            process.waitFor()
-            val error = process.errorReader().readText()
-            process.errorReader().close()
-            if (error.isNotBlank()) {
-                throw RuntimeException(error)
-            }
-
-            val result = process.inputReader().readText()
-            process.inputReader().close()
-
-            return result
         }
     }
 }
@@ -133,7 +109,6 @@ abstract class ExecutionTest(
 
     if (!outputDir.exists()) outputDir.mkdir()
 
-    // TODO: include deeper nested directories
     val dirs = File("src/test/resources/dobra101/mppcg/execution/").listFiles()
         ?.filter { it.isDirectory }
         ?.associate { dir ->
@@ -160,7 +135,6 @@ abstract class ExecutionTest(
                                 lang = language,
                                 file = mch,
                                 parser = Parser.SableCC,
-                                optimize = optimize,
                                 benchmark = false,
                                 outputPath = "${outputDir.path}/$dir/"
                             )
@@ -197,7 +171,7 @@ private fun createSetupFile(
         val methodChain =
             setup.getInstanceOf("methodChain") ?: throw EnvironmentException("Template 'methodChain' not found")
         methodChain.add("chain", it)
-        ResultCall(methodChain.render(), it[0].methodName) // TODO: breaks chains
+        ResultCall(methodChain.render(), it[0].methodName)
     }.toList()
 
     val st = setup.getInstanceOf("setup") ?: throw EnvironmentException("Template 'setup' not found")
@@ -233,7 +207,6 @@ data class Execution(val operations: List<ExecOperation>, val result: Map<List<E
             var methodChainList: MutableList<ExecOperation>
 
             for (line in content.lines()) {
-                // TODO: not hardcoded
                 if (line.startsWith("***")) {
                     operationsProcessed = true
                     continue

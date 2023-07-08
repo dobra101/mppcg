@@ -27,7 +27,7 @@ abstract class EnvironmentUtils {
     abstract fun UnarySequenceExpressionOperator.render(): String
     abstract fun UnaryExpressionOperator.render(): String
 
-    open fun Type?.render(): String = ""
+    abstract fun Type?.render(): String
 
     @JvmName("renderExpressionList")
     fun List<Expression>.render(): List<String> {

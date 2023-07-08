@@ -3,25 +3,33 @@ package dobra101.mppcg
 import de.be4.classicalb.core.parser.node.Start
 import dobra101.mppcg.adapter.sablecc.convert
 import dobra101.mppcg.environment.OutputLanguageEnvironment
-import dobra101.mppcg.node.ClassVariables
 import dobra101.mppcg.node.MPPCGNode
 import dobra101.mppcg.node.NamedNode
 import dobra101.mppcg.node.Program
-import dobra101.mppcg.node.b.*
-import dobra101.mppcg.node.b.Function
-import dobra101.mppcg.node.collection.*
-import dobra101.mppcg.node.expression.*
-import dobra101.mppcg.node.predicate.*
-import dobra101.mppcg.node.substitution.*
+import dobra101.mppcg.node.b.ConcreteIdentifierExpression
 import java.io.File
+import kotlin.reflect.KVisibility
+import kotlin.reflect.full.isSubtypeOf
+import kotlin.reflect.full.memberProperties
+import kotlin.reflect.typeOf
 
 class Generator {
     companion object {
         lateinit var environment: OutputLanguageEnvironment
     }
 
-    val identifierReferenceMap: MutableMap<String, MutableList<NamedNode>> = mutableMapOf()
+    private val identifierReferenceMap: MutableMap<String, MutableList<NamedNode>> = mutableMapOf()
 
+    /**
+     * Converts the given AST to intermediate code, executes the preprocessing and generates the code.
+     *
+     * Note: The output language and environment need to be configured before calling this method.
+     *
+     * @param start The root AST node
+     * @param outputPath The output path where the generated file is stored
+     *
+     * @return The file containing the generated code
+     */
     fun generate(start: Start, outputPath: String): File {
         val program: Program = start.convert()
 
@@ -37,13 +45,18 @@ class Generator {
         return file
     }
 
+    /**
+     * Collects all [NamedNode]s via reflection and replaces keywords by suffixed, modified versions.
+     *
+     * @receiver The root node
+     */
     private fun Program.handleKeywords() {
         val keywords = environment.renderTemplate("keywords")
             .split(",")
             .map { it.trim() }
             .toSet()
 
-        getAllIdentifiers().forEach { it.getAllIdentifiers() } // TODO: kann man das generisch halten? -> jeder knoten müsste liste mit allen childs haben
+        collectAllIdentifiers()
 
         // change names of all identifiers
         for (keyword in keywords) {
@@ -60,207 +73,31 @@ class Generator {
         }
     }
 
-    // TODO: rename
-    private fun MPPCGNode.getAllIdentifiers() {
-        when (this) {
-            is Expression -> this.getIdentifiersFromExpression()
-            is Predicate -> this.getIdentifiersFromPredicate()
-            is Substitution -> this.getIdentifiersFromSubstitution()
-            is Program -> this.getAllIdentifiers()
-            is ClassVariables -> variables.forEach { it.getAllIdentifiers() }
+    /**
+     * Traverses all child nodes and collects [NamedNode]s in the identifierReferenceMap.
+     */
+    private fun MPPCGNode.collectAllIdentifiers() {
+        val mppcgnode = typeOf<MPPCGNode?>()
+        val collection = typeOf<Collection<MPPCGNode>>()
+        // get all class fields ...
+        this::class.memberProperties.forEach { kp ->
+            if (kp.visibility == KVisibility.PRIVATE) return@forEach
+            if (kp.call(this) == this || (this is ConcreteIdentifierExpression && kp.name == "node")) return@forEach
 
-            /* B Nodes */
-            is Operation -> {
-                identifierReferenceMap.putOrAdd(name, this)
-                parameters.forEach { it.getAllIdentifiers() }
-                returnValues.forEach { it.getAllIdentifiers() }
-                body?.getAllIdentifiers()
+            // if current node is NamedNode and current field is named "name"
+            if (this is NamedNode && kp.name == "name") {
+                // ... add this node to the map
+                identifierReferenceMap.putOrAdd(kp.call(this) as String, this as NamedNode)
+            } else if (kp.returnType.isSubtypeOf(collection)) {
+                (kp.call(this) as Collection<*>).forEach { entry -> (entry as MPPCGNode).collectAllIdentifiers() }
+            } else if (kp.returnType.isSubtypeOf(mppcgnode)) {
+                kp.call(this)?.let { inst -> (inst as MPPCGNode).collectAllIdentifiers() }
             }
-
-            is Transition -> {
-                identifierReferenceMap.putOrAdd(name, this)
-                parameters.forEach { it.getAllIdentifiers() }
-                body.getAllIdentifiers()
-            }
-
-            else -> throw RuntimeException("Unknown ${this::class}")
         }
     }
-
-    private fun Expression.getIdentifiersFromExpression() {
-        when (this) {
-            is AnonymousCollectionNode -> elements.forEach { it.getAllIdentifiers() }
-            is BinaryExpression -> {
-                left.getAllIdentifiers()
-                right.getAllIdentifiers()
-            }
-
-            is EnumCollectionNode -> {
-                identifierReferenceMap.putOrAdd(name, this)
-                elements.forEach { it.getAllIdentifiers() }
-            }
-
-            is EnumEntry -> identifierReferenceMap.putOrAdd(name, this)
-            is IdentifierExpression -> identifierReferenceMap.putOrAdd(name, this)
-            is IntervalExpression -> {
-                left.getAllIdentifiers()
-                right.getAllIdentifiers()
-            }
-
-            is SetCollectionNode -> {
-                identifierReferenceMap.putOrAdd(name, this)
-                elements.forEach { it.getAllIdentifiers() }
-            }
-
-            is SetEntry -> identifierReferenceMap.putOrAdd(name, this)
-            is ValueExpression -> {
-                // ignore
-            }
-
-            /* B Expressions */ // TODO: move
-            is Function -> {
-                left.getAllIdentifiers()
-                right.getAllIdentifiers()
-            }
-
-            is BinaryCollectionExpression -> {
-                left.getAllIdentifiers()
-                right.getAllIdentifiers()
-            }
-
-            is BinaryFunctionExpression -> {
-                left.getAllIdentifiers()
-                right.getAllIdentifiers()
-            }
-
-            is BinarySequenceExpression -> {
-                left.getAllIdentifiers()
-                right.getAllIdentifiers()
-            }
-
-            is CallFunctionExpression -> {
-                expression.getAllIdentifiers()
-                parameters.forEach { it.getAllIdentifiers() }
-            }
-
-            is ComprehensionSet -> {
-                identifiers.forEach { it.getAllIdentifiers() }
-                predicates.getAllIdentifiers()
-            }
-
-            is ConcreteIdentifierExpression -> {
-                identifierReferenceMap.putOrAdd(name, this)
-                value.getAllIdentifiers()
-            }
-
-            is Couple -> {
-                from.getAllIdentifiers()
-                to.getAllIdentifiers()
-            }
-
-            is InfiniteSet -> {
-                // ignore
-            }
-
-            is LambdaExpression -> {
-                identifiers.forEach { it.getAllIdentifiers() }
-                predicate.getAllIdentifiers()
-                expression.getAllIdentifiers()
-            }
-
-            is Sequence -> elements.forEach { it.getAllIdentifiers() }
-            is UnarySequenceExpression -> sequence.getAllIdentifiers()
-            is UnaryCollectionExpression -> collection.getAllIdentifiers()
-            is UnaryExpression -> value.getAllIdentifiers()
-            is UnaryFunctionExpression -> expression.getAllIdentifiers()
-
-            is GeneralSumOrProductExpression -> {
-                identifiers.forEach { it.getAllIdentifiers() }
-                predicate.getAllIdentifiers()
-                expression.getAllIdentifiers()
-            }
-
-            else -> throw RuntimeException("Unknown ${this::class}")
-        }
-    }
-
-    private fun Predicate.getIdentifiersFromPredicate() {
-        when (this) {
-            is BinaryPredicate -> {
-                left.getAllIdentifiers()
-                right.getAllIdentifiers()
-            }
-
-            is BinaryLogicPredicate -> {
-                left.getAllIdentifiers()
-                right.getAllIdentifiers()
-            }
-
-            is UnaryLogicPredicate -> predicate.getAllIdentifiers()
-            is ValuePredicate -> {
-                // ignore
-            }
-
-            /* B Predicates */
-            is Invariant -> predicates.forEach { it.getAllIdentifiers() }
-            is QuantifierPredicate -> {
-                identifier.forEach { it.getAllIdentifiers() }
-                predicate.getAllIdentifiers()
-                quantification?.getAllIdentifiers()
-            }
-
-            else -> throw RuntimeException("Unknown ${this::class}")
-        }
-    }
-
-    private fun Substitution.getIdentifiersFromSubstitution() {
-        when (this) {
-            is AssignSubstitution -> {
-                left.getAllIdentifiers()
-                right.getAllIdentifiers()
-            }
-
-            is ElseIfSubstitution -> {
-                condition.getAllIdentifiers()
-                then.getAllIdentifiers()
-            }
-
-            is IfSubstitution -> {
-                condition.getAllIdentifiers()
-                then.getAllIdentifiers()
-                elseIf.forEach { it.getAllIdentifiers() }
-                elseSubstitution?.getAllIdentifiers()
-            }
-
-            is SequenceSubstitution -> substitutions.forEach { it.getAllIdentifiers() }
-            is WhileSubstitution -> {
-                condition.getAllIdentifiers()
-                body.getAllIdentifiers()
-            }
-
-            /* B Substitutions */
-            is Initialization -> substitutions.forEach { it.getAllIdentifiers() }
-            is ParallelSubstitution -> substitutions.forEach { it.getAllIdentifiers() }
-            is Precondition -> {
-                substitution?.getAllIdentifiers()
-                predicate.getAllIdentifiers()
-            }
-
-            is Select -> {
-                condition.getAllIdentifiers()
-                then?.getAllIdentifiers()
-                whenSubstitution.forEach { it.getAllIdentifiers() }
-                elseSubstitution?.getAllIdentifiers()
-            }
-
-            else -> throw RuntimeException("Unknown ${this::class}")
-        }
-    }
-
 }
 
-// TODO: move
-fun MutableMap<String, MutableList<NamedNode>>.putOrAdd(key: String, value: NamedNode) {
+private fun MutableMap<String, MutableList<NamedNode>>.putOrAdd(key: String, value: NamedNode) {
     val current = get(key) ?: mutableListOf()
     current.add(value)
     this[key] = current

@@ -40,94 +40,85 @@ class GenerationTest : ExpectSpec({
         File("src/test/resources/dobra101/mppcg/generate/operators/expectations.csv").toExpectations()
     val machines = File("src/test/resources/dobra101/mppcg/generate/operators/").walk()
         .filter { it.isFile && it.name.endsWith(".mch") }
-        .filter { it.nameWithoutExtension == "tictac"}
+        .filter { it.nameWithoutExtension == "tictac" }
         .toList()
 
     machines.filter { mch -> expectations.find { expect -> expect.file == mch } == null }
         .forEach { println("No expectation for: ${it.name}") }
 
-    // TODO: check expected model checking results
     machines
         .sortedBy { expectations.find { ex -> ex.file == it }?.walltime }
         .forAll { machineFile ->
             context(machineFile.name) {
                 println("Testing ${machineFile.name}")
-                listOf(true).forAll { optimize ->
-                    val expectName = if (optimize) "optimized" else "regular"
-                    expect(expectName) {
-                        val expectation = expectations.firstOrNull { it.file.name == machineFile.name }
-                        withClue("No expectation given") {
-                            expectation shouldNotBe null
-                        }
-                        var file: File? = null
-                        shouldNotThrowAny {
-                            file = Launcher.launch(
-                                lang = Language.PROLOG,
-                                file = machineFile,
-                                parser = Parser.SableCC,
-                                optimize = optimize,
-                                benchmark = false,
-                                minInt = expectation!!.minInt,
-                                maxInt = expectation.maxInt
-                            )
-                        }
+                val expectation = expectations.firstOrNull { it.file.name == machineFile.name }
+                withClue("No expectation given") {
+                    expectation shouldNotBe null
+                }
+                var file: File? = null
+                shouldNotThrowAny {
+                    file = Launcher.launch(
+                        lang = Language.PROLOG,
+                        file = machineFile,
+                        parser = Parser.SableCC,
+                        benchmark = false,
+                        minInt = expectation!!.minInt,
+                        maxInt = expectation.maxInt
+                    )
+                }
 
-                        println("Running ProB for at most ${(1000 + expectation!!.walltime * 2) / 1000} seconds")
+                println("Running ProB for at most ${(1000 + expectation!!.walltime * 2) / 1000} seconds")
 
-                        if (expectation.withDeadlock) {
-                            println("NOT CHECKING DEADLOCK")
-                            // model check also without deadlock check
-                            val result = Launcher.benchmarkProlog(
-                                file!!,
-                                checkDeadlock = false,
-                                checkInvariant = true,
-                                timeout = 1000 + expectation.walltime * 2
-                            )
-                            withClue("Counterexample found") {
-                                if (!expectation.withInvariantViolation) {
-                                    result.counterExample shouldBe null
-                                } else {
-                                    result.counterExample shouldNotBe null
-                                }
-                            }
-                        }
-
-                        if (expectation.withInvariantViolation) {
-                            println("NOT CHECKING INVARIANT")
-                            // model check also without invariant check
-                            val result = Launcher.benchmarkProlog(
-                                file!!,
-                                checkDeadlock = true,
-                                checkInvariant = false,
-                                timeout = 1000 + expectation.walltime * 2
-                            )
-                            withClue("Counterexample found") {
-                                if (!expectation.withDeadlock) {
-                                    result.counterExample shouldBe null
-                                } else {
-                                    result.counterExample shouldNotBe null
-                                }
-                            }
-                        }
-
-
-                        val result = Launcher.benchmarkProlog(
-                            file!!,
-                            checkDeadlock = !expectation.withDeadlock,
-                            checkInvariant = !expectation.withInvariantViolation,
-                            timeout = 1000 + expectation.walltime * 2
-                        )
-                        withClue("Counterexample found") {
+                if (expectation.withDeadlock) {
+                    println("NOT CHECKING DEADLOCK")
+                    // model check also without deadlock check
+                    val result = Launcher.benchmarkProlog(
+                        file!!,
+                        checkDeadlock = false,
+                        checkInvariant = true,
+                        timeout = 1000 + expectation.walltime * 2
+                    )
+                    withClue("Counterexample found") {
+                        if (!expectation.withInvariantViolation) {
                             result.counterExample shouldBe null
+                        } else {
+                            result.counterExample shouldNotBe null
                         }
-                        withClue("States do not match") {
-                            result.statesAnalysed shouldBeExactly expectation.states
-                        }
-                        withClue("States do not match") {
-                            result.transitionsFired shouldBeExactly expectation.transitions
-                        }
-                        // TODO: print hint if times differ too much
                     }
+                }
+
+                if (expectation.withInvariantViolation) {
+                    println("NOT CHECKING INVARIANT")
+                    // model check also without invariant check
+                    val result = Launcher.benchmarkProlog(
+                        file!!,
+                        checkDeadlock = true,
+                        checkInvariant = false,
+                        timeout = 1000 + expectation.walltime * 2
+                    )
+                    withClue("Counterexample found") {
+                        if (!expectation.withDeadlock) {
+                            result.counterExample shouldBe null
+                        } else {
+                            result.counterExample shouldNotBe null
+                        }
+                    }
+                }
+
+                val result = Launcher.benchmarkProlog(
+                    file!!,
+                    checkDeadlock = !expectation.withDeadlock,
+                    checkInvariant = !expectation.withInvariantViolation,
+                    timeout = 1000 + expectation.walltime * 2
+                )
+                withClue("Counterexample found") {
+                    result.counterExample shouldBe null
+                }
+                withClue("States do not match") {
+                    result.statesAnalysed shouldBeExactly expectation.states
+                }
+                withClue("States do not match") {
+                    result.transitionsFired shouldBeExactly expectation.transitions
                 }
             }
         }

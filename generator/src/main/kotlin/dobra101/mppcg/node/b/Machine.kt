@@ -25,7 +25,6 @@ data class Machine(
     override val templateName: String = "machine"
 ) : Program {
 
-    // TODO: only needed when model checking ?
     val transitions = operations.mapNotNull {
         val pre = when (it.body) {
             is Precondition -> it.body.predicate
@@ -36,7 +35,7 @@ data class Machine(
         else null
     }
 
-    override fun getAllIdentifiers(): List<MPPCGNode> {
+    override fun getAllNodesWithIdentifiers(): List<MPPCGNode> {
         val list = mutableListOf<MPPCGNode?>()
         list += parameters
         list += mutableListOf(constraints)

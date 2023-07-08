@@ -8,6 +8,9 @@ plugins {
 group = "dobra101.mppcg"
 version = "1.0-SNAPSHOT"
 
+// on MacOS, Intellij sometimes has problems receiving the environment variables
+val jasper: String = System.getenv("jasper") ?: "/usr/local/sicstus4.7.0/lib/sicstus-4.7.0/bin/jasper.jar"
+
 repositories {
     mavenCentral()
 }
@@ -23,8 +26,7 @@ dependencies {
     testImplementation("org.antlr:stringtemplate:4.0.2")
     testImplementation("io.kotest:kotest-runner-junit5:5.5.5")
     testImplementation("io.kotest:kotest-property:5.5.5")
-    // TODO: location and version can differ
-    testImplementation(files("/usr/local/sicstus4.7.0/lib/sicstus-4.7.0/bin/jasper.jar"))
+    testImplementation(files(jasper))
     implementation(kotlin("stdlib-jdk8"))
 }
 

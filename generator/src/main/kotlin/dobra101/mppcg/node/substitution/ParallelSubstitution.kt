@@ -15,6 +15,7 @@ data class ParallelSubstitution(
 ) : Substitution("parallelSubstitution") {
     val needTempVar: Set<IdentifierExpression>
 
+    // Calculate which temporary variables are required
     init {
         val assignments = substitutions.filterIsInstance<AssignSubstitution>()
 
@@ -22,7 +23,6 @@ data class ParallelSubstitution(
             .filter { (_, subs) -> subs is AssignSubstitution }
             .associate { (idx, assign) -> idx to (assign as AssignSubstitution).right.getIdentifiers() }
 
-        // TODO: also get identifier in comparisons
         val identifierInIfs = substitutions.withIndex()
             .filter { (_, subs) -> subs is IfSubstitution }
             .associate { (idx, ifSubs) -> idx to (ifSubs as IfSubstitution).getIdentifiers() }
@@ -31,7 +31,7 @@ data class ParallelSubstitution(
 
         val tempVars = mutableSetOf<IdentifierExpression>()
         // store identifiers which occur on both sides and are not only self-assigning
-        // only those are relevant, which are assigned first and later used on a right side // TODO: java?
+        // only those are relevant, which are assigned first and later used on a right side
         for ((idx, assignment) in assignments.withIndex()) {
             if (assignment.left !is IdentifierExpression) continue
             if (tempVars.contains(assignment.left)) continue
@@ -46,6 +46,7 @@ data class ParallelSubstitution(
         needTempVar = tempVars
     }
 
+    // TODO: make generic
     private fun Map<Int, List<IdentifierExpression>>.getIndicesOfIdentifier(identifier: IdentifierExpression): List<Int> {
         return filter { it.value.contains(identifier) }.map { it.key }
     }

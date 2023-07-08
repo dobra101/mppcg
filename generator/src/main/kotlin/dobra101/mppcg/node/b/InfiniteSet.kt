@@ -4,5 +4,5 @@ import dobra101.mppcg.node.expression.Expression
 import dobra101.mppcg.node.Type
 
 data class InfiniteSet(
-    var setType: Type // TODO: needed?
+    var setType: Type
 ) : Expression("infiniteSetExpression")

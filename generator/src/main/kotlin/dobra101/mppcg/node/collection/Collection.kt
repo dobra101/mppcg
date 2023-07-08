@@ -6,7 +6,6 @@ import dobra101.mppcg.node.expression.Expression
 abstract class CollectionNode(
     override var name: String,
     open val elements: List<CollectionEntry>,
-    private val collectionType: CollectionType, // TODO: delete if never used
     override val templateName: String,
     var isParameter: Boolean = false
 ) : Expression(templateName), NamedNode {
@@ -18,9 +17,3 @@ abstract class CollectionEntry(
     open val collection: String,
     override val templateName: String
 ) : Expression(templateName), NamedNode
-
-enum class CollectionType {
-    List,
-    Set,
-    Enum
-}

@@ -21,7 +21,6 @@ s_<name>(Expr_<exprCount>)<else>
 s_<name>([<elements; separator = ", ">])<endif>
 >>
 
-// TODO: add enum name?
 enumEntryExpression(name) ::= <<
 '<name>'
 >>
@@ -34,7 +33,6 @@ intervalExpression(lhs, rhs) ::= <<
 (<lhs>, <rhs>)
 >>
 
-// TODO: add set name?
 setEntryExpression(name) ::= <<
 '<name>'
 >>
@@ -47,7 +45,6 @@ Expr_<exprCount> is -<resultAt><endif><else>
 <operator>(<value>, Expr_<exprCount>)<endif><endif>
 >>
 
-// TODO: add type ?
 valueExpression(value) ::= <<
 <value>
 >>

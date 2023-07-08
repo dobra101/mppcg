@@ -1,6 +1,5 @@
 package dobra101.mppcg.node.predicate
 
-import dobra101.mppcg.node.CustomMethodOperator
 import dobra101.mppcg.node.expression.Expression
 
 data class BinaryPredicate(
@@ -9,7 +8,7 @@ data class BinaryPredicate(
     val operator: BinaryPredicateOperator
 ) : Predicate("binaryPredicate")
 
-enum class BinaryPredicateOperator: CustomMethodOperator {
+enum class BinaryPredicateOperator {
     GREATER,
     GREATER_EQUAL,
     LESS,

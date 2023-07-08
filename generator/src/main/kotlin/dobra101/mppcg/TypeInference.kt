@@ -20,7 +20,7 @@ class TypeInference {
                 .forEach {
                     (it.key as ConcreteIdentifierExpression).type =
                             typeFromEnv((it.key as ConcreteIdentifierExpression).name.removePrefix("c_"), env)
-                } // TODO: refactor
+                }
         pruneAll(node)
     }
 
@@ -62,7 +62,7 @@ class TypeInference {
                 if (!env.contains(node)) {
                     env[node] = TypeVariable()
                 }
-                val type = typeFromEnv(node, env, true)
+                val type = typeFromEnv(node, env)
                 if (node.type == null) node.type = type
                 return type
             }
@@ -390,7 +390,7 @@ class TypeInference {
 
                 val type = TypeRelation(fromType, exprType)
                 loadOldEnv(env, envBefore)
-                node.type = type // TODO: remove
+                node.type = type
                 return type
             }
 
@@ -406,7 +406,7 @@ class TypeInference {
                         nestedCouples(identifierTypes)
                 )
                 loadOldEnv(env, envBefore)
-                node.type = type // TODO: remove
+                node.type = type
                 return type
             }
 
@@ -477,8 +477,6 @@ class TypeInference {
                 analyse(node.predicate, env)
             }
 
-            // TODO: refactor enum handling
-            // TODO: member is only in B
             is BinaryPredicate -> {
                 val leftType = analyse(node.left, env)
                 val rightType = prune(analyse(node.right, env))
@@ -521,26 +519,29 @@ class TypeInference {
         return MPPCG_Boolean
     }
 
-    // TODO: needed?
     private fun loadOldEnv(env: MutableMap<MPPCGNode, Type>, envBefore: MutableMap<MPPCGNode, Type>) {
-        // TODO: needed?
         env.filterKeys { !envBefore.containsKey(it) }
                 .forEach {
                     val value = prune(it.value)
-                    if (it.key is Expression) {
-                        (it.key as Expression).type = value
-                    } else if (it.key is Operation) {
-                        (it.key as Operation).type = value
-                    } else {
-                        TODO("Not implemented")
+                    when (it.key) {
+                        is Expression -> {
+                            (it.key as Expression).type = value
+                        }
+
+                        is Operation -> {
+                            (it.key as Operation).type = value
+                        }
+
+                        else -> {
+                            TODO("Not implemented")
+                        }
                     }
                 }
         env.clear()
         env.putAll(envBefore)
     }
 
-    // TODO: remove unsed parameter
-    private fun typeFromEnv(node: MPPCGNode, env: Map<MPPCGNode, Type>, acceptTypeEnum: Boolean = false): Type {
+    private fun typeFromEnv(node: MPPCGNode, env: Map<MPPCGNode, Type>): Type {
         val type = env[node]
         if (type != null) return type
         if (node is IdentifierExpression) {
@@ -583,7 +584,7 @@ class TypeInference {
 
             if (((a.name != b.name) || (a.types.size != b.types.size))
                     && !unifyable(a, b)
-            ) { // TODO: and to or, min types size not necessary in for loop
+            ) {
                 throw InferenceError("Types $a and $b do not match.")
             }
             for (i in 0 until min(a.types.size, b.types.size)) {

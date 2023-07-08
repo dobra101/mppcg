@@ -24,10 +24,8 @@ import java.util.logging.Logger
  * using the template name and a map of arguments.
  */
 abstract class OutputLanguageEnvironment : EnvironmentUtils(), BEnvironment {
-    var optimize: Boolean = true
-
     abstract val fileExtension: String
-    abstract val templateDir: String // TODO: as file
+    abstract val templateDir: String
     private val group: STGroup by lazy { importTemplates() } // prevents templateDir from being null
 
     private val logger: Logger = Logger.getLogger(this::class.simpleName)

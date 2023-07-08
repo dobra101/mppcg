@@ -5,7 +5,6 @@ import dobra101.mppcg.node.b.CallFunctionExpression
 import dobra101.mppcg.node.b.CallFunctionOperator
 import dobra101.mppcg.node.b.Precondition
 import dobra101.mppcg.node.b.Select
-import dobra101.mppcg.node.expression.IdentifierExpression
 import dobra101.mppcg.node.substitution.*
 
 class SubstitutionVisitor : AbstractVisitor() {
@@ -54,7 +53,6 @@ class SubstitutionVisitor : AbstractVisitor() {
     }
 
     override fun caseASelectWhenSubstitution(node: ASelectWhenSubstitution) {
-        // TODO: add also to caseAMemberPredicate
         TODO("Not implemented caseASelectWhenSubstitution")
     }
 

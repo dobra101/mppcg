@@ -8,7 +8,6 @@ class EvaluatedExpressions : HashMap<MPPCGNode, String>() {
         this[node] = evaluated
     }
 
-    // TODO: use more often
     fun withReset(resetCondition: Boolean = true, blockToReset: () -> Unit) {
         val before = HashMap(this)
 

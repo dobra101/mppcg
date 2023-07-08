@@ -83,29 +83,23 @@ class PrologTest : ExpectSpec({
                 mchResult = runProB(machineFile)
                 println(mchResult)
             }
-            listOf(true).forAll { optimize ->
-                val expectName = if (optimize) "optimized" else "regular"
-                expect(expectName) {
-                    val file = Launcher.launch(
-                        lang = Language.PROLOG,
-                        file = machineFile.name,
-                        parser = Parser.SableCC,
-                        optimize = optimize,
-                        benchmark = false
-                    )
-                    println("Benchmark Prolog:")
-                    val result = Launcher.benchmarkProlog(file); //, timeout = 1000 + (mchResult!!.modelCheckingTime * 2))
-                    println(result)
+            val file = Launcher.launch(
+                lang = Language.PROLOG,
+                file = machineFile.name,
+                parser = Parser.SableCC,
+                benchmark = false
+            )
+            println("Benchmark Prolog:")
+            val result = Launcher.benchmarkProlog(file); //, timeout = 1000 + (mchResult!!.modelCheckingTime * 2))
+            println(result)
 
-                    withClue("States do not match") {
-                        result.statesAnalysed shouldBeExactly mchResult!!.statesAnalysed
-                    }
-                    withClue("Transitions do not match") {
-                        result.transitionsFired shouldBeExactly mchResult!!.transitionsFired
-                    }
-                    result.counterExample shouldBe mchResult!!.counterExample
-                }
+            withClue("States do not match") {
+                result.statesAnalysed shouldBeExactly mchResult!!.statesAnalysed
             }
+            withClue("Transitions do not match") {
+                result.transitionsFired shouldBeExactly mchResult!!.transitionsFired
+            }
+            result.counterExample shouldBe mchResult!!.counterExample
         }
     }
 })

@@ -1,6 +1,5 @@
 package dobra101.mppcg.node.collection
 
-import dobra101.mppcg.node.*
 import dobra101.mppcg.node.expression.Expression
 
 data class BinaryCollectionExpression(
@@ -9,7 +8,7 @@ data class BinaryCollectionExpression(
     val operator: BinaryCollectionOperator
 ) : Expression("binaryCollectionExpression")
 
-enum class BinaryCollectionOperator: CustomMethodOperator {
+enum class BinaryCollectionOperator {
     INTERSECTION,
     SUBTRACTION,
     UNION,

@@ -7,7 +7,6 @@ binaryPredicateMember(entry, set) ::= <<
 <set>.contains(<entry>)
 >>
 
-// TODO: add parenthesis
 binaryLogicPredicate(lhs, operator, rhs, parenthesis, implication) ::= <<
 <if(implication)>!(<lhs>) || <rhs><else>
 <if(parenthesis)>(<lhs>) <operator> (<rhs>)<else>

@@ -174,7 +174,6 @@ public class BSet<T> implements Set<T> {
 
     @Override
     public String toString() {
-        // TODO: only for execTest
         return entries.toString().replace("[", "{").replace("]", "}");
     }
 }

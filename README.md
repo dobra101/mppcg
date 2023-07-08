@@ -32,3 +32,9 @@ Example:
 Currently, the files have to be located in [src/main/resources/machines](src/main/resources/machines)
 
 The files will then be generated to `generator/build/generated/`
+
+## Running Tests
+To run tests, the environment variable `jasper` need to be set.
+This points to the `jasper.jar`-file used in Prolog tests.
+
+Example: `/usr/local/sicstus4.7.0/lib/sicstus-4.7.0/bin/jasper.jar`

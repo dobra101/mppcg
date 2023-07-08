@@ -62,7 +62,6 @@ public class BSequence<T> {
 
     @Override
     public String toString() {
-        // TODO: only for execTest
         return elements.toString().replace("[", "{").replace("]", "}");
     }
 }

@@ -88,12 +88,11 @@ precondition(predicate, substitution) ::= <<
 <substitution>
 >>
 
-// TODO: only else, when
+// TODO: add else, when
 select(condition, then, elseSubstitution, when) ::= <<
 <if(then)><then><else>// skip<endif>
 >>
 
-// TODO: make parallel
 parallelSubstitution(substitutions) ::= <<
 // Parallel Substitution:
 <substitutions; separator="\n">

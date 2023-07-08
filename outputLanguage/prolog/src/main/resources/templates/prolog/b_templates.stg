@@ -1,4 +1,3 @@
-// TODO: use remaining variables
 machine(name, parameters, constraints, sets, constants, concrete_constants, properties, definitions, variables, concrete_variables, invariant, assertions, initialization, operations, whileDefinitions, quantifierDefinitions) ::= <<
 :- use_module(btypes).
 
@@ -73,7 +72,6 @@ init_constants :-
 <quantifierDefinitions; separator="\n\n"><endif>
 >>
 
-// TODO: improve return values
 operation(name, parameters, returnValues, body, bodyWithOutput, resultStateCount, resultStateCountWithOutput) ::= <<
 <if(body)>
 trans('<name>'<if(parameters)>(<parameters :{ p | <p>=Expr_<p>}; separator=", ">)<endif>, State_0, State_<resultStateCount>) :-
@@ -167,9 +165,7 @@ start(State_<resultStateCount>) :-
     <body; separator=",\n"><endif>.
 >>
 
-// TODO: make parallel
 parallelSubstitution(tempVars, substitutions) ::= <<
-% Parallel Substitution:
 <if(tempVars)><tempVars; separator=",\n">,<endif>
 <substitutions; separator=",\n">
 >>

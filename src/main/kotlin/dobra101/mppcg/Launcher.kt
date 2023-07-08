@@ -11,14 +11,16 @@ import kotlinx.cli.required
 import java.io.File
 import java.util.logging.Logger
 
-// TODO: generate multiple files at once
+/**
+ * The Launcher is the main starting point for code generation.
+ * The launch methods start the code generation for the given file, to the given language, using the given parser.
+ */
 object Launcher {
     private val logger: Logger = Logger.getLogger(Launcher::class.simpleName)
     fun launch(
         lang: Language,
         file: File,
         parser: Parser,
-        optimize: Boolean = false,
         benchmark: Boolean = false,
         outputPath: String = "generator/build/generated/",
         minInt: Long = -1,
@@ -42,7 +44,6 @@ object Launcher {
         }
 
         Generator.environment = environmentOf(lang)
-        Generator.environment.optimize = optimize
         RuntimeConfig.config = BEnvironmentConfig(minInt, maxInt)
         val generated = Generator().generate(start, outputPath)
         if (lang == Language.PROLOG) {
@@ -67,7 +68,6 @@ object Launcher {
         lang: Language,
         file: String,
         parser: Parser,
-        optimize: Boolean = false,
         benchmark: Boolean = false,
         outputPath: String = "generator/build/generated/",
         minInt: Long = -1,
@@ -80,7 +80,7 @@ object Launcher {
                 .filter { fn -> fn.name == filename }.first()
         }
 
-        return launch(lang, machine, parser, optimize, benchmark, outputPath, minInt, maxInt)
+        return launch(lang, machine, parser, benchmark, outputPath, minInt, maxInt)
     }
 
     fun benchmarkProlog(
@@ -132,7 +132,6 @@ object Launcher {
             throw RuntimeException(msg)
         }
 
-        // TODO: store results
         val proBResult = ProBResultAnalyser.analyze(probOutput)
         println(proBResult)
 
@@ -147,12 +146,11 @@ fun main(args: Array<String>) {
     val lang by argParser.option(ArgType.Choice<Language>(), description = "Language").required()
     val file by argParser.option(ArgType.String, description = "File").required()
     val parser by argParser.option(ArgType.Choice<Parser>(), description = "Parser").default(Parser.SableCC)
-    val optimize by argParser.option(ArgType.Boolean, description = "Optimization").default(false)
     val benchmark by argParser.option(ArgType.Boolean, description = "Run Benchmarks").default(false)
 
     argParser.parse(args)
 
-    Launcher.launch(lang, file, parser, optimize, benchmark)
+    Launcher.launch(lang, file, parser, benchmark)
 }
 
 private fun environmentOf(language: Language): OutputLanguageEnvironment {
