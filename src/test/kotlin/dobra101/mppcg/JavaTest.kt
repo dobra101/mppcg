@@ -43,7 +43,6 @@ class JavaTest : ExpectSpec({
         "Train_1_beebook_deterministic_MC.mch"
     )
 
-    val exclude: List<String> = listOf()
     val machines = File("src/main/resources/machines/").walk()
         .filter { it.isFile && it.name.endsWith(".mch") }
         .filter { if (include.isNotEmpty()) include.contains(it.name) else true }

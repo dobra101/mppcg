@@ -100,6 +100,10 @@ class ExecutionTestJava : ExecutionTest(Language.JAVA, "java.stg", ".java", runS
     }
 }
 
+/**
+ * Generates source code for several machine files and executes it.
+ * Compares execution result with the results specified in the .execPath files.
+ */
 abstract class ExecutionTest(
     language: Language,
     setupFileName: String,

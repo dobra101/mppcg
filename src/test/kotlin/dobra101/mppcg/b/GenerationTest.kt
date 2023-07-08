@@ -13,6 +13,9 @@ import io.kotest.matchers.shouldNotBe
 import java.io.File
 import java.io.FileNotFoundException
 
+/**
+ * Tests which intermediate code nodes can be rendered, i.e. for which nodes the `renderSelf`-method is implemented.
+ */
 class GenerationTest : ExpectSpec({
     fun File.toExpectations(): List<Expectation> {
         if (!exists()) throw FileNotFoundException(path)

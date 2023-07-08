@@ -104,7 +104,6 @@ class PrologOutputEnvironment : OutputLanguageEnvironment() {
                 "infiniteSet" to isInfiniteSet
             )
 
-            // TODO: add to evaluated?
             val rendered = renderTemplate(map)
             return@loadOrEvaluate RenderResult("${expanded.before}$rendered", exprToInfo(node))
         }

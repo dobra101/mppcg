@@ -32,26 +32,21 @@ class PrologTest : ExpectSpec({
     }
 
     val include: List<String> = listOf(
-//        "Lift.mch",
-//        "TrafficLight_MC.mch",
-//        "scheduler_deterministic_MC.mch",
-//        "QueensWithEvents_4.mch",
-//        "QueensWithEvents_8.mch",
+        "Lift.mch",
+        "TrafficLight_MC.mch",
+        "scheduler_deterministic_MC.mch",
+        "QueensWithEvents_4.mch",
+        "QueensWithEvents_8.mch",
         "sort_m2_data1000.mch",
-//        "CAN_BUS_tlc.mch",
-//        "Cruise_finite1_deterministic_MC.mch",
-//        "LandingGear_R6.mch",
-//        "Train_1_beebook_deterministic_MC.mch"
+        "CAN_BUS_tlc.mch",
+        "Cruise_finite1_deterministic_MC.mch",
+        "LandingGear_R6.mch",
+        "Train_1_beebook_deterministic_MC.mch"
     )
 
-    val exclude: List<String> = listOf(
-        //"Train_1_beebook_deterministic_MC.mch",
-//        "QueensWithEvents_4.mch"
-    )
     val machines = File("src/main/resources/machines/").walk()
         .filter { it.isFile && it.name.endsWith(".mch") }
         .filter { if (include.isNotEmpty()) include.contains(it.name) else true }
-//        .filter { if (exclude.isNotEmpty()) !exclude.contains(it.name) else true }
         .toList()
 
     val expectedModelCheckingResults: Map<File, ProBResult> =
@@ -90,7 +85,7 @@ class PrologTest : ExpectSpec({
                 benchmark = false
             )
             println("Benchmark Prolog:")
-            val result = Launcher.benchmarkProlog(file); //, timeout = 1000 + (mchResult!!.modelCheckingTime * 2))
+            val result = Launcher.benchmarkProlog(file)
             println(result)
 
             withClue("States do not match") {
